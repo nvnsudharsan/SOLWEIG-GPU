@@ -9,7 +9,7 @@ pip install .
 ```
 
 ## Requirements
-
 - Python 3.8+
+- GDAL needs to be installed prior to SOLWEIG-GPU (conda install conda-forge::gdal)
 - Tested with Modulus 23.01 (CUDA 12+)
 - GPU with sufficient memory
