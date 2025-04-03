@@ -6,7 +6,13 @@ def thermal_comfort(
     trees_filename,
     tile_size,
     netcdf_filename,
-    selected_date_str,
+    selected_date_str, 
+    use_own_met=True,
+    start_time=None, 
+    end_time=None, 
+    data_source_type=None, 
+    data_folder=None,
+    own_met_file=None,
     save_tmrt=True,
     save_svf=False,
     save_kup=False,
@@ -23,7 +29,10 @@ def thermal_comfort(
     import torch
 
     # Preprocessing
-    ppr(base_path, building_dsm_filename, dem_filename, trees_filename, tile_size, netcdf_filename, selected_date_str)
+    ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
+         tile_size, selected_date_str, use_own_met,
+         start_time, end_time, data_source_type, data_folder,
+         own_met_file)
 
     # Setup directories
     base_output_path = os.path.join(base_path, "UTCI")
