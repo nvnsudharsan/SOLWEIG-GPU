@@ -1,1 +1,1 @@
-# UTCI-GPU
+# SOLWEIG-GPU
