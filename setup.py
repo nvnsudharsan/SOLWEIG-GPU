@@ -17,7 +17,9 @@ setup(
         "pytz",
         "shapely",
         "timezonefinder",
-        "gdal"
+        "gdal",
+        "xarray",
+        "tqdm"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
