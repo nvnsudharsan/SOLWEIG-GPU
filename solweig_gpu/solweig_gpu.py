@@ -1,12 +1,11 @@
 
 def thermal_comfort(
     base_path,
-    building_dsm_filename,
-    dem_filename,
-    trees_filename,
-    tile_size,
-    netcdf_filename,
-    selected_date_str, 
+    selected_date_str,
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    tile_size=3600, 
     use_own_met=True,
     start_time=None, 
     end_time=None, 
