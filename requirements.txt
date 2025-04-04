@@ -6,4 +6,5 @@ netCDF4
 pytz
 shapely
 timezonefinder
-
+xarray
+tqdm
