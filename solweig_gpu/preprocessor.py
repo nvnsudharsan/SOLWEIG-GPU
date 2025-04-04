@@ -103,7 +103,8 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     relative humidity (in %), wind speed (in m/s), shortwave and longwave radiation (in W/m^2),
     and writes the results to a new NetCDF file.
     """
-    
+    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H")
+    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H")
     def saturation_vapor_pressure(T):
         """
         Calculate saturation vapor pressure (in hPa) given temperature T in Celsius.
@@ -235,7 +236,8 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         - Generate an hourly time array between start_time and end_time.
         - Combine the data from all files along the time axis and save to a new NetCDF file.
     """
-    
+    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H")
+    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H")
     # Helper function to calculate relative humidity.
     def calculate_rh(t2, q2, psfc):
         """Calculate relative humidity from temperature (K), mixing ratio, and surface pressure (Pa)."""
@@ -662,8 +664,7 @@ def create_met_files(base_path, source_met_file):
 # method need to be provided.
 # =============================================================================
 def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
-         tile_size, selected_date_str, use_own_met,
-         start_time=None, end_time=None, data_source_type=None, data_folder=None,
+         tile_size, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
          own_met_file=None):
     """
     Modified main function:
