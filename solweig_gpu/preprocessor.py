@@ -13,6 +13,7 @@ from datetime import timedelta
 from osgeo import gdal, ogr, osr
 from shapely.geometry import box
 from timezonefinder import TimezoneFinder
+from tqdm import tqdm
 
 # =============================================================================
 # Function to check that all raster files have matching dimensions, pixel size, and CRS.
@@ -58,33 +59,68 @@ def create_tiles(infile, tilesize, tile_type):
     if ds is None:
         raise FileNotFoundError(f"Could not open {infile}")
 
-    width = ds.RasterXSize
-    height = ds.RasterYSize
+   width = ds.RasterXSize
+   height = ds.RasterYSize
 
-    out_folder = os.path.join(os.path.dirname(infile), tile_type)
-    if not os.path.exists(out_folder):
-        os.makedirs(out_folder)
+   out_folder = os.path.join(os.path.dirname(infile), tile_type)
+   if not os.path.exists(out_folder):
+       os.makedirs(out_folder)
 
-    if tilesize >= width and tilesize >= height:
-        outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
-        options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
-        gdal.Translate(outfile, ds, options=options)
-        print(f"Created single tile (original file): {outfile}")
-        ds = None
-        return
+   if tilesize >= width and tilesize >= height:
+       outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
+       options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
+       gdal.Translate(outfile, ds, options=options)
+       print(f"Created single tile (original file): {outfile}")
+       ds = None
+       return
 
-    for i in range(0, width, tilesize):
-        for j in range(0, height, tilesize):
-            tile_width = min(tilesize, width - i)
-            tile_height = min(tilesize, height - j)
-            outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
-            options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
-            gdal.Translate(outfile, ds, options=options)
-            print(f"Created tile: {outfile}")
-    
-    ds = None
+   for i in range(0, width, tilesize):
+       for j in range(0, height, tilesize):
+           tile_width = min(tilesize, width - i)
+           tile_height = min(tilesize, height - j)
+           outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
+           options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
+           gdal.Translate(outfile, ds, options=options)
+           print(f"Created tile: {outfile}")
+   
+   ds = None
 
-    
+#def create_tiles(infile, tilesize, tile_type):
+#    ds = gdal.Open(infile)
+#    if ds is None:
+#        raise FileNotFoundError(f"Could not open {infile}")
+#
+#    width = ds.RasterXSize
+#    height = ds.RasterYSize
+#
+#    out_folder = os.path.join(os.path.dirname(infile), tile_type)
+#    os.makedirs(out_folder, exist_ok=True)
+#
+#    if tilesize >= width and tilesize >= height:
+#        outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
+#        options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
+#        gdal.Translate(outfile, ds, options=options)
+#        print(f"Created single tile (original file): {outfile}")
+#        ds = None
+#        return
+#
+#    num_tiles_x = (width + tilesize - 1) // tilesize
+#    num_tiles_y = (height + tilesize - 1) // tilesize
+#    total_tiles = num_tiles_x * num_tiles_y
+#
+#    with tqdm(total=total_tiles, desc=f"Creating tiles for {tile_type}") as pbar:
+#        for i in range(0, width, tilesize):
+#            for j in range(0, height, tilesize):
+#                tile_width = min(tilesize, width - i)
+#                tile_height = min(tilesize, height - j)
+#                outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
+#                options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
+#                gdal.Translate(outfile, ds, options=options)
+#                pbar.update(1)
+#
+#    ds = None
+
+
 def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
     """
     Process ERA5 instantaneous and accumulated data from NetCDF files located in folder_path.
