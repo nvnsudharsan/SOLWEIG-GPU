@@ -147,7 +147,7 @@ def run_parallel_processing(dem_folder_path, wall_output_path, aspect_output_pat
     dem_files = [f for f in os.listdir(dem_folder_path) if f.endswith('.tif') and not f.startswith('.')]
     args_list = [(f, dem_folder_path, wall_output_path, aspect_output_path) for f in dem_files]
 
-    max_workers = min(24, os.cpu_count() or 1)
+    max_workers = min(32, os.cpu_count() or 1)
     print(f"Using {max_workers} parallel workers")
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
