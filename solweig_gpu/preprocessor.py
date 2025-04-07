@@ -59,31 +59,31 @@ def create_tiles(infile, tilesize, tile_type):
     if ds is None:
         raise FileNotFoundError(f"Could not open {infile}")
 
-   width = ds.RasterXSize
-   height = ds.RasterYSize
+    width = ds.RasterXSize
+    height = ds.RasterYSize
 
-   out_folder = os.path.join(os.path.dirname(infile), tile_type)
-   if not os.path.exists(out_folder):
-       os.makedirs(out_folder)
+    out_folder = os.path.join(os.path.dirname(infile), tile_type)
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
 
-   if tilesize >= width and tilesize >= height:
-       outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
-       options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
-       gdal.Translate(outfile, ds, options=options)
-       print(f"Created single tile (original file): {outfile}")
-       ds = None
-       return
+    if tilesize >= width and tilesize >= height:
+        outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
+        options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
+        gdal.Translate(outfile, ds, options=options)
+        print(f"Created single tile (original file): {outfile}")
+        ds = None
+        return
 
-   for i in range(0, width, tilesize):
-       for j in range(0, height, tilesize):
-           tile_width = min(tilesize, width - i)
-           tile_height = min(tilesize, height - j)
-           outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
-           options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
-           gdal.Translate(outfile, ds, options=options)
-           print(f"Created tile: {outfile}")
+    for i in range(0, width, tilesize):
+        for j in range(0, height, tilesize):
+            tile_width = min(tilesize, width - i)
+            tile_height = min(tilesize, height - j)
+            outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
+            options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
+            gdal.Translate(outfile, ds, options=options)
+            print(f"Created tile: {outfile}")
    
-   ds = None
+    ds = None
 
 #def create_tiles(infile, tilesize, tile_type):
 #    ds = gdal.Open(infile)

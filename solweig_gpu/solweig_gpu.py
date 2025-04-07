@@ -44,7 +44,7 @@ def thermal_comfort(
 
     # Wall and aspect generation
     run_parallel_processing(building_dsm_dir, walls_dir, aspect_dir)
-
+    print("Running Solweig ...")
     # Load file lists
     met_files = get_matching_files(inputMet, ".txt")
     building_dsm_files = get_matching_files(building_dsm_dir, ".tif")
