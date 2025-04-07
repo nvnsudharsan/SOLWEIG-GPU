@@ -345,7 +345,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     dataset5 = None
     end_time = time.time()
     time_taken = end_time - start_time
-    print(f"Time taken to execute the function for {building_dsm_path}: {time_taken:.2f} seconds")
+    print(f"Time taken to execute tile {number}: {time_taken:.2f} seconds")
 
 
 # #run the preprocessor to create required files, change the paths and names as required
