@@ -14,14 +14,22 @@ import torch.nn.functional as F
 from scipy.ndimage import rotate
 import time
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def ensure_tensor(x, device=None):
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if not isinstance(x, torch.Tensor):
+        x = torch.tensor(x, device=device)
+    return x
 
 def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     degrees = torch.pi / 180.
     if azimuth == 0.0:
         azimuth = 1e-12
-    azimuth = torch.tensor(azimuth * degrees, device=a.device)
-    altitude = torch.tensor(altitude * degrees, device=a.device)
+    azimuth = ensure_tensor(azimuth)
+    altitutde = ensure_tensor(altitude)
+    azimuth = azimuth * degrees #torch.tensor(azimuth * degrees, device=a.device)
+    altitude = altitude * degrees #torch.tensor(altitude * degrees, device=a.device)
 
     dx = 0.
     dy = 0.
@@ -62,7 +70,7 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
 
     index = 1
     #print(type(amaxvalue))
-    amaxvalue =  torch.tensor(amaxvalue,  device=device)
+    #%%amaxvalue =  torch.tensor(amaxvalue,  device=device)
     while (amaxvalue >= dz and torch.abs(dx) < sizex and torch.abs(dy) < sizey):
         if (pibyfour <= azimuth < threetimespibyfour or fivetimespibyfour <= azimuth < seventimespibyfour):
             dy = signsinazimuth * index
@@ -142,10 +150,13 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     # Changed here
     return sh, vegsh, vbshvegsh
 
-def annulus_weight(altitude, aziinterval, device=device):
+def annulus_weight(altitude, aziinterval, device=None):
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     n = torch.tensor(90.0, device=device)
     altitude = torch.tensor(altitude, device=device)
-    aziinterval = torch.tensor(aziinterval, device=device)
+    #%%aziinterval = torch.tensor(aziinterval, device=device)
 
     steprad = (360.0 / aziinterval) * (torch.pi / 180.0)
     annulus = 91.0 - altitude
@@ -155,8 +166,8 @@ def annulus_weight(altitude, aziinterval, device=device):
     return weight
 
 def create_patches(patch_option):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     deg2rad = torch.pi / 180
-
     skyvaultalt = torch.tensor([], device=device)
     skyvaultazi = torch.tensor([], device=device)
 
@@ -192,6 +203,7 @@ def create_patches(patch_option):
 
 
 def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = a.device
     rows = a.shape[0]
     cols = a.shape[1]
