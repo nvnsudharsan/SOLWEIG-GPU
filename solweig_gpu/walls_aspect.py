@@ -152,6 +152,6 @@ def run_parallel_processing(dem_folder_path, wall_output_path, aspect_output_pat
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(process_file_parallel, args): args[0] for args in args_list}
-        for future in tqdm(as_completed(futures), total=len(futures), desc="Computing Walls and Aspects", mininterval = 1):
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Computing Wall Height and Aspect", mininterval = 1):
             _ = future.result()
 
