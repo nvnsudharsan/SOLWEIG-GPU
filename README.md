@@ -12,11 +12,12 @@ This repository provides a Python package and a command-line interface (CLI) for
 
 ## Installation
 
-Clone the repository and set up the environment (assumes `conda` or `venv`):
+Clone the repository and set up the environment:
 
 ```bash
-git clone https://github.com/yourusername/solweig-gpu.git
+conda create -n solweig python=3.10
 conda install -c conda-forge gdal
+git clone https://github.com/yourusername/solweig-gpu.git
 cd solweig-gpu
 pip install -r requirements.txt
 
