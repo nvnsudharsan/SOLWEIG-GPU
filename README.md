@@ -11,7 +11,7 @@ This repository provides a Python package and a command-line interface for runni
 - Compatible with WRF and ERA5 meteorological data
 
 ![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
-UTCI for New Delhi, India
+UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized using ArcGIS online.
 
 ## Installation
 
