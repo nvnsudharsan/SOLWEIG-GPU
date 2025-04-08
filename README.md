@@ -10,6 +10,8 @@ This repository provides a Python package and a command-line interface (CLI) for
 - Optional outputs: SVF, radiation fluxes, shadow maps, etc.
 - Compatible with WRF and ERA5 meteorological data
 
+![UTCI for New Delhi](path/to/image.png)
+
 ## Installation
 
 Clone the repository and set up the environment:
@@ -22,4 +24,4 @@ git clone https://github.com/yourusername/solweig-gpu.git
 cd solweig-gpu
 pip install .
 
-![UTCI for New Delhi](path/to/image.png)
+
