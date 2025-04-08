@@ -22,3 +22,4 @@ git clone https://github.com/yourusername/solweig-gpu.git
 cd solweig-gpu
 pip install .
 
+![UTCI for New Delhi](path/to/image.png)
