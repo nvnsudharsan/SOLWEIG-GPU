@@ -1,6 +1,6 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling
 
-This repository provides a Python package and a command-line interface for running the SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model with GPU acceleration. It supports urban microclimate modeling using high-resolution spatial data to compute thermal comfort indices such as Mean Radiant Temperature (Tmrt) and Universal Thermal Climate Index (UTCI)
+This repository provides a Python package and a command-line interface for running the SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model with GPU acceleration. It supports urban microclimate modeling using high-resolution spatial data to compute thermal comfort indices such as Mean Radiant Temperature (Tmrt) and Universal Thermal Climate Index (UTCI).
 
 ## Features
 
