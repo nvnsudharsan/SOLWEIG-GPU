@@ -10,7 +10,7 @@ This repository provides a Python package and a command-line interface (CLI) for
 - Optional outputs: SVF, radiation fluxes, shadow maps, etc.
 - Compatible with WRF and ERA5 meteorological data
 
-![UTCI for New Delhi](SOLWEIG-GPU/UTCI_New_Delhi.jpeg)
+![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
 
 ## Installation
 
