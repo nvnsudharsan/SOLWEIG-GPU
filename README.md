@@ -19,5 +19,5 @@ conda create -n solweig python=3.10
 conda install -c conda-forge gdal
 git clone https://github.com/yourusername/solweig-gpu.git
 cd solweig-gpu
-pip install -r requirements.txt
+pip install .
 
