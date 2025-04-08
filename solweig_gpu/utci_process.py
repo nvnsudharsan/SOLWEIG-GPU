@@ -13,6 +13,9 @@ import torch
 import torch.nn.functional as F
 from scipy.ndimage import rotate
 import time
+from timezonefinder import TimezoneFinder
+import pytz
+import datetime
 from .sun_position import Solweig_2015a_metdata_noload
 from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
@@ -24,7 +27,7 @@ from .walls_aspect import run_parallel_processing
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-utc = 6.  # Change this later
+#utc = 6.  # Change this later
 #wind_speed = torch.tensor(1.5)  # Wind speed = 1.5 m/s
 
 # Wall and ground emissivity and albedo
@@ -108,6 +111,14 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if alt > 0:
         alt = 3.
     location = {'longitude': lon, 'latitude': lat, 'altitude': alt}
+    # After computing lat and lon
+    tf = TimezoneFinder()
+    timezone_name = tf.timezone_at(lat=lat, lng=lon) or "UTC"
+    local_tz = pytz.timezone(timezone_name)
+    # Use a sample date (today or specific) to get current UTC offset
+    local_dt = local_tz.localize(datetime.datetime.now())
+    utc = local_dt.utcoffset().total_seconds() / 3600
+    print(f"[INFO] Timezone: {timezone_name}, UTC offset: {utc} hours")
     YYYY, altitude, azimuth, zen, jday, leafon, dectime, altmax = Solweig_2015a_metdata_noload(met_file, location, utc)
     temp1[temp1 < 0.] = 0.
     vegdem = temp1 + temp2
