@@ -74,7 +74,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     temp2, dataset3 = load_raster_to_tensor(dem_path)
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
-    base_date = datetime.strptime(selected_date_str, "%Y-%m-%d")
+    base_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d")
     rows, cols = a.shape
     geotransform = dataset.GetGeoTransform()
     scale = 1 / geotransform[1]
