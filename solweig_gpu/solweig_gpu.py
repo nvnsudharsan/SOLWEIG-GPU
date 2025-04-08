@@ -76,6 +76,7 @@ def thermal_comfort(
             met_file_data,
             output_folder,
             number,
+            selected_date_str,
             save_tmrt=save_tmrt,
             save_svf=save_svf,
             save_kup=save_kup,
