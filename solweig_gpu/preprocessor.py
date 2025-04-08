@@ -139,8 +139,8 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     relative humidity (in %), wind speed (in m/s), shortwave and longwave radiation (in W/m^2),
     and writes the results to a new NetCDF file.
     """
-    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H")
-    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H")
+    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     def saturation_vapor_pressure(T):
         """
         Calculate saturation vapor pressure (in hPa) given temperature T in Celsius.
@@ -272,8 +272,8 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         - Generate an hourly time array between start_time and end_time.
         - Combine the data from all files along the time axis and save to a new NetCDF file.
     """
-    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H")
-    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H")
+    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     # Helper function to calculate relative humidity.
     def calculate_rh(t2, q2, psfc):
         """Calculate relative humidity from temperature (K), mixing ratio, and surface pressure (Pa)."""
