@@ -67,13 +67,14 @@ def extract_number_from_filename(filename):
     return number
 
 
-def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, met_file, output_path,number,save_tmrt=False,save_svf=False,
+def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, met_file, output_path,number,selected_date_str,save_tmrt=False,save_svf=False,
         save_kup=False,save_kdown=False,save_lup=False,save_ldown=False,save_shadow=False):
     a, dataset = load_raster_to_tensor(building_dsm_path)
     temp1, dataset2 = load_raster_to_tensor(tree_path)
     temp2, dataset3 = load_raster_to_tensor(dem_path)
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
+    base_date = datetime.strptime(selected_date_str, "%Y-%m-%d")
     rows, cols = a.shape
     geotransform = dataset.GetGeoTransform()
     scale = 1 / geotransform[1]
@@ -266,6 +267,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         out_band = out_dataset.GetRasterBand(band + 1)
         out_band.WriteArray(UTCI_all[band])
         out_band.FlushCache()
+        hour = int(hours[band].cpu().item())
+        minute = int(minu[band].cpu().item())
+        timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+        out_band.SetMetadata({'Time': timestamp})
     out_dataset = None
     # Optionally, you can similarly write TMRT to a single multi-band file:
     if save_tmrt:
@@ -278,6 +283,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(TMRT_all[band])
             out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
     if save_svf:
         out_file_path_op = os.path.join(output_path, f'SVF_{number}.tif')
@@ -291,6 +300,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(SVF[band])
             out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
         out_dataset_svf = None
     if save_kup:
         out_file_path_op = os.path.join(output_path, f'Kup_{number}.tif')
@@ -302,6 +315,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(Kup_all[band])
             out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
     if save_kdown:
         out_file_path_op = os.path.join(output_path, f'Kdown_{number}.tif')
@@ -313,6 +330,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(Kdown_all[band])
             out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
     if save_lup:
         out_file_path_op = os.path.join(output_path, f'Lup_{number}.tif')
@@ -324,6 +345,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(Lup_all[band])
             out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
     if save_ldown:
         out_file_path_op = os.path.join(output_path, f'Ldown_{number}.tif')
@@ -335,6 +360,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(Ldown_all[band])
             out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
     if save_shadow:
         out_file_path_op = os.path.join(output_path, f'Shadow_{number}.tif')
@@ -346,6 +375,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(Shadow_all[band])
             out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
 
     # Clean up datasets
@@ -357,54 +390,5 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     end_time = time.time()
     time_taken = end_time - start_time
     print(f"Time taken to execute tile {number}: {time_taken:.2f} seconds")
-
-
-# #run the preprocessor to create required files, change the paths and names as required
-# base_path = "/scratch/09295/naveens/Solweig-gpu/Data"
-# building_dsm_filename = 'Building_DSM.tif'
-# dem_filename = 'DEM.tif'
-# trees_filename = 'Trees.tif'
-# tile_size = 3600
-# netcdf_filename = 'Control.nc'
-# selected_date_str = '2020-08-13'
-# ppr(base_path, building_dsm_filename, dem_filename, trees_filename, tile_size, netcdf_filename, selected_date_str)
-
-# # paths for running utci pipeline !!Don't Change!! 
-# base_output_path = os.path.join(base_path, "UTCI")
-# inputMet = os.path.join(base_path, "metfiles")
-# building_dsm_dir = os.path.join(base_path, "Building_DSM")
-# tree_dir = os.path.join(base_path, "Trees")
-# dem_dir = os.path.join(base_path, "DEM")
-# walls_dir = os.path.join(base_path, "walls")
-# aspect_dir = os.path.join(base_path, "aspect")
-
-# #create walls and aspect
-# run_parallel_processing(building_dsm_dir, walls_dir, aspect_dir)
-
-# # Load met files and create a mapping
-# met_files = get_matching_files(inputMet, ".txt")
-# # Load DSM and corresponding datasets
-# building_dsm_files = get_matching_files(building_dsm_dir, ".tif")
-# tree_files = get_matching_files(tree_dir, ".tif")
-# dem_files = get_matching_files(dem_dir, ".tif")
-# walls_files = get_matching_files(walls_dir, ".tif")
-# aspect_files = get_matching_files(aspect_dir, ".tif")
-
-# for i in range(len(building_dsm_files)):
-#     building_dsm_path = os.path.join(building_dsm_dir, building_dsm_files[i])
-#     tree_path = os.path.join(tree_dir, tree_files[i])
-#     dem_path = os.path.join(dem_dir, dem_files[i])
-#     walls_path = os.path.join(walls_dir, walls_files[i])
-#     aspect_path = os.path.join(aspect_dir, aspect_files[i])
-#     number = extract_number_from_filename(building_dsm_files[i])
-#     output_folder = os.path.join(base_output_path, number)
-#     os.makedirs(output_folder, exist_ok=True)
-#     met_file_path = os.path.join(inputMet, met_files[i])
-#     met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ')
-#     output_folder = os.path.join(base_output_path, number)
-#     os.makedirs(output_folder, exist_ok=True)
-#     compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, met_file_data, output_folder, number,save_tmrt=True)
-#     torch.cuda.empty_cache()
-
 
 
