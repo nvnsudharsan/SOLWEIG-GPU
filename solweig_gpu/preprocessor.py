@@ -315,7 +315,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     
     # Initialize lists to store data arrays from each file.
     t2_list, wind_list, rh2_list, tsk_list = [], [], [], []
-    utci_list, ac_list, pv_list = [], [], []
+    #utci_list, ac_list, pv_list = [], [], []
     swdown_list, glw_list, psfc_list = [], [], []
     
     # Variables to hold latitude and longitude (assumed same for all files).
@@ -332,9 +332,9 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
             
             t2_list.append(t2)
             tsk_list.append(ds['TSK'].values)       # Land surface temperature (K)
-            utci_list.append(ds['COMF_50'].values)    # UTCI (degrees C)
-            ac_list.append(ds['CM_AC_URB3D'].values)   # Air condition (W/m^2)
-            pv_list.append(ds['EP_PV_URB3D'].values)   # PV energy consumption (W/m^2)
+            #utci_list.append(ds['COMF_50'].values)    # UTCI (degrees C)
+            #ac_list.append(ds['CM_AC_URB3D'].values)   # Air condition (W/m^2)
+            #pv_list.append(ds['EP_PV_URB3D'].values)   # PV energy consumption (W/m^2)
             swdown_list.append(ds['SWDOWN'].values)    # Downwelling shortwave radiation (W/m^2)
             glw_list.append(ds['GLW'].values)          # Downwelling longwave radiation (W/m^2)
             psfc_list.append(psfc)
@@ -359,9 +359,9 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     wind_array    = np.concatenate(wind_list, axis=0)
     rh2_array     = np.concatenate(rh2_list, axis=0)
     tsk_array     = np.concatenate(tsk_list, axis=0)
-    utci_array    = np.concatenate(utci_list, axis=0)
-    ac_array      = np.concatenate(ac_list, axis=0)
-    pv_array      = np.concatenate(pv_list, axis=0)
+    #utci_array    = np.concatenate(utci_list, axis=0)
+    #ac_array      = np.concatenate(ac_list, axis=0)
+    #pv_array      = np.concatenate(pv_list, axis=0)
     swdown_array  = np.concatenate(swdown_list, axis=0)
     glw_array     = np.concatenate(glw_list, axis=0)
     psfc_array    = np.concatenate(psfc_list, axis=0)
@@ -383,9 +383,9 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         wind_var  = nc.createVariable('WIND', 'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         tsk_var   = nc.createVariable('TSK', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        utci_var  = nc.createVariable('UTCI', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        ac_var    = nc.createVariable('AC_consumption', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        pv_var    = nc.createVariable('PV_generation', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        #utci_var  = nc.createVariable('UTCI', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        #ac_var    = nc.createVariable('AC_consumption', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        #pv_var    = nc.createVariable('PV_generation', 'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
         glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         psfc_var  = nc.createVariable('PSFC', 'f4', ('time', 'lat', 'lon'), zlib=True)
@@ -401,9 +401,9 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         wind_var.units = "m/s"
         rh2_var.units = "%"
         tsk_var.units = "K"
-        utci_var.units = "degrees_C"
-        ac_var.units = "W/m^2"
-        pv_var.units = "W/m^2"
+        #utci_var.units = "degrees_C"
+        #ac_var.units = "W/m^2"
+        #pv_var.units = "W/m^2"
         swdown_var.units = "W/m^2"
         glw_var.units = "W/m^2"
         psfc_var.units = "Pa"
@@ -418,9 +418,9 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         wind_var[:, :, :]  = wind_array
         rh2_var[:, :, :]   = rh2_array
         tsk_var[:, :, :]   = tsk_array
-        utci_var[:, :, :]  = utci_array
-        ac_var[:, :, :]    = ac_array
-        pv_var[:, :, :]    = pv_array
+        #utci_var[:, :, :]  = utci_array
+        #ac_var[:, :, :]    = ac_array
+        #pv_var[:, :, :]    = pv_array
         swdown_var[:, :, :] = swdown_array
         glw_var[:, :, :]    = glw_array
         psfc_var[:, :, :]   = psfc_array
