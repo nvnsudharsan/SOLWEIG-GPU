@@ -13,6 +13,7 @@ import torch
 import torch.nn.functional as F
 from scipy.ndimage import rotate
 import time
+gdal.UseExceptions()
 
 def ensure_tensor(x, device=None):
     if device is None:
