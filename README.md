@@ -24,5 +24,55 @@ conda install -c conda-forge gdal
 git clone https://github.com/yourusername/solweig-gpu.git
 cd solweig-gpu
 pip install .
+```
+## Usage in Python
 
+```bash
+from solweig_gpu import thermal_comfort
+thermal_comfort(
+    base_path,
+    selected_date_str,
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    tile_size=3600,
+    use_own_met=True,
+    start_time=None,
+    end_time=None,
+    data_source_type=None,
+    data_folder=None,
+    own_met_file=None,
+    save_tmrt=True,
+    save_svf=False,
+    save_kup=False,
+    save_kdown=False,
+    save_lup=False,
+    save_ldown=False,
+    save_shadow=False
+)
+```
 
+## Usage in Command Line
+``` bash
+thermal_comfort(
+    base_path,
+    selected_date_str,
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    tile_size=3600,
+    use_own_met=True,
+    start_time=None,
+    end_time=None,
+    data_source_type=None,
+    data_folder=None,
+    own_met_file=None,
+    save_tmrt=True,
+    save_svf=False,
+    save_kup=False,
+    save_kdown=False,
+    save_lup=False,
+    save_ldown=False,
+    save_shadow=False
+)
+```
