@@ -31,6 +31,7 @@ setup(
     entry_points={
         'console_scripts': [
             'thermal_comfort=solweig_gpu.cli:main',
+            'solweig_gpu=solweig_gpu.solweig_gpu_gui:main',
         ],
     },
 )
