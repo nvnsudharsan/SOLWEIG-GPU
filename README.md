@@ -83,4 +83,4 @@ Type the following on the command line
 ```bash
 solweig_gpu
 ```
-
+![GUI](/GUI.png)
