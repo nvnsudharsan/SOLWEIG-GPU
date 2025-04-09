@@ -21,7 +21,7 @@ Clone the repository and set up the environment:
 conda create -n solweig python=3.10
 conda activate solweig
 conda install -c conda-forge gdal
-git clone https://github.com/yourusername/solweig-gpu.git
+git clone https://github.com/nvnsudharsan/solweig-gpu.git
 cd solweig-gpu
 pip install .
 ```
