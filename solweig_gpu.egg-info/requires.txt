@@ -1,0 +1,11 @@
+torch
+numpy
+scipy
+pandas
+netCDF4
+pytz
+shapely
+timezonefinder
+gdal
+xarray
+tqdm
