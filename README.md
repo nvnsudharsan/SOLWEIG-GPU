@@ -55,24 +55,24 @@ thermal_comfort(
 ## Usage in Command Line
 ``` bash
 thermal_comfort(
-    base_path,
-    selected_date_str,
-    building_dsm_filename='Building_DSM.tif',
-    dem_filename='DEM.tif',
-    trees_filename='Trees.tif',
-    tile_size=3600,
-    use_own_met=True,
-    start_time=None,
-    end_time=None,
-    data_source_type=None,
-    data_folder=None,
-    own_met_file=None,
-    save_tmrt=True,
-    save_svf=False,
-    save_kup=False,
-    save_kdown=False,
-    save_lup=False,
-    save_ldown=False,
-    save_shadow=False
+    base_path, #base directory where your input data is available
+    selected_date_str, #date for which the model should be run
+    building_dsm_filename='Building_DSM.tif', #name of building dsm raster
+    dem_filename='DEM.tif', #name of dem raster
+    trees_filename='Trees.tif', #name of trees raster
+    tile_size=3600, #desired tile size, set as per your GPU
+    use_own_met=True, #True, if you are using your met file, otherwise False
+    own_met_file=None, #met file directory
+    start_time=None, #start time of the meteorological data in the format 'YYYY-MM-DD HH:MM:SS'
+    end_time=None, #end time of the meteorological data in the format 'YYYY-MM-DD HH:MM:SS'
+    data_source_type=None, #'ERA5' or 'WRF' if not using your own met file
+    data_folder=None,#Directory of data if ERA5 or WRF
+    save_tmrt=True, #True to output Mean Radiant Temperature 
+    save_svf=False, #True to output Sky View Factor
+    save_kup=False, #True to output Short wave upward
+    save_kdown=False, #True to output Short wave downward
+    save_lup=False, #True to output Long wave upward
+    save_ldown=False, #True to output Long wave downward
+    save_shadow=False #True to output Shadow map
 )
 ```
