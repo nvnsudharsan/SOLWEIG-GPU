@@ -53,6 +53,7 @@ thermal_comfort(
 ```
 
 ## Usage in Command Line
+Type the following on the command line
 ``` bash
 thermal_comfort(
     base_path, #base directory where your input data is available
@@ -76,3 +77,10 @@ thermal_comfort(
     save_shadow=False #True to output Shadow map
 )
 ```
+
+## Usage of GUI
+Type the following on the command line
+```bash
+solweig_gpu
+```
+
