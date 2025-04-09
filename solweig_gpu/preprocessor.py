@@ -14,6 +14,7 @@ from osgeo import gdal, ogr, osr
 from shapely.geometry import box
 from timezonefinder import TimezoneFinder
 from tqdm import tqdm
+gdal.UseExceptions()
 
 # =============================================================================
 # Function to check that all raster files have matching dimensions, pixel size, and CRS.
