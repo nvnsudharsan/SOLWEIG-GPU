@@ -23,6 +23,7 @@ from .calculate_utci import utci_calculator
 import os
 from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
+gdal.UseExceptions()
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
