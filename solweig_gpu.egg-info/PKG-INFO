@@ -1,0 +1,32 @@
+Metadata-Version: 2.4
+Name: solweig-gpu
+Version: 0.1.0
+Summary: GPU-accelerated SOLWEIG model for urban thermal comfort simulation
+Home-page: https://github.com/nvnsudharsan/utci-pipeline
+Author: Harsh Kamath, Naveen Sudharsan
+Author-email: harsh.kamath@utexas.edu, naveens@utexas.edu
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Atmospheric Science
+Requires-Python: >=3.8
+License-File: LICENSE
+Requires-Dist: torch
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: pandas
+Requires-Dist: netCDF4
+Requires-Dist: pytz
+Requires-Dist: shapely
+Requires-Dist: timezonefinder
+Requires-Dist: gdal
+Requires-Dist: xarray
+Requires-Dist: tqdm
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
