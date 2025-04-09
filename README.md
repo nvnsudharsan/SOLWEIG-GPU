@@ -55,6 +55,7 @@ thermal_comfort(
 ## Usage in Command Line
 Type the following on the command line
 ``` bash
+conda activate solweig
 thermal_comfort(
     base_path, #base directory where your input data is available
     selected_date_str, #date for which the model should be run
@@ -81,6 +82,7 @@ thermal_comfort(
 ## Usage of GUI
 Type the following on the command line
 ```bash
+conda activate solweig
 solweig_gpu
 ```
 ![GUI](/GUI.png)
