@@ -324,11 +324,57 @@ class SOLWEIGApp(QWidget):
         self.log_output.moveCursor(self.log_output.textCursor().End)
         self.log_output.insertPlainText(text)
         self.log_output.ensureCursorVisible()
-        if any(k in text for k in ["Processing metfile", "Creating tiles", "Time taken to execute"]):
-            val = self.progress.value()
-            if val < 100:
-                self.progress.setValue(min(100, val + 1))
 
+        # Initialize tracking
+        if not hasattr(self, "_progress_state"):
+            self._progress_state = {
+                "tile_count": 0,
+                "metfiles_saved": 0,
+                "total_tiles": None,  # Will be inferred
+                "final_steps": 0,
+                "steps_done": 0,
+                "phase": 0  # 0: initial tiles, 1: metfile, 2: workers, 3: execution, 4: tiles executed
+            }
+
+        state = self._progress_state
+
+        # 5% for tile creation phase
+        if "Created tile:" in text:
+            state["tile_count"] += 1
+            self.progress.setValue(5)
+
+        # 10% after all metfiles are saved
+        if "All raster extents processed and metfiles saved" in text:
+            self.progress.setValue(10)
+            state["phase"] = 1
+
+        # 30% after workers launched
+        if "Running Solweig" in text:
+            self.progress.setValue(30)
+            state["phase"] = 2
+
+        # Count number of final tiles for dividing the rest of the progress
+        if "Processing 24 time steps for" in text:
+            # Count how many final tiles to expect (metfiles = number of tiles)
+            state["metfiles_saved"] += 1
+
+        if "Using" in text and "parallel workers" in text:
+            # Total tiles = number of metfiles saved
+            state["total_tiles"] = state["metfiles_saved"]
+            if state["total_tiles"] > 0:
+                state["phase"] = 3
+                state["steps_done"] = 0
+                state["final_steps"] = state["total_tiles"]
+            else:
+                self.log_output.append("⚠️ No tiles detected for progress tracking.")
+
+        # Final 70%: each executed tile advances progress
+        if "Time taken to execute tile" in text:
+            state["steps_done"] += 1
+            if state["final_steps"]:
+                progress_val = 30 + int((70 * state["steps_done"]) / state["final_steps"])
+                self.progress.setValue(min(100, progress_val))
+    
     def on_solweig_done(self):
         self.run_button.setEnabled(True)
         self.run_button.setText("✅ Completed - Run Again")
