@@ -5,6 +5,7 @@ from scipy.ndimage import rotate
 import math
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
+gdal.UseExceptions()
 
 # Wall height threshold
 walllimit = 3.0

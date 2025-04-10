@@ -21,7 +21,7 @@ Clone the repository and set up the environment:
 conda create -n solweig python=3.10
 conda activate solweig
 conda install -c conda-forge gdal
-git clone https://github.com/yourusername/solweig-gpu.git
+git clone https://github.com/nvnsudharsan/solweig-gpu.git
 cd solweig-gpu
 pip install .
 ```
@@ -53,7 +53,9 @@ thermal_comfort(
 ```
 
 ## Usage in Command Line
+Type the following on the command line
 ``` bash
+conda activate solweig
 thermal_comfort(
     base_path, #base directory where your input data is available
     selected_date_str, #date for which the model should be run
@@ -76,3 +78,11 @@ thermal_comfort(
     save_shadow=False #True to output Shadow map
 )
 ```
+
+## Usage of GUI
+Type the following on the command line
+```bash
+conda activate solweig
+solweig_gpu
+```
+![GUI](/GUI.png)
