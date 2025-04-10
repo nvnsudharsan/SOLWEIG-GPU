@@ -23,6 +23,7 @@ from .calculate_utci import utci_calculator
 import os
 from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
+gdal.UseExceptions()
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -117,7 +118,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     timezone_name = tf.timezone_at(lat=lat, lng=lon) or "UTC"
     local_tz = pytz.timezone(timezone_name)
     # Use a sample date (today or specific) to get current UTC offset
-    local_dt = local_tz.localize(datetime.datetime.now())
+    local_dt = local_tz.localize(base_date)
     utc = local_dt.utcoffset().total_seconds() / 3600
     print(f"[INFO] Timezone: {timezone_name}, UTC offset: {utc} hours")
     YYYY, altitude, azimuth, zen, jday, leafon, dectime, altmax = Solweig_2015a_metdata_noload(met_file, location, utc)

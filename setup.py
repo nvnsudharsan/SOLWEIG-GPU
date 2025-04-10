@@ -19,7 +19,8 @@ setup(
         "timezonefinder",
         "gdal",
         "xarray",
-        "tqdm"
+        "tqdm",
+        "PyQt5",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
