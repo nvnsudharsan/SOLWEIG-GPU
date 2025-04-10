@@ -1,1 +1,0 @@
-solweig_gpu

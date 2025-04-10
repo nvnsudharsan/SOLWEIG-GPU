@@ -122,7 +122,10 @@ class SOLWEIGApp(QWidget):
         self.main_layout.addLayout(btn_container)
 
         self.main_layout.addWidget(self.progress)
-        self.main_layout.addWidget(QLabel("Execution Log:", parent=self).setStyleSheet("color: #ffffff;"))
+        #self.main_layout.addWidget(QLabel("Execution Log:", parent=self).setStyleSheet("color: #ffffff;"))
+        log_label = QLabel("Execution Log:", parent=self)
+        log_label.setStyleSheet("color: #ffffff;")
+        self.main_layout.addWidget(log_label)
         self.main_layout.addWidget(self.log_output)
 
         self._monitor_required_inputs()
@@ -308,6 +311,10 @@ class SOLWEIGApp(QWidget):
         self.run_button.setEnabled(False)
         self.run_button.setText("Running... ⏳")
 
+        import pprint
+        pprint.pprint(params)
+        self.log_output.append(str(params))
+
         self.worker = SOLWEIGWorker(params)
         self.worker.log_signal.connect(self.update_log)
         self.worker.finished.connect(self.on_solweig_done)
@@ -332,7 +339,7 @@ class SOLWEIGApp(QWidget):
         QWidget {
             background-color: #121212;
             color: #dddddd;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Arial', 'Helvetica', sans-serif;
             font-size: 13px;
         }
         QGroupBox {
