@@ -1,5 +1,13 @@
 import torch
 
+# Function to computed UTCI using 6th order polynomial approximation. 
+# Inputs:
+#    - Mean radiant temperature
+#    - Air temperature
+#    - Wind speed
+#    - Air vapor pressure
+
+
 def utci_polynomial(D_Tmrt, Ta, va, Pa):
     UTCI_approx = Ta + \
     (6.07562052E-01) + \
