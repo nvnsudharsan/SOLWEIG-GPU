@@ -181,7 +181,7 @@ class SOLWEIGApp(QWidget):
         self.date_input = QDateEdit()
         self.date_input.setCalendarPopup(True)
         layout.addRow(self._label_with_help("Base Directory", "Directory where output and intermediate files will be stored."), self._with_browse(self.base_path_input, False))
-        layout.addRow(self._label_with_help("Simulation Date", "Date for which thermal comfort is computed."), self.date_input)
+        layout.addRow(self._label_with_help("Simulation Date", "Date for which thermal comfort is computed. MM/DD/YY"), self.date_input)
         return layout
 
     def _input_files_layout(self):
