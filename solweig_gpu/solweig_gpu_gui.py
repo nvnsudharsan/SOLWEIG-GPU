@@ -202,7 +202,7 @@ class SOLWEIGApp(QWidget):
     def _met_inputs_layout(self):
         layout = QFormLayout()
         self.met_source = QComboBox()
-        self.met_source.addItems(["Metfile (txt)", "ERA5 (netcdf)", "WRF (netcdf)"])
+        self.met_source.addItems([ "ERA5 (netcdf)", "WRF (netcdf)", "Metfile (txt)"])
         self.met_source.currentTextChanged.connect(self.toggle_met_selector)
 
         self.met_path_input = QLineEdit()
@@ -237,12 +237,12 @@ class SOLWEIGApp(QWidget):
     def toggle_met_selector(self, source):
         is_metfile = "Metfile" in source
 
-        if "WRF (netcdf)" in source:
-            self.met_path_input.setPlaceholderText("Select the folder for WRF data")
-        elif "ERA5 (netcdf)" in source:
-            self.met_path_input.setPlaceholderText("Select the folder for ERA5 data")
-        else:
+        if "Metfile (txt)" in source:
             self.met_path_input.setPlaceholderText("Select the meteorological .txt file")
+        elif "WRF (netcdf)" in source:
+            self.met_path_input.setPlaceholderText("Select the folder for WRF data")
+        else:
+            self.met_path_input.setPlaceholderText("Select the folder for ERA5 data")
 
         # Show/hide start and end time fields
         self.start_time.setVisible(not is_metfile)
@@ -282,10 +282,13 @@ class SOLWEIGApp(QWidget):
             self.building_dsm.text(),
             self.dem.text(),
             self.trees.text(),
-            self.met_path_input.text(),
-            self.start_time.text(),
-            self.end_time.text()
+            self.met_path_input.text()
         ]
+
+        if self.start_time.isVisible():
+            required.append(self.start_time.text())
+        if self.end_time.isVisible():
+            required.append(self.end_time.text())
         is_complete = all(required) and self.date_input.date().isValid()
         self.run_button.setEnabled(is_complete)
         self.run_button.setToolTip("" if is_complete else "Please complete all required fields to enable Run.")
