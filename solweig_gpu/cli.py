@@ -13,8 +13,14 @@ def main():
     parser.add_argument('--own_metfile', default = None, help='Path to your own meteorological file')
     parser.add_argument('--data_source_type', default=None, help='Specify source of meteorological data (e.g., ERA5 or WRF), if not providing met file')
     parser.add_argument('--data_folder', default = None,help='folder for meteorological data source, if it is ERA5 to WRF')
-    parser.add_argument('--start', default = None,help='Start time of the input file(e.g., \'2020-08-12 00:00:00'\)')
-    parser.add_argument('--end', default= None, help='End time of the input file(e.g., \'2020-08-14 23:00:00'\)')
+    parser.add_argument(
+    '--start',
+    default=None,
+    help="""Start time of the input file ('2020-08-12 00:00:00')""")
+    parser.add_argument(
+    '--end',
+    default=None,
+    help="""Start time of the input file ('2020-08-12 00:00:00')""")
     parser.add_argument('--save_tmrt', action='store_true', help='Flag to save mean radiant temperature')
     parser.add_argument('--save_svf', action='store_true', help='Flag to save sky view factor')
     parser.add_argument('--save_kup', action='store_true', help='Flag to save upward shortwave radiation')
