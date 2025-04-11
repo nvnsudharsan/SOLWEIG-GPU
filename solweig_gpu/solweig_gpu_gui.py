@@ -235,10 +235,12 @@ class SOLWEIGApp(QWidget):
         return layout
 
     def toggle_met_selector(self, source):
-        if "Metfile" in source:
-            self.met_path_input.setPlaceholderText("Select a meteorological .txt file")
+        if "Metfile (txt)" in source:
+            self.met_path_input.setPlaceholderText("Select the meteorological .txt file")
+        elif "ERA5 (netcdf)" in source:
+            self.met_path_input.setPlaceholderText("Select the folder for ERA5 data")
         else:
-            self.met_path_input.setPlaceholderText("Select a folder (ERA5/WRF)")
+            self.met_path_input.setPlaceholderText("Select the folder for WRF data")
 
     def browse_met_source(self):
         source = self.met_source.currentText()
