@@ -70,8 +70,6 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     tanaltitudebyscale = torch.tan(altitude) / scale
 
     index = 1
-    #print(type(amaxvalue))
-    #%%amaxvalue =  torch.tensor(amaxvalue,  device=device)
     while (amaxvalue >= dz and torch.abs(dx) < sizex and torch.abs(dy) < sizey):
         if (pibyfour <= azimuth < threetimespibyfour or fivetimespibyfour <= azimuth < seventimespibyfour):
             dy = signsinazimuth * index
@@ -157,7 +155,6 @@ def annulus_weight(altitude, aziinterval, device=None):
     
     n = torch.tensor(90.0, device=device)
     altitude = torch.tensor(altitude, device=device)
-    #%%aziinterval = torch.tensor(aziinterval, device=device)
 
     steprad = (360.0 / aziinterval) * (torch.pi / 180.0)
     annulus = 91.0 - altitude
@@ -310,9 +307,7 @@ def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
     svfWaveg[svfWaveg > 1.] = 1.
     svfNaveg[svfNaveg > 1.] = 1.
 
-    #Changed here
     del sh, vegsh,vbshvegsh, last, weight
     torch.cuda.empty_cache()
-    #Changed here
-
+    
     return svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat
