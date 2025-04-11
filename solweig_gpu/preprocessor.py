@@ -14,6 +14,7 @@ from osgeo import gdal, ogr, osr
 from shapely.geometry import box
 from timezonefinder import TimezoneFinder
 from tqdm import tqdm
+import shutil
 gdal.UseExceptions()
 
 # =============================================================================
@@ -65,6 +66,9 @@ def create_tiles(infile, tilesize, tile_type):
 
     out_folder = os.path.join(os.path.dirname(infile), tile_type)
     if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
+    else:
+        shutil.rmtree(out_folder)
         os.makedirs(out_folder)
 
     if tilesize >= width and tilesize >= height:
@@ -585,6 +589,9 @@ def create_met_files(base_path, source_met_file):
     target_folder = os.path.join(base_path, 'metfiles')
 
     if not os.path.exists(target_folder):
+        os.makedirs(target_folder)
+    else:
+        shutil.rmtree(target_folder)
         os.makedirs(target_folder)
     
     for file in os.listdir(raster_folder):
