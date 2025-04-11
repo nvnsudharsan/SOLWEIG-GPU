@@ -123,7 +123,7 @@ class SOLWEIGApp(QWidget):
 
         self.main_layout.addWidget(self.progress)
         #self.main_layout.addWidget(QLabel("Execution Log:", parent=self).setStyleSheet("color: #ffffff;"))
-        log_label = QLabel("Execution Log:", parent=self)
+        log_label = QLabel("", parent=self)
         log_label.setStyleSheet("color: #ffffff;")
         self.main_layout.addWidget(log_label)
         self.main_layout.addWidget(self.log_output)
@@ -235,12 +235,21 @@ class SOLWEIGApp(QWidget):
         return layout
 
     def toggle_met_selector(self, source):
+        is_metfile = "Metfile" in source
+
         if "WRF (netcdf)" in source:
             self.met_path_input.setPlaceholderText("Select the folder for WRF data")
         elif "ERA5 (netcdf)" in source:
             self.met_path_input.setPlaceholderText("Select the folder for ERA5 data")
         else:
             self.met_path_input.setPlaceholderText("Select the meteorological .txt file")
+
+        # Show/hide start and end time fields
+        self.start_time.setVisible(not is_metfile)
+        self.end_time.setVisible(not is_metfile)
+        self.start_time.parentWidget().setVisible(not is_metfile)  # Hide label+field row
+        self.end_time.parentWidget().setVisible(not is_metfile)    # Hide label+field row
+
 
     def browse_met_source(self):
         source = self.met_source.currentText()
