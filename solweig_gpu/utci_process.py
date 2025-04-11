@@ -28,9 +28,6 @@ gdal.UseExceptions()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#utc = 6.  # Change this later
-#wind_speed = torch.tensor(1.5)  # Wind speed = 1.5 m/s
-
 # Wall and ground emissivity and albedo
 albedo_b = 0.2
 albedo_g = 0.15
@@ -293,19 +290,13 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         out_file_path_op = os.path.join(output_path, f'SVF_{number}.tif')
         SVF = svf.cpu().numpy()
         SVF = np.array(SVF)
-        num_bands_op = SVF.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, 1, gdal.GDT_Float32)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
-        for band in range(num_bands_op):
-            out_band = out_dataset_op.GetRasterBand(band + 1)
-            out_band.WriteArray(SVF[band])
-            out_band.FlushCache()
-            hour = int(hours[band].cpu().item())
-            minute = int(minu[band].cpu().item())
-            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
-            out_band.SetMetadata({'Time': timestamp})
-        out_dataset_svf = None
+        out_band = out_dataset_op.GetRasterBand(1)
+        out_band.WriteArray(SVF)
+        out_band.FlushCache()
+        out_dataset_op = None
     if save_kup:
         out_file_path_op = os.path.join(output_path, f'Kup_{number}.tif')
         num_bands_op = Kup_all.shape[0]

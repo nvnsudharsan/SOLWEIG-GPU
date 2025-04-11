@@ -27,13 +27,11 @@ def thermal_comfort(
     import numpy as np
     import torch
 
-    # Preprocessing
     ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
          tile_size, selected_date_str, use_own_met,
          start_time, end_time, data_source_type, data_folder,
          own_met_file)
 
-    # Setup directories
     base_output_path = os.path.join(base_path, "UTCI")
     inputMet = os.path.join(base_path, "metfiles")
     building_dsm_dir = os.path.join(base_path, "Building_DSM")
