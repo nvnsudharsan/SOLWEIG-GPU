@@ -28,9 +28,6 @@ gdal.UseExceptions()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#utc = 6.  # Change this later
-#wind_speed = torch.tensor(1.5)  # Wind speed = 1.5 m/s
-
 # Wall and ground emissivity and albedo
 albedo_b = 0.2
 albedo_g = 0.15
