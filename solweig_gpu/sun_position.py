@@ -70,8 +70,7 @@ def sun_position(time, location):
 def julian_calculation(t_input):
 
     if not isinstance(t_input, dict):
-        # tt = datetime.datetime.strptime(t_input, "%Y-%m-%d %H:%M:%S.%f")    # if t_input is a string of this format
-        # t_input should be a datetime object
+
         time = dict()
         time['UTC'] = 0
         time['year'] = t_input.year
@@ -757,13 +756,6 @@ def topocentric_sun_position_calculate(earth_heliocentric_position, location,
 
 
 def topocentric_local_hour_calculate(observer_local_hour, topocentric_sun_position):
-    """
-    This function compute the topocentric local jour angle in degrees
-
-    :param observer_local_hour:
-    :param topocentric_sun_position:
-    :return:
-    """
 
     topocentric_local_hour = observer_local_hour - topocentric_sun_position['rigth_ascension_parallax']
     return topocentric_local_hour
