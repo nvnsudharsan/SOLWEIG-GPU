@@ -86,60 +86,19 @@ def create_tiles(infile, tilesize, tile_type):
    
     ds = None
 
-#def create_tiles(infile, tilesize, tile_type):
-#    ds = gdal.Open(infile)
-#    if ds is None:
-#        raise FileNotFoundError(f"Could not open {infile}")
-#
-#    width = ds.RasterXSize
-#    height = ds.RasterYSize
-#
-#    out_folder = os.path.join(os.path.dirname(infile), tile_type)
-#    os.makedirs(out_folder, exist_ok=True)
-#
-#    if tilesize >= width and tilesize >= height:
-#        outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
-#        options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
-#        gdal.Translate(outfile, ds, options=options)
-#        print(f"Created single tile (original file): {outfile}")
-#        ds = None
-#        return
-#
-#    num_tiles_x = (width + tilesize - 1) // tilesize
-#    num_tiles_y = (height + tilesize - 1) // tilesize
-#    total_tiles = num_tiles_x * num_tiles_y
-#
-#    with tqdm(total=total_tiles, desc=f"Creating tiles for {tile_type}") as pbar:
-#        for i in range(0, width, tilesize):
-#            for j in range(0, height, tilesize):
-#                tile_width = min(tilesize, width - i)
-#                tile_height = min(tilesize, height - j)
-#                outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
-#                options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
-#                gdal.Translate(outfile, ds, options=options)
-#                pbar.update(1)
-#
-#    ds = None
-
+# =============================================================================
+# The function expects two files in folder_path:
+#        - 'data_stream-oper_stepType-instant.nc'
+#        - "data_stream-oper_stepType-accum.n"
+        
+# It processes the data to compute temperature (in °C), surface pressure (in kPa), 
+# relative humidity (in %), wind speed (in m/s), shortwave and longwave radiation (in W/m^2),
+# and writes the results to a new netCDF file. This netCDF files will be used to create the 
+# meteogrological forcing for SOLWEIG. Note that RAIN is set to 0.
+# =============================================================================
 
 def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
-    """
-    Process ERA5 instantaneous and accumulated data from NetCDF files located in folder_path.
-    
-    Parameters:
-        start_time (datetime): The start datetime.
-        end_time (datetime): The end datetime.
-        folder_path (str): The folder path where the input NetCDF files are located.
-        output_file (str): The filename for the output NetCDF file.
-        
-    The function expects two files in folder_path:
-        - 'data_stream-oper_stepType-instant.nc'
-        - 'data_stream-oper_stepType-accum.nc'
-        
-    It processes the data to compute temperature (in °C), surface pressure (in kPa), 
-    relative humidity (in %), wind speed (in m/s), shortwave and longwave radiation (in W/m^2),
-    and writes the results to a new NetCDF file.
-    """
+
     start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     def saturation_vapor_pressure(T):
@@ -148,11 +107,9 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         """
         return 6.112 * np.exp((17.67 * T) / (T + 243.5))
     
-    # Build the file paths for the input datasets
     instant_file = os.path.join(folder_path, 'data_stream-oper_stepType-instant.nc')
     accum_file   = os.path.join(folder_path, 'data_stream-oper_stepType-accum.nc')
     
-    # Open the datasets using xarray
     ds_instant = xr.open_dataset(instant_file)
     ds_accum   = xr.open_dataset(accum_file)
     
@@ -160,35 +117,27 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     time_array = [start_time + timedelta(hours=i) 
                   for i in range(int((end_time - start_time).total_seconds() // 3600) + 1)]
     
-    # Process instantaneous variables:
-    # Convert temperatures from Kelvin to Celsius
     temperatures = ds_instant['t2m'].values
     dew_points   = ds_instant['d2m'].values
     
-    # Convert surface pressure from hPa to kPa
     surface_pressures = ds_instant['sp'].values 
     
-    # Calculate wind speed from u and v components (m/s)
     u10 = ds_instant['u10'].values
     v10 = ds_instant['v10'].values
     wind_speeds = np.sqrt(u10**2 + v10**2)
     
-    # Process accumulated radiation fields:
     # Convert from J m^-2 (accumulated over 3 hours) to W m^-2 by dividing by 3600.
     shortwave_radiation = ds_accum['ssrd'].values / 3600.0
     longwave_radiation  = ds_accum['strd'].values / 3600.0
     
     # Compute relative humidity (in %)
-    # First, compute the saturation vapor pressures (in hPa)
     e_temp      = saturation_vapor_pressure(temperatures - 273.15)
     e_dew_point = saturation_vapor_pressure(dew_points - 273.15)
     relative_humidities = 100.0 * (e_dew_point / e_temp)
     
-    # Extract latitude and longitude.
     latitudes = ds_instant['latitude'].values
     longitudes = ds_instant['longitude'].values
     
-    # If lat and lon are 1D, convert them to 2D arrays
     if latitudes.ndim == 1 and longitudes.ndim == 1:
         lon2d, lat2d = np.meshgrid(longitudes, latitudes)
     else:
@@ -197,17 +146,14 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     
     # Define the output NetCDF file
     with Dataset(output_file, 'w', format='NETCDF4') as nc:
-        # Define dimensions
         nc.createDimension('time', len(time_array))
         nc.createDimension('lat', lat2d.shape[0])
         nc.createDimension('lon', lon2d.shape[1])
         
-        # Create coordinate variables
         time_var = nc.createVariable('time', 'f8', ('time',))
         lat_var  = nc.createVariable('lat', 'f4', ('lat', 'lon'))
         lon_var  = nc.createVariable('lon', 'f4', ('lat', 'lon'))
         
-        # Create data variables with compression enabled
         t2_var    = nc.createVariable('T2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         psfc_var  = nc.createVariable('PSFC', 'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
@@ -215,14 +161,12 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
         glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         
-        # Set attributes for coordinate variables
         # The time units are defined relative to the start time.
         time_var.units = "hours since " + start_time.strftime("%Y-%m-%d %H:%M:%S")
         time_var.calendar = "gregorian"
         lat_var.units = "degrees_north"
         lon_var.units = "degrees_east"
         
-        # Set attributes for data variables
         t2_var.units = "degC"
         psfc_var.units = "kPa"
         rh2_var.units = "%"
@@ -230,12 +174,10 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         swdown_var.units = "W/m^2"
         glw_var.units = "W/m^2"
         
-        # Write coordinate data
         time_var[:] = date2num(time_array, units=time_var.units, calendar=time_var.calendar)
         lat_var[:, :] = lat2d
         lon_var[:, :] = lon2d
         
-        # Write processed variable data.
         t2_var[:, :, :]    = temperatures
         psfc_var[:, :, :]  = surface_pressures
         rh2_var[:, :, :]   = relative_humidities
@@ -243,41 +185,31 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         swdown_var[:, :, :] = shortwave_radiation
         glw_var[:, :, :]    = longwave_radiation
 
-    print("New NetCDF file created:", output_file)
-    
+    print("ERA5 forcing file created:", output_file)
+
+# =============================================================================
+#    The function will:
+#        - Populate the list of available WRF output files (names starting with 'wrfout')
+#          and sort them based on the datetime string embedded in the filename.
+#        - Loop over the sorted files and extract variables:
+#            - 2-meter temperature (T2)
+#            - Mixing ratio at 2 m (Q2)
+#            - Surface pressure (PSFC)
+#            - Land surface temperature (TSK)
+#            - Downwelling shortwave radiation (SWDOWN)
+#            - Downwelling longwave radiation (GLW)
+#            - U and V wind components (U10, V10) to compute wind speed
+#        - Calculate relative humidity using a helper function.
+#        - Generate an hourly time array between start_time and end_time.
+#        - Combine the data from all files along the time axis and save to a new NetCDF file.
+# =============================================================================
+
 def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
-    """
-    Process WRF output files from a given folder and create a single output NetCDF file.
-    
-    Parameters:
-        start_time (datetime): The starting datetime of the simulation period.
-        end_time (datetime): The ending datetime of the simulation period.
-        folder_path (str): Directory path where the WRF output files (wrfout_*) are located.
-        output_file (str): Path (including filename) for the output NetCDF file.
-        
-    The function will:
-        - Populate the list of available WRF output files (names starting with 'wrfout')
-          and sort them based on the datetime string embedded in the filename.
-        - Loop over the sorted files and extract variables:
-            - 2-meter temperature (T2)
-            - Mixing ratio at 2 m (Q2)
-            - Surface pressure (PSFC)
-            - Land surface temperature (TSK)
-            - UTCI (COMF_50)
-            - Air condition (CM_AC_URB3D)
-            - PV energy consumption (EP_PV_URB3D)
-            - Downwelling shortwave radiation (SWDOWN)
-            - Downwelling longwave radiation (GLW)
-            - U and V wind components (U10, V10) to compute wind speed
-        - Calculate relative humidity using a helper function.
-        - Generate an hourly time array between start_time and end_time.
-        - Combine the data from all files along the time axis and save to a new NetCDF file.
-    """
+
     start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
-    # Helper function to calculate relative humidity.
+
     def calculate_rh(t2, q2, psfc):
-        """Calculate relative humidity from temperature (K), mixing ratio, and surface pressure (Pa)."""
         # Compute saturation vapor pressure (in hPa) using temperature converted to Celsius.
         e_s = 6.112 * np.exp((17.67 * (t2 - 273.15)) / ((t2 - 273.15) + 243.5))
         e_s = e_s * 100  # convert hPa to Pa
@@ -287,7 +219,6 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         eps = Rd / Rv
         e = q2 * psfc / (eps + q2)
         rh = (e / e_s) * 100
-        # Ensure RH stays within physical bounds.
         return np.clip(rh, 0, 100)
     
     # List and sort the WRF output files from the folder.
@@ -314,15 +245,10 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     total_hours = int((end_time - start_time).total_seconds() // 3600) + 1
     time_array = [start_time + timedelta(hours=i) for i in range(total_hours)]
     
-    # Initialize lists to store data arrays from each file.
     t2_list, wind_list, rh2_list, tsk_list = [], [], [], []
-    #utci_list, ac_list, pv_list = [], [], []
     swdown_list, glw_list, psfc_list = [], [], []
-    
-    # Variables to hold latitude and longitude (assumed same for all files).
     lat, lon = None, None
     
-    # Process each sorted file.
     for file in wrf_files_sorted:
         file_path = os.path.join(folder_path, file)
         with xr.open_dataset(file_path) as ds:
@@ -333,9 +259,6 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
             
             t2_list.append(t2)
             tsk_list.append(ds['TSK'].values)       # Land surface temperature (K)
-            #utci_list.append(ds['COMF_50'].values)    # UTCI (degrees C)
-            #ac_list.append(ds['CM_AC_URB3D'].values)   # Air condition (W/m^2)
-            #pv_list.append(ds['EP_PV_URB3D'].values)   # PV energy consumption (W/m^2)
             swdown_list.append(ds['SWDOWN'].values)    # Downwelling shortwave radiation (W/m^2)
             glw_list.append(ds['GLW'].values)          # Downwelling longwave radiation (W/m^2)
             psfc_list.append(psfc)
@@ -355,73 +278,53 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
                 lat = ds['XLAT'].values[0, :, :]
                 lon = ds['XLONG'].values[0, :, :]
     
-    # Concatenate lists along the time axis.
     t2_array      = np.concatenate(t2_list, axis=0)
     wind_array    = np.concatenate(wind_list, axis=0)
     rh2_array     = np.concatenate(rh2_list, axis=0)
     tsk_array     = np.concatenate(tsk_list, axis=0)
-    #utci_array    = np.concatenate(utci_list, axis=0)
-    #ac_array      = np.concatenate(ac_list, axis=0)
-    #pv_array      = np.concatenate(pv_list, axis=0)
     swdown_array  = np.concatenate(swdown_list, axis=0)
     glw_array     = np.concatenate(glw_list, axis=0)
     psfc_array    = np.concatenate(psfc_list, axis=0)
     
     # Create a new NetCDF file and write the combined data.
     with Dataset(output_file, 'w', format='NETCDF4') as nc:
-        # Define dimensions.
         nc.createDimension('time', len(time_array))
         nc.createDimension('lat', lat.shape[0])
         nc.createDimension('lon', lon.shape[1])
         
-        # Create coordinate variables.
         time_var = nc.createVariable('time', 'f8', ('time',))
         lat_var = nc.createVariable('lat', 'f4', ('lat', 'lon'))
         lon_var = nc.createVariable('lon', 'f4', ('lat', 'lon'))
         
-        # Create data variables with compression enabled.
         t2_var    = nc.createVariable('T2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var  = nc.createVariable('WIND', 'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         tsk_var   = nc.createVariable('TSK', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        #utci_var  = nc.createVariable('UTCI', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        #ac_var    = nc.createVariable('AC_consumption', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        #pv_var    = nc.createVariable('PV_generation', 'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
         glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         psfc_var  = nc.createVariable('PSFC', 'f4', ('time', 'lat', 'lon'), zlib=True)
         
-        # Set attributes for coordinate variables.
         time_var.units = "hours since 1970-01-01 00:00:00"
         time_var.calendar = "gregorian"
         lat_var.units = "degrees_north"
         lon_var.units = "degrees_east"
         
-        # Set attributes for data variables.
         t2_var.units = "K"
         wind_var.units = "m/s"
         rh2_var.units = "%"
         tsk_var.units = "K"
-        #utci_var.units = "degrees_C"
-        #ac_var.units = "W/m^2"
-        #pv_var.units = "W/m^2"
         swdown_var.units = "W/m^2"
         glw_var.units = "W/m^2"
         psfc_var.units = "Pa"
         
-        # Write coordinate data.
         time_var[:] = date2num(time_array, units=time_var.units, calendar=time_var.calendar)
         lat_var[:, :] = lat
         lon_var[:, :] = lon
         
-        # Write processed variable data.
         t2_var[:, :, :]    = t2_array
         wind_var[:, :, :]  = wind_array
         rh2_var[:, :, :]   = rh2_array
         tsk_var[:, :, :]   = tsk_array
-        #utci_var[:, :, :]  = utci_array
-        #ac_var[:, :, :]    = ac_array
-        #pv_var[:, :, :]    = pv_array
         swdown_var[:, :, :] = swdown_array
         glw_var[:, :, :]    = glw_array
         psfc_var[:, :, :]   = psfc_array
@@ -703,19 +606,7 @@ def create_met_files(base_path, source_met_file):
 def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
          tile_size, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
          own_met_file=None):
-    """
-    Modified main function:
-    
-    - Checks that all input rasters (Building_DSM, DEM, Trees) have matching dimensions, pixel size, and CRS.
-    - Tiles each raster.
-    - If use_own_met is True, copies the source met file to create new metfiles.
-    - If use_own_met is False, then a folder path must be provided (data_folder) along with:
-          - start_time and end_time (datetime objects)
-          - data_source_type: "ERA5" or "wrfout"
-      Based on data_source_type, the corresponding process function is called (process_era5_data or process_wrfout_data)
-      to create a NetCDF file that is then used for metfile processing.
-    """
-    
+
     building_dsm_path = os.path.join(base_path, building_dsm_filename)
     dem_path = os.path.join(base_path, dem_filename)
     trees_path = os.path.join(base_path, trees_filename)
