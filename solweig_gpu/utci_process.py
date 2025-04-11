@@ -190,7 +190,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     firstdaytime = 1.
     start_time = time.time()
     # Calculate SVF and related parameters (remains unchanged)
-    svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat = svf_calculator(patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale)
+    svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal = svf_calculator(patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale)
     svfbuveg = svf - (1.0 - svfveg) * (1.0 - transVeg)
     asvf = torch.acos(torch.sqrt(svf))
     diffsh = torch.zeros((rows, cols, shmat.shape[2]), device=device)
@@ -288,7 +288,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         out_dataset_op = None
     if save_svf:
         out_file_path_op = os.path.join(output_path, f'SVF_{number}.tif')
-        SVF = svfaveg.cpu().numpy()
+        SVF = svftotal.cpu().numpy()
         SVF = np.array(SVF)
         out_dataset_op = driver.Create(out_file_path_op, cols, rows, 1, gdal.GDT_Float32)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
