@@ -288,7 +288,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         out_dataset_op = None
     if save_svf:
         out_file_path_op = os.path.join(output_path, f'SVF_{number}.tif')
-        SVF = svf.cpu().numpy()
+        SVF = svfaveg.cpu().numpy()
         SVF = np.array(SVF)
         out_dataset_op = driver.Create(out_file_path_op, cols, rows, 1, gdal.GDT_Float32)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
