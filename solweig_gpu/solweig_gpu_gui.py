@@ -104,7 +104,7 @@ class SOLWEIGApp(QWidget):
         """)
         self.run_button.clicked.connect(self.run_solweig)
 
-        header = QLabel("🌤 SOLWEIG GPU")
+        header = QLabel("SOLWEIG GPU")
         header.setAlignment(Qt.AlignCenter)
         header.setStyleSheet("font-size: 24px; font-weight: bold; margin: 10px 0; color: #ffffff;")
         self.main_layout.addWidget(header)
@@ -112,8 +112,8 @@ class SOLWEIGApp(QWidget):
         self.main_layout.addWidget(self._make_divider())
         self.main_layout.addWidget(self._create_group("Initial Settings", self._general_layout()))
         self.main_layout.addWidget(self._create_group("Input Files", self._input_files_layout()))
-        self.main_layout.addWidget(self._create_group("📊 Meteorological Inputs", self._met_inputs_layout()))
-        self.main_layout.addWidget(self._create_group("📤 Output Options", self._output_options_layout()))
+        self.main_layout.addWidget(self._create_group("Meteorological Inputs", self._met_inputs_layout()))
+        self.main_layout.addWidget(self._create_group("Output Options", self._output_options_layout()))
 
         btn_container = QHBoxLayout()
         btn_container.addStretch()
@@ -190,13 +190,13 @@ class SOLWEIGApp(QWidget):
         self.dem = QLineEdit()
         self.trees = QLineEdit()
         self.tile_size_input = QSpinBox()
-        self.tile_size_input.setRange(100, 4000)
+        self.tile_size_input.setRange(100, 10000)
         self.tile_size_input.setValue(3600)
 
         layout.addRow(self._label_with_help("Building DSM", "Digital Surface Model representing building heights."), self._with_browse(self.building_dsm))
         layout.addRow(self._label_with_help("DEM", "Digital Elevation Model of the terrain."), self._with_browse(self.dem))
         layout.addRow(self._label_with_help("Trees", "Raster layer representing vegetation height."), self._with_browse(self.trees))
-        layout.addRow(self._label_with_help("Tile Size", "Controls resolution of GPU processing (100–4000)."), self.tile_size_input)
+        layout.addRow(self._label_with_help("Tile Size", "Controls resolution of GPU processing (100–10000)."), self.tile_size_input)
         return layout
 
     def _met_inputs_layout(self):
@@ -259,13 +259,22 @@ class SOLWEIGApp(QWidget):
         else:
             path = QFileDialog.getExistingDirectory(caption="Select Data Folder")
             if path:
-                nc_files = [f for f in os.listdir(path) if f.endswith(".nc")]
-                if not nc_files:
-                    QMessageBox.warning(self, "No NetCDF Files", "The selected folder does not contain any .nc files.")
-                    return
-                self.log_output.append(f"📂 Found {len(nc_files)} NetCDF files in {path}:")
-                for f in nc_files:
-                    self.log_output.append(f"  • {f}")
+                if "WRF" in source:
+                    wrf_files = [f for f in os.listdir(path) if f.startswith("wrfout")]
+                    if not wrf_files:
+                        QMessageBox.warning(self, "No WRF Files", "The selected folder does not contain any files starting with 'wrfout'.")
+                        return
+                    self.log_output.append(f"📂 Found {len(wrf_files)} WRF files in {path}:")
+                    for f in wrf_files:
+                        self.log_output.append(f"  • {f}")
+                else:  # ERA5
+                    nc_files = [f for f in os.listdir(path) if f.endswith(".nc")]
+                    if not nc_files:
+                        QMessageBox.warning(self, "No NetCDF Files", "The selected folder does not contain any .nc files.")
+                        return
+                    self.log_output.append(f"📂 Found {len(nc_files)} ERA5 files in {path}:")
+                    for f in nc_files:
+                        self.log_output.append(f"  • {f}")
         if path:
             self.met_path_input.setText(path)
 
@@ -370,7 +379,7 @@ class SOLWEIGApp(QWidget):
             # Count how many final tiles to expect (metfiles = number of tiles)
             state["metfiles_saved"] += 1
 
-        if "Using" in text and "parallel workers" in text:
+        if "Using" in text and "parallel processors" in text:
             # Total tiles = number of metfiles saved
             state["total_tiles"] = state["metfiles_saved"]
             if state["total_tiles"] > 0:
@@ -378,7 +387,7 @@ class SOLWEIGApp(QWidget):
                 state["steps_done"] = 0
                 state["final_steps"] = state["total_tiles"]
             else:
-                self.log_output.append("⚠️ No tiles detected for progress tracking.")
+                self.log_output.append("No tiles detected for progress tracking.")
 
         # Final 70%: each executed tile advances progress
         if "Time taken to execute tile" in text:
