@@ -42,29 +42,10 @@ def sunonsurface_2018a(azimuthA, scale, buildings, shadow, sunwall, first, secon
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Convert inputs to tensors on the GPU
-    #%%azimuthA = torch.tensor(azimuthA, device=device).clone().detach()
+
     scale = torch.tensor(scale, device=device).clone().detach()
-    # buildings = torch.tensor(buildings, device=device)
-
-    # shadow = torch.tensor(shadow, device=device)
-
-    # sunwall = torch.tensor(sunwall, device=device)
-    #%%first = torch.tensor(first, device=device).clone().detach()
-    #%%second = torch.tensor(second, device=device).clone().detach()
-
-    # aspect = torch.tensor(aspect, device=device)
-    # walls = torch.tensor(walls, device=device)
-
-    #%%Tg = torch.tensor(Tg, device=device).clone().detach()
-    #%%Tgwall = torch.tensor(Tgwall, device=device).clone().detach()
-    #%%Ta = torch.tensor(Ta, device=device).clone().detach()
-    #%%emis_grid = torch.tensor(emis_grid, device=device).clone().detach()
     ewall = torch.tensor(ewall, device=device).clone().detach()
-    #%%alb_grid = torch.tensor(alb_grid, device=device).clone().detach()
-    #%%SBC = torch.tensor(SBC, device=device).clone().detach()
     albedo_b = torch.tensor(albedo_b, device=device).clone().detach()
-    #%%Twater = torch.tensor(Twater, device=device).clone().detach()
-    #%%lc_grid = torch.tensor(lc_grid, device=device).clone().detach()
     landcover = torch.tensor(landcover, device=device).clone().detach()
 
     sizex = walls.shape[0]
@@ -388,33 +369,11 @@ def TsWaveDelay_2015a(gvfLup, firstdaytime, timeadd, timestepdec, Tgmap1):
 def Kup_veg_2015a(radI, radD, radG, altitude, svfbuveg, albedo_b, F_sh, gvfalb, gvfalbE, gvfalbS, gvfalbW, gvfalbN, gvfalbnosh, gvfalbnoshE, gvfalbnoshS, gvfalbnoshW, gvfalbnoshN):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    #%%radI = torch.tensor(radI, device=device).clone().detach()
-    #%%radD = torch.tensor(radD, device=device).clone().detach()
-    #%%radG = torch.tensor(radG, device=device).clone().detach()
-    #%%altitude = torch.tensor(altitude, device=device).clone().detach()
-    #%%svfbuveg = torch.tensor(svfbuveg, device=device).clone().detach()
     albedo_b = torch.tensor(albedo_b, device=device).clone().detach()
-    #%%F_sh = torch.tensor(F_sh, device=device).clone().detach()
-
-    # gvfalb = torch.tensor(gvfalb, device=device)
-    # gvfalbE = torch.tensor(gvfalbE, device=device)
-    # gvfalbS = torch.tensor(gvfalbS, device=device)
-    # gvfalbW = torch.tensor(gvfalbW, device=device)
-    # gvfalbN = torch.tensor(gvfalbN, device=device)
-    # gvfalbnosh = torch.tensor(gvfalbnosh, device=device)
-    # gvfalbnoshE = torch.tensor(gvfalbnoshE, device=device)
-    # gvfalbnoshS = torch.tensor(gvfalbnoshS, device=device)
-    # gvfalbnoshW = torch.tensor(gvfalbnoshW, device=device)
-    # gvfalbnoshN = torch.tensor(gvfalbnoshN, device=device)
-
     Kup = (gvfalb * radI * torch.sin(altitude * (torch.pi / 180.))) + (radD * svfbuveg + albedo_b * (1 - svfbuveg) * (radG * (1 - F_sh) + radD * F_sh)) * gvfalbnosh
-
     KupE = (gvfalbE * radI * torch.sin(altitude * (torch.pi / 180.))) + (radD * svfbuveg + albedo_b * (1 - svfbuveg) * (radG * (1 - F_sh) + radD * F_sh)) * gvfalbnoshE
-
     KupS = (gvfalbS * radI * torch.sin(altitude * (torch.pi / 180.))) + (radD * svfbuveg + albedo_b * (1 - svfbuveg) * (radG * (1 - F_sh) + radD * F_sh)) * gvfalbnoshS
-
     KupW = (gvfalbW * radI * torch.sin(altitude * (torch.pi / 180.))) + (radD * svfbuveg + albedo_b * (1 - svfbuveg) * (radG * (1 - F_sh) + radD * F_sh)) * gvfalbnoshW
-
     KupN = (gvfalbN * radI * torch.sin(altitude * (torch.pi / 180.))) + (radD * svfbuveg + albedo_b * (1 - svfbuveg) * (radG * (1 - F_sh) + radD * F_sh)) * gvfalbnoshN
 
     return Kup, KupE, KupS, KupW, KupN
@@ -422,12 +381,7 @@ def Kup_veg_2015a(radI, radD, radG, altitude, svfbuveg, albedo_b, F_sh, gvfalb, 
 def Kvikt_veg(svf, svfveg, vikttot):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # svf = torch.tensor(svf, device=device)
-    # svfveg = torch.tensor(svfveg, device=device)
-    # vikttot = torch.tensor(vikttot, device=device)
-
     viktwall = (vikttot - (63.227 * svf ** 6 - 161.51 * svf ** 5 + 156.91 * svf ** 4 - 70.424 * svf ** 3 + 16.773 * svf ** 2 - 0.4863 * svf)) / vikttot
-
     svfvegbu = (svfveg + svf - 1)
     viktveg = (vikttot - (63.227 * svfvegbu ** 6 - 161.51 * svfvegbu ** 5 + 156.91 * svfvegbu ** 4 - 70.424 * svfvegbu ** 3 + 16.773 * svfvegbu ** 2 - 0.4863 * svfvegbu)) / vikttot
     viktveg = viktveg - viktwall
@@ -448,13 +402,10 @@ def shaded_or_sunlit(solar_altitude, solar_azimuth, patch_altitude, patch_azimut
 
     # Radians to degrees
     rad2deg = 180.0 / torch.pi
-
     xi = torch.cos(patch_to_sun_azi * deg2rad)
     yi = 2 * xi * torch.tan(solar_altitude * deg2rad)
     hsvf = torch.tan(asvf)
-
     yi_ = torch.where(yi > 0, 0.0, yi)
-
     tan_delta = hsvf + yi_
 
     # Degrees where below is in shade and above is sunlit
@@ -547,17 +498,15 @@ def Kside_veg_v2022a(radI, radD, radG, shadow, svfS, svfW, svfN, svfE, svfEveg, 
     if anisotropic_diffuse == 1:
         anisotropic_sky = True
 
-        patch_altitude = lv[:,0] #%%torch.tensor(lv[:, 0], device=device)
-        patch_azimuth = lv[:,1] #%%torch.tensor(lv[:, 1], device=device)
+        patch_altitude = lv[:,0] 
+        patch_azimuth = lv[:,1] 
         if anisotropic_sky:
-            patch_luminance = lv[:,2] #%%torch.tensor(lv[:, 2], device=device)
+            patch_luminance = lv[:,2] 
         else:
             patch_luminance = torch.ones((patch_altitude.shape[0]), device=device) / patch_altitude.shape[0]
 
         skyalt, skyalt_c = torch.unique(patch_altitude, return_counts=True)
-
         radTot = torch.zeros(1, device=device)
-
         steradian = torch.zeros((patch_altitude.shape[0]), device=device)
         for i in range(patch_altitude.shape[0]):
             if skyalt_c[skyalt == patch_altitude[i]] > 1:
@@ -681,17 +630,11 @@ def Kside_veg_v2022a(radI, radD, radG, shadow, svfS, svfW, svfN, svfE, svfEveg, 
         Knorth = KnorthI + KnorthDG
 
     del temp_vegsh,temp_vbsh,temp_sh
-
     del Kref_sun ,Kref_sh ,Kref_veg
-
     del Kref_veg_n,Kref_veg_s,Kref_veg_e ,Kref_veg_w
-
     del Kref_sh_n ,Kref_sh_s ,Kref_sh_e ,Kref_sh_w
-
     del Kref_sun_n ,Kref_sun_s ,Kref_sun_e ,Kref_sun_w
-
     del KeastRef ,KwestRef ,KnorthRef,KsouthRef ,diffRadE ,diffRadS ,diffRadW ,diffRadN
-
     del KeastI, KsouthI, KwestI, KnorthI, viktveg,viktwall,svfviktbuvegE,svfviktbuvegS,svfviktbuvegW,svfviktbuvegN,KupW,KupN
 
     return Keast, Ksouth, Kwest, Knorth, KsideI, KsideD, Kside
@@ -713,7 +656,7 @@ def clearnessindex_2013b(zen, jday, Ta, RH, radG, location, P):
         p = P * 10.0  # Convert from hPa to millibars
 
     Itoa = 1370.0  # Effective solar constant
-    D = sun_distance(jday)#%%(torch.tensor(jday, device=device))  # irradiance differences due to Sun-Earth distances
+    D = sun_distance(jday)
     m = 35.0 * torch.cos(zen) * ((1224.0 * (torch.cos(zen) ** 2) + 1.0) ** (-1 / 2.0))  # optical air mass at p=1013
     Trpg = 1.021 - 0.084 * (m * (0.000949 * p + 0.051)) ** 0.5  # Transmission coefficient for Rayleigh scattering and permanent gases
 
@@ -752,16 +695,13 @@ def clearnessindex_2013b(zen, jday, Ta, RH, radG, location, P):
     b2 = torch.tensor(237.7,device=device)
     Td = (b2 * (((a2 * Ta) / (b2 + Ta)) + torch.log(RH))) / (a2 - (((a2 * Ta) / (b2 + Ta)) + torch.log(RH)))
     Td = (Td * 1.8) + 32  # Dewpoint (F)
-    u = torch.exp(0.1133 - torch.log(torch.tensor(G + 1.)) + 0.0393 * Td) #%%torch.exp(0.1133 - torch.log(torch.tensor(G + 1.)) + 0.0393 * torch.tensor(Td)) # Precipitable water
+    u = torch.exp(0.1133 - torch.log(torch.tensor(G + 1.)) + 0.0393 * Td) 
     Tw = 1 - 0.077 * ((u * m) ** 0.3)  # Transmission coefficient for water vapor
     Tar = 0.935 ** m  # Transmission coefficient for aerosols
-
     I0 = Itoa * torch.cos(zen) * Trpg * Tw * D * Tar
     I0 = torch.where(torch.abs(zen) > torch.pi / 2, torch.tensor(0.0, device=device), I0)
     I0 = torch.where(torch.isnan(I0), torch.tensor(0.0, device=device), I0)
-
     corr = 0.1473 * torch.log(90 - (zen / torch.pi * 180)) + 0.3454  # 20070329
-
     CIuncorr = radG / I0
     CI = CIuncorr + (1 - corr)
     I0et = Itoa * torch.cos(zen) * D  # extra terrestrial solar radiation
@@ -775,7 +715,7 @@ def diffusefraction(radG, altitude, Kt, Ta, RH):
     RH = ensure_tensor(RH)
     alfa = altitude * (torch.pi / 180.0)
     alfa = ensure_tensor(alfa)
-    if Ta <= -999.00 or RH <= -999.00 or torch.isnan(Ta) or torch.isnan(RH): #torch.isnan(torch.tensor(Ta)) or torch.isnan(torch.tensor(RH))
+    if Ta <= -999.00 or RH <= -999.00 or torch.isnan(Ta) or torch.isnan(RH): 
         if Kt <= 0.3:
             radD = radG * (1.020 - 0.248 * Kt)
         elif 0.3 < Kt < 0.78:
@@ -897,12 +837,10 @@ def shadowingfunction_wallheight_13(a, azimuth, altitude, scale, walls, aspect):
 def shadowingfunction_wallheight_23(a, vegdem, vegdem2, azimuth, altitude, scale, amaxvalue, bush, walls, aspect):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # conversion
     degrees = torch.tensor(np.pi / 180.0, device=device)
     azimuth = torch.tensor(azimuth, device=device) * degrees
     altitude = torch.tensor(altitude, device=device) * degrees
 
-    # measure the size of the image
     sizex, sizey = a.shape
 
     # initialise parameters
@@ -915,14 +853,13 @@ def shadowingfunction_wallheight_23(a, vegdem, vegdem2, azimuth, altitude, scale
     templastfabovea = torch.zeros((sizex, sizey), device=device)
     templastgabovea = torch.zeros((sizex, sizey), device=device)
     bushplant = bush > 1
-    sh = torch.zeros((sizex, sizey), device=device) # shadows from buildings
-    vbshvegsh = torch.zeros((sizex, sizey), device=device) # vegetation blocking buildings
-    vegsh = torch.zeros((sizex, sizey), device=device) + bushplant.float() # vegetation shadow
-    f = a #%%torch.tensor(a, device=device).clone()
-    shvoveg = vegdem #%%torch.tensor(vegdem, device=device).clone() # for vegetation shadow volume
+    sh = torch.zeros((sizex, sizey), device=device) 
+    vbshvegsh = torch.zeros((sizex, sizey), device=device) 
+    vegsh = torch.zeros((sizex, sizey), device=device) + bushplant.float() 
+    f = a 
+    shvoveg = vegdem 
     wallbol = (walls > 0).float()
 
-    # other loop parameters
     pibyfour = torch.tensor(np.pi / 4.0, device=device)
     threetimespibyfour = 3 * pibyfour
     fivetimespibyfour = 5 * pibyfour
@@ -1068,8 +1005,8 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     zen = torch.tensor(zen, device=device) * deg2rad
     azimuth = torch.tensor(azimuth, device=device) * deg2rad
     altitude = torch.tensor(altitude, device=device) * deg2rad
-    Idh = radD #%%torch.tensor(radD, device=device).clone().detach()
-    Ibn = radI #%%torch.tensor(radI, device=device).clone().detach()
+    Idh = radD 
+    Ibn = radI
 
     PerezClearness = ((Idh + Ibn) / (Idh + 1.041 * torch.pow(zen, 3))) / (1 + 1.041 * torch.pow(zen, 3))
 
@@ -1227,13 +1164,10 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
                                  Ta, Tgwall, ewall,
                                  rows, cols):
 
-    # Device for GPU computation
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Stefan-Boltzmann's Constant
     SBC = torch.tensor(5.67051e-8, device=device)
-
-    # Degrees to radians
     deg2rad = torch.tensor(np.pi / 180, device=device)
 
     # Define variables
@@ -1256,25 +1190,8 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
     Lnorth = torch.zeros((rows, cols), device=device)
     Lsouth = torch.zeros((rows, cols), device=device)
 
-    # Convert input data to torch tensors
-
-    # Changed here
-    # shmat = torch.tensor(shmat, device=device)
-    # vegshmat = torch.tensor(vegshmat, device=device)
-    # vbshvegshmat = torch.tensor(vbshvegshmat, device=device)
-    # Changed here
-
-    #%% Lsky_down = torch.tensor(Lsky_down, device=device).clone().detach()
-    #%% Lsky_side = torch.tensor(Lsky_side, device=device).clone().detach()
-    #%% Ta = torch.tensor(Ta, device=device).clone().detach()
-    #%% Tgwall = torch.tensor(Tgwall, device=device).clone().detach()
     ewall = torch.tensor(ewall, device=device).clone().detach()
-    #%% asvf = torch.tensor(asvf, device=device).clone().detach()
-    #%% steradian = torch.tensor(steradian, device=device).clone().detach()
-    #%% patch_altitude = torch.tensor(patch_altitude, device=device).clone().detach()
-    #%% patch_azimuth = torch.tensor(patch_azimuth, device=device).clone().detach()
 
-    # Define patch characteristics (sky, vegetation or building, and sunlit or shaded if building)
     for idx in range(patch_altitude.shape[0]):
         # Calculations for patches on sky, shmat = 1 = sky is visible
         temp_sky = ((shmat[:, :, idx] == 1) & (vegshmat[:, :, idx] == 1))
@@ -1420,9 +1337,8 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
     skyalt_c = torch.tensor(skyalt_c, device=device).clone().detach()
 
     # Altitudes and azimuths of the Robinson & Stone patches
-    patch_altitude = sky_patches[:,0] #%%torch.tensor(sky_patches[:, 0], device=device).clone().detach()
-    patch_azimuth = sky_patches[:,1] #%%torch.tensor(sky_patches[:, 1], device=device).clone().detach()
-
+    patch_altitude = sky_patches[:,0] 
+    patch_azimuth = sky_patches[:,1] 
     emis_m = 2
 
     # Unsworth & Monteith (1975)
@@ -1466,9 +1382,9 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
         Lside[patch_altitude == altitude] = ((temp_emissivity * SBC * ((Ta + 273.15) ** 4)) / torch.tensor(np.pi, device=device)) * steradian[patch_altitude == altitude] * torch.cos(altitude * deg2rad)
         Lnormal[patch_altitude == altitude] = ((temp_emissivity * SBC * ((Ta + 273.15) ** 4)) / torch.tensor(np.pi, device=device)) * steradian[patch_altitude == altitude]
 
-    Lsky_normal = torch.clone(sky_patches)#%%(torch.tensor(sky_patches, device=device))
-    Lsky_down = torch.clone(sky_patches)#%%(torch.tensor(sky_patches, device=device))
-    Lsky_side = torch.clone(sky_patches)#%%(torch.tensor(sky_patches, device=device))
+    Lsky_normal = torch.clone(sky_patches)
+    Lsky_down = torch.clone(sky_patches)
+    Lsky_side = torch.clone(sky_patches)
 
     Lsky_normal[:, 2] = Lnormal
     Lsky_down[:, 2] = Ldown
@@ -1490,22 +1406,10 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
 
 def Lvikt_veg(svf, svfveg, svfaveg, vikttot):
 
-    # Device for GPU computation
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    # Convert input data to torch tensors
-    # svf = torch.tensor(svf, device=device)
-    # svfveg = torch.tensor(svfveg, device=device)
-    # svfaveg = torch.tensor(svfaveg, device=device)
-    #%% vikttot = torch.tensor(vikttot, device=device)
-
-    # Least
     viktonlywall = (vikttot - (63.227 * svf ** 6 - 161.51 * svf ** 5 + 156.91 * svf ** 4 - 70.424 * svf ** 3 + 16.773 * svf ** 2 - 0.4863 * svf)) / vikttot
-
     viktaveg = (vikttot - (63.227 * svfaveg ** 6 - 161.51 * svfaveg ** 5 + 156.91 * svfaveg ** 4 - 70.424 * svfaveg ** 3 + 16.773 * svfaveg ** 2 - 0.4863 * svfaveg)) / vikttot
-
     viktwall = viktonlywall - viktaveg
-
     svfvegbu = (svfveg + svf - 1)  # Vegetation plus buildings
     viktsky = (63.227 * svfvegbu ** 6 - 161.51 * svfvegbu ** 5 + 156.91 * svfvegbu ** 4 - 70.424 * svfvegbu ** 3 + 16.773 * svfvegbu ** 2 - 0.4863 * svfvegbu) / vikttot
     viktrefl = (vikttot - (63.227 * svfvegbu ** 6 - 161.51 * svfvegbu ** 5 + 156.91 * svfvegbu ** 4 - 70.424 * svfvegbu ** 3 + 16.773 * svfvegbu ** 2 - 0.4863 * svfvegbu)) / vikttot
@@ -1519,39 +1423,12 @@ def Lvikt_veg(svf, svfveg, svfaveg, vikttot):
 
 def Lside_veg_v2022a(svfS, svfW, svfN, svfE, svfEveg, svfSveg, svfWveg, svfNveg, svfEaveg, svfSaveg, svfWaveg, svfNaveg, azimuth, altitude, Ta, Tw, SBC, ewall, Ldown, esky, t, F_sh, CI, LupE, LupS, LupW, LupN, anisotropic_longwave):
 
-    # Device for GPU computation
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # Convert input data to torch tensors
-    # Changed here
-    # svfS = torch.tensor(svfS, device=device)
-    # svfW = torch.tensor(svfW, device=device)
-    # svfN = torch.tensor(svfN, device=device)
-    # svfE = torch.tensor(svfE, device=device)
-    # svfEveg = torch.tensor(svfEveg, device=device)
-    # svfSveg = torch.tensor(svfSveg, device=device)
-    # svfWveg = torch.tensor(svfWveg, device=device)
-    # svfNveg = torch.tensor(svfNveg, device=device)
-    # svfEaveg = torch.tensor(svfEaveg, device=device)
-    # svfSaveg = torch.tensor(svfSaveg, device=device)
-    # svfWaveg = torch.tensor(svfWaveg, device=device)
-    # svfNaveg = torch.tensor(svfNaveg, device=device)
-    # Changed here
     azimuth = torch.tensor(azimuth, device=device)
     altitude = torch.tensor(altitude, device=device)
-    #%% Ta = torch.tensor(Ta, device=device)
-    #%% Tw = torch.tensor(Tw, device=device)
-    #%% SBC = torch.tensor(SBC, device=device)
     ewall = torch.tensor(ewall, device=device)
-    #%% Ldown = torch.tensor(Ldown, device=device)
-    #%% esky = torch.tensor(esky, device=device)
     t = torch.tensor(t, device=device)
-    #%% F_sh = torch.tensor(F_sh, device=device)
-    #%% CI = torch.tensor(CI, device=device)
-    #%% LupE = torch.tensor(LupE, device=device)
-    #%% LupS = torch.tensor(LupS, device=device)
-    #%% LupW = torch.tensor(LupW, device=device)
-    #%% LupN = torch.tensor(LupN, device=device)
     anisotropic_longwave = torch.tensor(anisotropic_longwave, device=device)
 
     # Building height angle from svf
@@ -1697,47 +1574,20 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
 
     t = 0.
 
-    # Device for GPU computation
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Convert input data to torch tensors
     altitude = torch.tensor(altitude, device=device).clone().detach()
     azimuth = torch.tensor(azimuth, device=device).clone().detach()
     zen = torch.tensor(zen, device=device).clone().detach()
-    #%%psi = torch.tensor(psi, device=device).clone().detach()
     lc_grid = torch.tensor(lc_grid, device=device).clone().detach()
     dectime = torch.tensor(dectime, device=device).clone().detach()
     altmax = torch.tensor(altmax, device=device).clone().detach()
-    # dirwalls = torch.tensor(dirwalls, device=device)
-    # walls = torch.tensor(walls, device=device)
-    # buildings = torch.tensor(buildings, device=device)
-    # Ta = torch.tensor(Ta, device=device)
-    # RH = torch.tensor(RH, device=device)
-    # radG = torch.tensor(radG, device=device)
-    # radD = torch.tensor(radD, device=device)
-    # radI = torch.tensor(radI, device=device)
-    #%%P = torch.tensor(P, device=device).clone().detach()
-    #%%amaxvalue = torch.tensor(amaxvalue, device=device).clone().detach()
-    # bush = torch.tensor(bush, device=device)
     Twater = torch.tensor(Twater, device=device).clone().detach()
-    #%%TgK = torch.tensor(TgK, device=device).clone().detach()
-    #%%Tstart = torch.tensor(Tstart, device=device).clone().detach()
-    #%%alb_grid = torch.tensor(alb_grid, device=device).clone().detach()
-    #%%emis_grid = torch.tensor(emis_grid, device=device).clone().detach()
     TgK_wall = torch.tensor(TgK_wall, device=device).clone().detach()
     Tstart_wall = torch.tensor(Tstart_wall, device=device).clone().detach()
     TmaxLST = torch.tensor(TmaxLST, device=device).clone().detach()
     TmaxLST_wall = torch.tensor(TmaxLST_wall, device=device).clone().detach()
-
-    # svfalfa = torch.tensor(svfalfa, device=device)
-    # svfbuveg = torch.tensor(svfbuveg, device=device)
-    # diffsh = torch.tensor(diffsh, device=device)
-
-    # shmat = torch.tensor(shmat, device=device)
-    # vegshmat = torch.tensor(vegshmat, device=device)
-    # vbshvegshmat = torch.tensor(vbshvegshmat, device=device)
-
-    # asvf = torch.tensor(asvf, device=device)
 
     # Stefan Bolzmans Constant
     SBC = torch.tensor(5.67051e-8, device=device).clone().detach()
