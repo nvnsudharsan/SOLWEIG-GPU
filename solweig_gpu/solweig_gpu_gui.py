@@ -247,8 +247,6 @@ class SOLWEIGApp(QWidget):
         # Show/hide start and end time fields
         self.start_time.setVisible(not is_metfile)
         self.end_time.setVisible(not is_metfile)
-        self.start_time.parentWidget().setVisible(not is_metfile)  # Hide label+field row
-        self.end_time.parentWidget().setVisible(not is_metfile)    # Hide label+field row
 
 
     def browse_met_source(self):
