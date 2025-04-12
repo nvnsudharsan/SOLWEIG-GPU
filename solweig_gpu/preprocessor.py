@@ -166,7 +166,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         
         # The time units are defined relative to the start time.
-        time_var.units = "hours since " + start_time.strftime("%Y-%m-%d %H:%M:%S")
+        time_var.units = "hours since 1970-01-01 00:00:00"
         time_var.calendar = "gregorian"
         lat_var.units = "degrees_north"
         lon_var.units = "degrees_east"
