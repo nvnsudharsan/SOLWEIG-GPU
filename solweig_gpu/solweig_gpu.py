@@ -32,7 +32,7 @@ def thermal_comfort(
          start_time, end_time, data_source_type, data_folder,
          own_met_file)
 
-    base_output_path = os.path.join(base_path, "UTCI")
+    base_output_path = os.path.join(base_path, "Outputs")
     inputMet = os.path.join(base_path, "metfiles")
     building_dsm_dir = os.path.join(base_path, "Building_DSM")
     tree_dir = os.path.join(base_path, "Trees")
