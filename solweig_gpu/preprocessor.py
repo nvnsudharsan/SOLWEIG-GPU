@@ -237,7 +237,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         match = re.search(r"wrfout_\w+_(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2})", filename)
         if match:
             dt_str = match.group(1)
-            return datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
+            return datetime.datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
         else:
             # If not matched, return a very early date to push it to the beginning.
             return datetime.min
