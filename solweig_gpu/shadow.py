@@ -205,7 +205,7 @@ def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
     device = a.device
     rows = a.shape[0]
     cols = a.shape[1]
-
+    
     svf = torch.zeros([rows, cols], device=device)
     svfE = torch.zeros([rows, cols], device=device)
     svfS = torch.zeros([rows, cols], device=device)
@@ -307,7 +307,10 @@ def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
     svfWaveg[svfWaveg > 1.] = 1.
     svfNaveg[svfNaveg > 1.] = 1.
 
+    trans = torch.tensor(0.03, device=device)  # Tree transmission hardcoded to 3%
+    SVFtotal = svf - (1 - svfveg) * (1 - trans)
+
     del sh, vegsh,vbshvegsh, last, weight
     torch.cuda.empty_cache()
     
-    return svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat
+    return svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, SVFtotal

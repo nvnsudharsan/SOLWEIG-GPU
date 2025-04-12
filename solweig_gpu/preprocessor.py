@@ -14,6 +14,7 @@ from osgeo import gdal, ogr, osr
 from shapely.geometry import box
 from timezonefinder import TimezoneFinder
 from tqdm import tqdm
+import shutil
 gdal.UseExceptions()
 
 # =============================================================================
@@ -65,6 +66,9 @@ def create_tiles(infile, tilesize, tile_type):
 
     out_folder = os.path.join(os.path.dirname(infile), tile_type)
     if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
+    else:
+        shutil.rmtree(out_folder)
         os.makedirs(out_folder)
 
     if tilesize >= width and tilesize >= height:
@@ -162,7 +166,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         
         # The time units are defined relative to the start time.
-        time_var.units = "hours since " + start_time.strftime("%Y-%m-%d %H:%M:%S")
+        time_var.units = "hours since 1970-01-01 00:00:00"
         time_var.calendar = "gregorian"
         lat_var.units = "degrees_north"
         lon_var.units = "degrees_east"
@@ -233,7 +237,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         match = re.search(r"wrfout_\w+_(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2})", filename)
         if match:
             dt_str = match.group(1)
-            return datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
+            return datetime.datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
         else:
             # If not matched, return a very early date to push it to the beginning.
             return datetime.min
@@ -585,6 +589,9 @@ def create_met_files(base_path, source_met_file):
     target_folder = os.path.join(base_path, 'metfiles')
 
     if not os.path.exists(target_folder):
+        os.makedirs(target_folder)
+    else:
+        shutil.rmtree(target_folder)
         os.makedirs(target_folder)
     
     for file in os.listdir(raster_folder):
