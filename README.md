@@ -13,6 +13,11 @@ This repository provides a Python package and a command-line interface for runni
 ![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
 UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized using ArcGIS online.
 
+## Required input datasets    
+- Building digital surface model (DSM) which has builings + digital elevation model (DEM)
+- DEM
+- Tree DSM which has only the height of vegetation (no DEM) 
+
 ## Installation
 
 Clone the repository and set up the environment:
