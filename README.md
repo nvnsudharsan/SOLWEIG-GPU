@@ -16,7 +16,8 @@ UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized using ArcG
 ## Required input datasets    
 - Building digital surface model (DSM) which has builings + digital elevation model (DEM)
 - DEM
-- Tree DSM which has only the height of vegetation (no DEM) 
+- Tree DSM which has only the height of vegetation (no DEM)
+- Meteorological forcing using own meterological text file prepared using Urban Multi-scale Environmental Predictor (UMEP), ERA-5 or WRF output netCDF files.
 
 ## Installation
 
