@@ -12,6 +12,7 @@
 ---
 
 - ✅ CPU and GPU support (automatically uses GPU if available)
+- ✅ Divides larger areas into tiles based on the tile size selected
 - 🏙️ CPU-based computations of wall height and aspect parallezied on multiple CPUs.
 - 🏙️ GPU-based computation of SVF, short/longwave radiation, shadows, Tmrt, and UTCI.
 - 🗂️ Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
