@@ -2,9 +2,9 @@
 
 **SOLWEIG-GPU** is a Python package and command-line interface for running the SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
-SOLWEIG was originally developed by Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. Int J Biometeorol 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
+**SOLWEIG** was originally developed by Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. Int J Biometeorol 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
 
-SOLWEIG GPU code is an extention of the original SOLWEIG python model that is the part of Urban Multi-scale Environmental Predictor (UMEP) (GitHub code reference: https://github.com/UMEP-dev/UMEP). UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. Environmental modelling & software, 99, pp.70-87.https://doi.org/10.1016/j.envsoft.2017.09.020
+**SOLWEIG GPU** code is an extention of the original **SOLWEIG** python model that is the part of the Urban Multi-scale Environmental Predictor (UMEP) (GitHub code reference: https://github.com/UMEP-dev/UMEP). UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. Environmental modelling & software, 99, pp.70-87.https://doi.org/10.1016/j.envsoft.2017.09.020
 
 ---
 
