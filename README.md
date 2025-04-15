@@ -13,9 +13,8 @@
 - 🏙️ GPU-based computation of SVF, short/longwave radiation, shadows, Tmrt, and UTCI.
 - 🗂️ Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
 - 🧩 Tile-based processing for large urban domains
----
 
-![SOLWEIG-GPU workflow ](/solweig_diagram.jpeg)
+![SOLWEIG-GPU workflow ](/solweig_diagram.png)
 *Flowchart of SOLWEIG-GPU modeling framework*
 ---
 
