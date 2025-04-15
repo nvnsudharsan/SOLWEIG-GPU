@@ -1,44 +1,50 @@
-
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
 **SOLWEIG-GPU** is a Python package and command-line interface for running the SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
+**SOLWEIG** was originally developed by Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. Int J Biometeorol 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
+
+**SOLWEIG GPU** code is an extention of the original **SOLWEIG** python model that is the part of the Urban Multi-scale Environmental Predictor (UMEP) (GitHub code reference: https://github.com/UMEP-dev/UMEP). UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. Environmental modelling & software, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
+
 ---
 
-## 🚀 Features
+## Features
 
-- ✅ CPU and GPU support (automatically uses GPU if available)
-- ✅ Divides larger areas into tiles based on the tile size selected
-- 🏙️ CPU-based computations of wall height and aspect parallezied on multiple CPUs.
-- 🏙️ GPU-based computation of SVF, short/longwave radiation, shadows, Tmrt, and UTCI.
-- 🗂️ Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
-- 🧩 Tile-based processing for large urban domains
+- CPU and GPU support (automatically uses GPU if available)
+- Divides larger areas into tiles based on the selected tile size
+- CPU-based computations of wall height and aspect parallelized across multiple CPUs
+- GPU-based computation of SVF, shortwave/longwave radiation, shadows, Tmrt, and UTCI
+- Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
+- Tile-based processing for large urban domains
 
 ![SOLWEIG-GPU workflow ](/solweig_diagram.png)
-*Flowchart of SOLWEIG-GPU modeling framework*
+*Flowchart of the SOLWEIG-GPU modeling framework*
+
 ---
 
-## 📥 Required Input Data
+## Required Input Data
 
-- `Building DSM`: Includes both buildings and elevation (e.g., `Building_DSM.tif`)
+- `Building DSM`: Includes both buildings and terrain elevation (e.g., `Building_DSM.tif`)
 - `DEM`: Digital Elevation Model excluding buildings (e.g., `DEM.tif`)
-- `Tree DSM`: Only vegetation height data (e.g., `Trees.tif`)
+- `Tree DSM`: Vegetation height data only (e.g., `Trees.tif`)
 - Meteorological forcing:
   - Custom `.txt` file (from UMEP)
   - ERA5 (both instantaneous and accumulated)
   - WRF output NetCDF (`wrfout`)
 
-  **Please see the data provided in the sample dataset to fully familiarize yourself with model inputs.**
+> Please refer to the sample dataset to familiarize yourself with the expected input formats.
 
-## ERA-5 variables required for meteorological data processing
+### ERA5 Variables Required
 - 2-meter air temperature
 - 2-meter dew point temperature
 - Surface pressure
-- U and V winds at 10-meters height
+- 10-meter U and V wind components
 - Downwelling shortwave radiation (accumulated)
 - Downwelling longwave radiation (accumulated)
 
-## 📁 Output Details
+---
+
+## Output Details
 
 - Output directory: `Outputs/`
 - Structure: One folder per tile (e.g., `tile_0_0/`, `tile_0_600/`)
@@ -47,9 +53,10 @@
 
 ![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
 *UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
+
 ---
 
-## ⚙️ Installation
+## Installation
 
 ```bash
 conda create -n solweig python=3.10
@@ -62,7 +69,7 @@ pip install .
 
 ---
 
-## 🧪 Python Usage
+## Python Usage
 
 ```python
 from solweig_gpu import thermal_comfort
@@ -78,8 +85,8 @@ thermal_comfort(
     own_met_file='/path/to/met.txt',
     start_time='2020-08-13 00:00:00',
     end_time='2020-08-13 23:00:00',
-    data_source_type='ERA5',  # or 'WRF'
-    data_folder='/path/to/era5_or_wrf',
+    data_source_type='ERA5',  # or 'WRFOUT'
+    data_folder='/path/to/era5_or_wrfout',
     save_tmrt=True,
     save_svf=False,
     save_kup=False,
@@ -92,7 +99,7 @@ thermal_comfort(
 
 ---
 
-## 🖥️ Command-Line Interface (CLI)
+## Command-Line Interface (CLI)
 
 ```bash
 conda activate solweig
@@ -107,7 +114,7 @@ thermal_comfort --base_path /path/to/input \
                 --start_time "2020-08-13 00:00:00" \
                 --end_time "2020-08-13 23:00:00" \
                 --data_source_type ERA5 \
-                --data_folder /path/to/era5_or_wrf \
+                --data_folder /path/to/era5_or_wrfout \
                 --save_tmrt True \
                 --save_svf False
 ```
@@ -116,7 +123,7 @@ thermal_comfort --base_path /path/to/input \
 
 ---
 
-## 🖱️ GUI Usage
+## GUI Usage
 
 To launch the GUI:
 ```bash
@@ -127,14 +134,14 @@ solweig_gpu
 ![GUI](/GUI.png)
 
 ### GUI Workflow
-1. Select **base path** containing input datasets.
-2. Choose the **Building DSM**, **DEM**, and **Tree DSM** rasters.
+1. Select the **base path** containing input datasets.
+2. Choose the **Building DSM**, **DEM**, and **Tree DSM** raster files.
 3. Set the **tile size** (e.g., 600 or 1200 pixels).
-4. Select **meteorological source** (`metfile`, `ERA5`, or `wrfout`):
-   - If `metfile`: Provide `.txt` file.
-   - If `ERA5`: Provide folder with both instantaneous and accumulated files.
-   - If `wrfout`: Provide folder with wrfout NetCDF files.
-5. Set **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
+4. Select a **meteorological source** (`metfile`, `ERA5`, or `wrfout`):
+   - If `metfile`: Provide a `.txt` file.
+   - If `ERA5`: Provide a folder with both instantaneous and accumulated files.
+   - If `wrfout`: Provide a folder with WRF output NetCDF files.
+5. Set the **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
 6. Choose which outputs to generate (e.g., Tmrt, UTCI, radiation fluxes).
 7. Output will be saved in `Outputs/`, with subfolders for each tile.
 
