@@ -81,8 +81,8 @@ thermal_comfort(
     own_met_file='/path/to/met.txt',
     start_time='2020-08-13 00:00:00',
     end_time='2020-08-13 23:00:00',
-    data_source_type='ERA5',  # or 'WRF'
-    data_folder='/path/to/era5_or_wrf',
+    data_source_type='ERA5',  # or 'WRFOUT'
+    data_folder='/path/to/era5_or_wrfout',
     save_tmrt=True,
     save_svf=False,
     save_kup=False,
@@ -110,7 +110,7 @@ thermal_comfort --base_path /path/to/input \
                 --start_time "2020-08-13 00:00:00" \
                 --end_time "2020-08-13 23:00:00" \
                 --data_source_type ERA5 \
-                --data_folder /path/to/era5_or_wrf \
+                --data_folder /path/to/era5_or_wrfout \
                 --save_tmrt True \
                 --save_svf False
 ```
