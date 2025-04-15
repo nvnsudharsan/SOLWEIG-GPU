@@ -111,8 +111,8 @@ solweig_gpu
 3. Set the **tile size** (e.g., 600 or 1200 pixels).
 4. Select **meteorological source** (`metfile`, `ERA5`, or `wrfout`):
    - If `metfile`: Provide `.txt` file.
-   - If `ERA5`: Provide both instantaneous and accumulated files.
-   - If `wrfout`: Provide hourly NetCDF files.
+   - If `ERA5`: Provide folder with both instantaneous and accumulated files.
+   - If `wrfout`: Provide folder with wrfout NetCDF files.
 5. Set **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
 6. Choose which outputs to generate (e.g., Tmrt, UTCI, radiation fluxes).
 7. Output will be saved in `Outputs/`, with subfolders for each tile.
