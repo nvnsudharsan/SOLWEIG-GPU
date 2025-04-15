@@ -12,7 +12,8 @@
 ---
 
 - ✅ CPU and GPU support (automatically uses GPU if available)
-- 🏙️ Computation of SVF, short/longwave radiation, shadows, Tmrt, and UTCI at once
+- 🏙️ CPU-based computations of wall height and aspect parallezied on multiple CPUs.
+- 🏙️ GPU-based computation of SVF, short/longwave radiation, shadows, Tmrt, and UTCI.
 - 🗂️ Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
 - 🧩 Tile-based processing for large urban domains
 
