@@ -202,7 +202,7 @@ class SOLWEIGApp(QWidget):
     def _met_inputs_layout(self):
         layout = QFormLayout()
         self.met_source = QComboBox()
-        self.met_source.addItems([ "ERA5 (netcdf)", "WRF (netcdf)", "Metfile (txt)"])
+        self.met_source.addItems([ "ERA5 (netcdf)", "WRFOUT (netcdf)", "Metfile (txt)"])
         self.met_source.currentTextChanged.connect(self.toggle_met_selector)
 
         self.met_path_input = QLineEdit()
@@ -213,7 +213,7 @@ class SOLWEIGApp(QWidget):
         self.end_time.setPlaceholderText("YYYY-MM-DD HH:MM:SS")
 
         layout.addRow(self._label_with_help("Source", "Choose type of meteorological input (metfile or dynamic data)."), self.met_source)
-        layout.addRow(self._label_with_help("Path", "File (metfile) or folder (ERA5/WRF) containing input data."), self._with_button(self.met_path_input, self.met_path_button))
+        layout.addRow(self._label_with_help("Path", "File (metfile) or folder (ERA5/WRFOUT) containing input data."), self._with_button(self.met_path_input, self.met_path_button))
         layout.addRow(self._label_with_help("Start Time", "Start time in format YYYY-MM-DD HH:MM:SS."), self.start_time)
         layout.addRow(self._label_with_help("End Time", "End time in format YYYY-MM-DD HH:MM:SS."), self.end_time)
         return layout
@@ -239,7 +239,7 @@ class SOLWEIGApp(QWidget):
 
         if "Metfile (txt)" in source:
             self.met_path_input.setPlaceholderText("Select the meteorological .txt file")
-        elif "WRF (netcdf)" in source:
+        elif "WRFOUT (netcdf)" in source:
             self.met_path_input.setPlaceholderText("Select the folder for WRF data")
         else:
             self.met_path_input.setPlaceholderText("Select the folder for ERA5 data")
@@ -259,7 +259,7 @@ class SOLWEIGApp(QWidget):
         else:
             path = QFileDialog.getExistingDirectory(caption="Select Data Folder")
             if path:
-                if "WRF" in source:
+                if "WRFOUT" in source:
                     wrf_files = [f for f in os.listdir(path) if f.startswith("wrfout")]
                     if not wrf_files:
                         QMessageBox.warning(self, "No WRF Files", "The selected folder does not contain any files starting with 'wrfout'.")
