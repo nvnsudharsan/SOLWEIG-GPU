@@ -28,7 +28,7 @@
  - `Building DSM`: Includes building heights and the terrain (Buildings + DEM)
  - `DEM`: Bare ground elevation
  - `Trees`: Only includes vegetation heights (no DEM)
-  Please see the data provided in the sample dataset to fully familiarize yourself with model inputs.
+  **Please see the data provided in the sample dataset to fully familiarize yourself with model inputs.**
 
 ## ERA-5 variables required for meteorological data processing
 - 2-meter air temperature
