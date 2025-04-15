@@ -2,6 +2,10 @@
 
 **SOLWEIG-GPU** is a Python package and command-line interface for running the SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
+SOLWEIG was originally developed by Fredrik Lindberg and collegues. Journal reference: Lindberg, F., Holmer, B., & Thorsson, S. (2008). SOLWEIG 1.0–Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. International journal of biometeorology, 52, 697-713.
+
+SOLWEIG GPU code is an extention of the original SOLWEIG python model that is the part of Urban Multi-scale Environmental Predictor (UMEP) (GitHub code reference: https://github.com/UMEP-dev/UMEP). UMEP journal reference: Lindberg, F., Grimmond, C. S. B., Gabey, A., Huang, B., Kent, C. W., Sun, T., ... & Zhang, Z. (2018). Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. Environmental modelling & software, 99, 70-87.  
+
 ---
 
 ## Features
