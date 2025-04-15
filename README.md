@@ -24,6 +24,20 @@
   - ERA5 (both instantaneous and accumulated)
   - WRF output NetCDF (`wrfout`)
 
+ ## Required input rasters
+ - `Building DSM`: Includes building heights and the terrain (Buildings + DEM)
+ - `DEM`: Bare ground elevation
+ - `Trees`: Only includes vegetation heights (no DEM)
+  Please see the data provided in the sample dataset to fully familiarize yourself with model inputs.
+
+## ERA-5 variables required for meteorological data processing
+- 2-meter air temperature
+- 2-meter dew point temperature
+- Surface pressure
+- U and V winds at 10-meters height
+- Downwelling shortwave radiation (accumulated)
+- Downwelling longwave radiation (accumulated)
+
 ![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
 *UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
 ---
