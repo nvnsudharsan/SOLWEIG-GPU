@@ -7,6 +7,10 @@
 
 ## 🚀 Features
 
+![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
+*UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
+---
+
 - ✅ CPU and GPU support (automatically uses GPU if available)
 - 🏙️ Computation of SVF, short/longwave radiation, shadows, Tmrt, and UTCI at once
 - 🗂️ Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
@@ -39,9 +43,12 @@
 - Downwelling shortwave radiation (accumulated)
 - Downwelling longwave radiation (accumulated)
 
-![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
-*UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
----
+## 📁 Output Details
+
+- Output directory: `Outputs/`
+- Structure: One folder per tile (e.g., `tile_0_0/`, `tile_0_600/`)
+- SVF: Single-band raster
+- Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
 
 ## ⚙️ Installation
 
@@ -133,10 +140,3 @@ solweig_gpu
 7. Output will be saved in `Outputs/`, with subfolders for each tile.
 
 ---
-
-## 📁 Output Details
-
-- Output directory: `Outputs/`
-- Structure: One folder per tile (e.g., `tile_0_0/`, `tile_0_600/`)
-- SVF: Single-band raster
-- Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
