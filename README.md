@@ -7,10 +7,6 @@
 
 ## 🚀 Features
 
-![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
-*UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
----
-
 - ✅ CPU and GPU support (automatically uses GPU if available)
 - ✅ Divides larger areas into tiles based on the tile size selected
 - 🏙️ CPU-based computations of wall height and aspect parallezied on multiple CPUs.
@@ -18,6 +14,8 @@
 - 🗂️ Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
 - 🧩 Tile-based processing for large urban domains
 
+![SOLWEIG-GPU workflow ](/solweig_diagram.jpeg)
+*Flowchart of SOLWEIG-GPU modeling framework*
 ---
 
 ## 📥 Required Input Data
@@ -51,6 +49,10 @@
 - Structure: One folder per tile (e.g., `tile_0_0/`, `tile_0_600/`)
 - SVF: Single-band raster
 - Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
+
+![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
+*UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
+---
 
 ## ⚙️ Installation
 
