@@ -8,8 +8,7 @@
 ## 🚀 Features
 
 - ✅ CPU and GPU support (automatically uses GPU if available)
-- 🌐 Supports custom meteorological input or reanalysis data (ERA5, WRF)
-- 🏙️ Modular framework for SVF, short/longwave radiation, shadows, Tmrt, and UTCI
+- 🏙️ Computation of SVF, short/longwave radiation, shadows, Tmrt, and UTCI at once
 - 🗂️ Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
 - 🧩 Tile-based processing for large urban domains
 
