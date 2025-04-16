@@ -15,7 +15,6 @@
 - CPU-based computations of wall height and aspect parallelized across multiple CPUs
 - GPU-based computation of SVF, shortwave/longwave radiation, shadows, Tmrt, and UTCI
 - Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
-- Tile-based processing for large urban domains
 
 ![SOLWEIG-GPU workflow ](/solweig_diagram.png)
 *Flowchart of the SOLWEIG-GPU modeling framework*
