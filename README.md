@@ -1,7 +1,7 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
 <p align="center">
-  <img src="/Logo.png" alt="SOLWEIG-GPU Logo" width="600"/>
+  <img src="/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
 </p>
 
 <p align="center">
