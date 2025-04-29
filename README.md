@@ -1,28 +1,26 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
 <p align="center">
-  <img src="https://github.com/nvnsudharsan/SOLWEIG-GPU/raw/main/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
+  <img src="/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
 </p>
 
 <p align="center">
-  <a href="https://www.repostatus.org/#active" style="text-decoration: none; border: none; outline: none;">
-    <img src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active" style="border: none; outline: none; box-shadow: none;"/>
+  <a href="https://pypi.org/project/solweig-gpu/">
+    <img src="https://badge.fury.io/py/solweig-gpu.svg" alt="PyPI version" style="border: none; outline: none; box-shadow: none;">
   </a>
-  <a href="https://pypi.org/project/solweig-gpu/" style="text-decoration: none; border: none; outline: none;">
-    <img src="https://badge.fury.io/py/solweig-gpu.svg" alt="PyPI version" style="border: none; outline: none; box-shadow: none;"/>
-  </a>
-  <!--
-  <a href="https://anaconda.org/conda-forge/solweig-gpu" style="text-decoration: none; border: none; outline: none;">
-    <img src="https://anaconda.org/conda-forge/solweig-gpu/badges/version.svg" alt="Conda version" style="border: none; outline: none; box-shadow: none;"/>
+  <!-- 
+  <a href="https://anaconda.org/conda-forge/solweig-gpu">
+    <img src="https://anaconda.org/conda-forge/solweig-gpu/badges/version.svg" alt="Conda version" style="border: none; outline: none; box-shadow: none;">
   </a>
   -->
-  <a href="https://opensource.org/licenses/MIT" style="text-decoration: none; border: none; outline: none;">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" style="border: none; outline: none; box-shadow: none;"/>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" style="border: none; outline: none; box-shadow: none;">
   </a>
-  <a href="https://pepy.tech/project/solweig-gpu" style="text-decoration: none; border: none; outline: none;">
-    <img src="https://pepy.tech/badge/solweig-gpu" alt="PyPI Downloads" style="border: none; outline: none; box-shadow: none;"/>
+  <a href="https://pepy.tech/project/solweig-gpu">
+    <img src="https://pepy.tech/badge/solweig-gpu" alt="PyPI Downloads" style="border: none; outline: none; box-shadow: none;">
   </a>
 </p>
+
 
 
 **SOLWEIG-GPU** is a Python package and command-line interface for running the SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
