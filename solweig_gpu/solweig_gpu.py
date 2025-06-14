@@ -1,10 +1,11 @@
-
 def thermal_comfort(
     base_path,
     selected_date_str,
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
+    landcover = 0, 
+    landcover_path: str | None = None ,  
     tile_size=3600, 
     use_own_met=True,
     start_time=None, 
@@ -71,6 +72,8 @@ def thermal_comfort(
             dem_path,
             walls_path,
             aspect_path,
+            landcover,  
+            landcover_path, 
             met_file_data,
             output_folder,
             number,
