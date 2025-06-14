@@ -16,6 +16,7 @@ import time
 from timezonefinder import TimezoneFinder
 import pytz
 import datetime
+from .Tgmaps_v1 import Tgmaps_v1
 from .sun_position import Solweig_2015a_metdata_noload
 from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
@@ -25,8 +26,10 @@ from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
 gdal.UseExceptions()
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+script_dir = os.path.dirname(__file__)
+landcover_classes_path = os.path.join(script_dir, 'landcoverclasses_2016a.txt')
 
 # Wall and ground emissivity and albedo
 albedo_b = 0.2
@@ -72,6 +75,26 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     temp2, dataset3 = load_raster_to_tensor(dem_path)
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
+
+    if landcover == 1:
+        if landcover_path is None:
+            raise ValueError(
+                "`landcover` is 1, so you must supply `landcover_path`.")
+        lcgrid_torch, dataset6 = load_raster_to_tensor(landcover_path)
+        rows, cols    = lcgrid_torch.shape
+        if (rows, cols) != a.shape:
+            raise ValueError("Land-cover grid extent/resolution differs from DSM")
+        if lcgrid_torch.max() > 7 or lcgrid_torch.min() < 1:
+            raise ValueError("Land-cover codes must be integers 1-7")
+        if (lcgrid_torch == 3).any() or (lcgrid_torch == 4).any():
+            raise ValueError("Codes 3 (deciduous) & 4 (conifer) not allowed in SOLWEIG")
+
+        with open(landcover_classes_path) as f:
+            lines = f.readlines()[1:]                            
+        lc_class = np.empty((len(lines), 6), dtype=float)
+        for i, ln in enumerate(lines):
+            lc_class[i, :] = [float(x) for x in ln.split()[1:]]  
+            
     base_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d")
     rows, cols = a.shape
     geotransform = dataset.GetGeoTransform()
@@ -139,17 +162,50 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Tgmap1W = torch.zeros((rows, cols), device=device)
     Tgmap1N = torch.zeros((rows, cols), device=device)
     TgOut1 = torch.zeros((rows, cols), device=device)
-    TgK = Knight + 0.37
-    Tstart = Knight - 3.41
-    alb_grid = Knight + albedo_g
-    emis_grid = Knight + eground
-    TgK_wall = 0.37
-    Tstart_wall = -3.41
-    TmaxLST = 15.
-    TmaxLST_wall = 15.
+
+    if landcover == 1:
+        lcgrid_np = lcgrid_torch.cpu().numpy()
+        if lcgrid_np.max() > 7 or lcgrid_np.min() < 1:
+            print("Warning: land-cover grid contains values outside 1-7. "
+                "Invalid cells are set to 6 (bare soil).")
+            lcgrid_np[lcgrid_np > 7] = 6
+            lcgrid_np[lcgrid_np < 1] = 6
+            lcgrid_np[lcgrid_np>7] = 6
+            lcgrid_np[lcgrid_np<1] = 6
+        elif np.where(lcgrid_np) == 3 or np.where(lcgrid_np) == 4:
+            QMessageBox.critical(self.dlg, "Attention!",
+                                         "The land cover grid includes values (decidouos and/or conifer) not appropriate for SOLWEIG-formatted land cover grid (should not include 3 or 4)."
+                                         "Land cover under the vegetation is required"
+                                         "Setting the invalid landcover types to grass")
+            lcgrid_np[lcgrid_np==3] = 5
+            lcgrid_np[lcgrid_np==4] = 5
+                                         
+        (TgK_np, Tstart_np, alb_np, emis_np, TgK_wall_np, Tstart_wall_np, TmaxLST_np,
+         TmaxLST_wall_np) = Tgmaps_v1(lcgrid_np, lc_class)
+           
+        TgK           = torch.from_numpy(TgK_np).to(device).float()
+        Tstart        = torch.from_numpy(Tstart_np).to(device).float()
+        alb_grid      = torch.from_numpy(alb_np).to(device).float()
+        emis_grid     = torch.from_numpy(emis_np).to(device).float()
+        TgK_wall      = torch.tensor(float(TgK_wall_np)     , device=device)
+        Tstart_wall   = torch.tensor(float(Tstart_wall_np)  , device=device)
+        TmaxLST       = torch.from_numpy(TmaxLST_np ).to(device).float()
+        TmaxLST_wall  = torch.tensor(float(TmaxLST_wall_np) , device=device)
+    else:
+        TgK = Knight + 0.37
+        Tstart = Knight - 3.41
+        alb_grid = Knight + albedo_g
+        emis_grid = Knight + eground
+        TgK_wall = 0.37
+        Tstart_wall = -3.41
+        TmaxLST = 15.
+        TmaxLST_wall = 15.
+            
     transVeg = 3. / 100.
-    landcover = 0
-    lcgrid = False
+    if landcover == 1:
+        lcgrid = lcgrid_torch
+    else:
+        lcgrid = False
     anisotropic_sky = 1
     patch_option = 2
     DOY = torch.tensor(met_file[:, 1], device=device)
