@@ -81,14 +81,20 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             raise ValueError(
                 "`landcover` is 1, so you must supply `landcover_path`.")
         lcgrid_torch, dataset6 = load_raster_to_tensor(landcover_path)
-        rows, cols    = lcgrid_torch.shape
-        if (rows, cols) != a.shape:
-            raise ValueError("Land-cover grid extent/resolution differs from DSM")
-        if lcgrid_torch.max() > 7 or lcgrid_torch.min() < 1:
-            raise ValueError("Land-cover codes must be integers 1-7")
-        if (lcgrid_torch == 3).any() or (lcgrid_torch == 4).any():
-            raise ValueError("Codes 3 (deciduous) & 4 (conifer) not allowed in SOLWEIG")
-
+        lcgrid_np = lcgrid_torch.cpu().numpy()
+        if lcgrid_np.max() > 7 or lcgrid_np.min() < 1:
+            print("Warning: land-cover grid contains values outside 1-7. "
+                "Invalid cells are set to 6 (bare soil).")
+            lcgrid_np[lcgrid_np > 7] = 6
+            lcgrid_np[lcgrid_np < 1] = 6
+        elif np.where(lcgrid_np) == 3 or np.where(lcgrid_np) == 4:
+            print("Attention!",
+                  "The land cover grid includes values (decidouos and/or conifer) not appropriate for SOLWEIG-formatted land cover grid (should not include 3 or 4)."
+                  "Land cover under the vegetation is required"
+                  "Setting the invalid landcover types to grass")
+            lcgrid_np[lcgrid_np==3] = 5
+            lcgrid_np[lcgrid_np==4] = 5
+        
         with open(landcover_classes_path) as f:
             lines = f.readlines()[1:]                            
         lc_class = np.empty((len(lines), 6), dtype=float)
@@ -163,23 +169,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Tgmap1N = torch.zeros((rows, cols), device=device)
     TgOut1 = torch.zeros((rows, cols), device=device)
 
-    if landcover == 1:
-        lcgrid_np = lcgrid_torch.cpu().numpy()
-        if lcgrid_np.max() > 7 or lcgrid_np.min() < 1:
-            print("Warning: land-cover grid contains values outside 1-7. "
-                "Invalid cells are set to 6 (bare soil).")
-            lcgrid_np[lcgrid_np > 7] = 6
-            lcgrid_np[lcgrid_np < 1] = 6
-            lcgrid_np[lcgrid_np>7] = 6
-            lcgrid_np[lcgrid_np<1] = 6
-        elif np.where(lcgrid_np) == 3 or np.where(lcgrid_np) == 4:
-            QMessageBox.critical(self.dlg, "Attention!",
-                                         "The land cover grid includes values (decidouos and/or conifer) not appropriate for SOLWEIG-formatted land cover grid (should not include 3 or 4)."
-                                         "Land cover under the vegetation is required"
-                                         "Setting the invalid landcover types to grass")
-            lcgrid_np[lcgrid_np==3] = 5
-            lcgrid_np[lcgrid_np==4] = 5
-                                         
+    if landcover == 1:                                 
         (TgK_np, Tstart_np, alb_np, emis_np, TgK_wall_np, Tstart_wall_np, TmaxLST_np,
          TmaxLST_wall_np) = Tgmaps_v1(lcgrid_np, lc_class)
            
