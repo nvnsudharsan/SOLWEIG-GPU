@@ -82,18 +82,21 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
                 "`landcover` is 1, so you must supply `landcover_path`.")
         lcgrid_torch, dataset6 = load_raster_to_tensor(landcover_path)
         lcgrid_np = lcgrid_torch.cpu().numpy()
-        if lcgrid_np.max() > 7 or lcgrid_np.min() < 1:
+        lcgrid_np = lcgrid_np.astype(int)
+        
+        mask_invalid = (lcgrid_np < 1) | (lcgrid_np > 7)
+        if mask_invalid.any():
             print("Warning: land-cover grid contains values outside 1-7. "
-                "Invalid cells are set to 6 (bare soil).")
-            lcgrid_np[lcgrid_np > 7] = 6
-            lcgrid_np[lcgrid_np < 1] = 6
-        elif np.where(lcgrid_np) == 3 or np.where(lcgrid_np) == 4:
+                "Invalid cells are set to 6 (bare soil). ")
+            lcgrid_np[mask_invalid] = 6
+        
+        mask_vegetation = (lcgrid_np == 3) | (lcgrid_np == 4)
+        if mask_vegetation.any():
             print("Attention!",
-                  "The land cover grid includes values (decidouos and/or conifer) not appropriate for SOLWEIG-formatted land cover grid (should not include 3 or 4)."
-                  "Land cover under the vegetation is required"
-                  "Setting the invalid landcover types to grass")
-            lcgrid_np[lcgrid_np==3] = 5
-            lcgrid_np[lcgrid_np==4] = 5
+                  "The land cover grid includes values (decidouos and/or conifer) not appropriate for SOLWEIG-formatted land cover grid (should not include 3 or 4. "
+                  "Land cover under the vegetation is required. "
+                  "Setting the invalid landcover types to grass.")
+            lcgrid_np[mask_vegetation] = 5
         
         with open(landcover_classes_path) as f:
             lines = f.readlines()[1:]                            
