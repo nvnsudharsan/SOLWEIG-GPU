@@ -123,6 +123,8 @@ thermal_comfort --base_path /path/to/input \
                 --building_dsm_filename Building_DSM.tif \
                 --dem_filename DEM.tif \
                 --trees_filename Trees.tif \
+                --landcover 0 \
+                --landcover_filename None 
                 --tile_size 3600 \
                 --use_own_met True \
                 --own_met_file /path/to/met.txt \
@@ -150,7 +152,7 @@ solweig_gpu
 
 ### GUI Workflow
 1. Select the **base path** containing input datasets.
-2. Choose the **Building DSM**, **DEM**, and **Tree DSM** raster files.
+2. Choose the **Building DSM**, **DEM**, **Tree DSM**, and **Land cover (optional)** raster files.
 3. Set the **tile size** (e.g., 600 or 1200 pixels).
 4. Select a **meteorological source** (`metfile`, `ERA5`, or `wrfout`):
    - If `metfile`: Provide a `.txt` file.
