@@ -5,7 +5,7 @@ def thermal_comfort(
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
     landcover = 0, 
-    landcover_path: str | None = None ,  
+    landcover_filename: str | None = None ,  
     tile_size=3600, 
     use_own_met=True,
     start_time=None, 
@@ -29,7 +29,7 @@ def thermal_comfort(
     import torch
 
     ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
-         tile_size, selected_date_str, use_own_met,
+         landcover_filename, tile_size, selected_date_str, use_own_met,
          start_time, end_time, data_source_type, data_folder,
          own_met_file)
 
@@ -38,6 +38,8 @@ def thermal_comfort(
     building_dsm_dir = os.path.join(base_path, "Building_DSM")
     tree_dir = os.path.join(base_path, "Trees")
     dem_dir = os.path.join(base_path, "DEM")
+    if landcover_filename is not None:
+        landcover_dir = os.path.join(base_path, "Landcover")
     walls_dir = os.path.join(base_path, "walls")
     aspect_dir = os.path.join(base_path, "aspect")
 
@@ -49,6 +51,8 @@ def thermal_comfort(
     building_dsm_files = get_matching_files(building_dsm_dir, ".tif")
     tree_files = get_matching_files(tree_dir, ".tif")
     dem_files = get_matching_files(dem_dir, ".tif")
+    if landcover_filename is not None:
+        landcover_files = get_matching_files(landcover_dir, ".tif")
     walls_files = get_matching_files(walls_dir, ".tif")
     aspect_files = get_matching_files(aspect_dir, ".tif")
 
@@ -57,6 +61,10 @@ def thermal_comfort(
         building_dsm_path = os.path.join(building_dsm_dir, building_dsm_files[i])
         tree_path = os.path.join(tree_dir, tree_files[i])
         dem_path = os.path.join(dem_dir, dem_files[i])
+        if landcover_filename is not None:
+            landcover_path = os.path.join(landcover_dir, landcover_files[i])
+        else:
+            landcover_path = None
         walls_path = os.path.join(walls_dir, walls_files[i])
         aspect_path = os.path.join(aspect_dir, aspect_files[i])
         number = extract_number_from_filename(building_dsm_files[i])
