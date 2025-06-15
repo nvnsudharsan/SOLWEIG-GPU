@@ -94,7 +94,7 @@ thermal_comfort(
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
     landcover = 0,
-    landcover_path= None,
+    landcover_filename = None,
     tile_size=3600,
     use_own_met=True,
     own_met_file='/path/to/met.txt',
