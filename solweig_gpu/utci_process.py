@@ -108,7 +108,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     scale = 1 / geotransform[1]
     projection_wkt = dataset.GetProjection()
     old_cs = osr.SpatialReference()
-    old_cs.ImportFromWkt(projection_wkt)
+    old_cs.ImportFromWkt(projection_wkt) 
+    old_cs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     wgs84_wkt = """GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -121,20 +122,14 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         AUTHORITY["EPSG","4326"]]"""
     new_cs = osr.SpatialReference()
     new_cs.ImportFromWkt(wgs84_wkt)
+    new_cs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     transform = osr.CoordinateTransformation(old_cs, new_cs)
     widthx = dataset.RasterXSize
     heightx = dataset.RasterYSize
     geotransform = dataset.GetGeoTransform()
-    minx = geotransform[0]
-    miny = geotransform[3] + widthx * geotransform[4] + heightx * geotransform[5]
-    lonlat = transform.TransformPoint(minx, miny)
-    gdalver = float(gdal.__version__[0])
-    if gdalver == 3.:
-        lon = lonlat[1]  # changed to gdal 3
-        lat = lonlat[0]  # changed to gdal 3
-    else:
-        lon = lonlat[0]  # changed to gdal 2
-        lat = lonlat[1]  # changed to gdal 2
+    centre_x = geotransform[0] + geotransform[1] * widthx  / 2.0
+    centre_y = geotransform[3] + geotransform[5] * heightx / 2.0
+    lon, lat = transform.TransformPoint(centre_x, centre_y)[:2]
     alt = torch.median(temp2)
     alt = alt.cpu().item()
     if alt > 0:
