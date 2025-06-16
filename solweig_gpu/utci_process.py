@@ -82,8 +82,6 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
                 "`landcover` is 1, so you must supply `landcover_path`.")
         lcgrid_torch, dataset6 = load_raster_to_tensor(landcover_path)
         lcgrid_np = lcgrid_torch.cpu().numpy()
-        lcgrid_np = lcgrid_np.astype(int)
-        
         mask_invalid = (lcgrid_np < 1) | (lcgrid_np > 7)
         if mask_invalid.any():
             print("Warning: land-cover grid contains values outside 1-7. "
