@@ -622,7 +622,11 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
 
     # Check that all rasters have matching dimensions, pixel size, and CRS.
     try:
-        check_rasters([building_dsm_path, dem_path, trees_path, landcover_path])
+        if landcover_filename is not None:
+            check_rasters([building_dsm_path, dem_path, trees_path, landcover_path]) 
+        else:
+            check_rasters([building_dsm_path, dem_path, trees_path])
+            
     except ValueError as error:
         print(error)
         exit(1)
