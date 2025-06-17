@@ -315,7 +315,7 @@ class SOLWEIGApp(QWidget):
             building_dsm_filename=self.building_dsm.text(),
             dem_filename=self.dem.text(),
             trees_filename=self.trees.text(),
-            landcover_path=self.landcover.text() if self.landcover.text().strip() else None,
+            landcover_filename=self.landcover.text() if self.landcover.text().strip() else None,
             tile_size=self.tile_size_input.value(),
             use_own_met=use_own_met,
             own_met_file=self.met_path_input.text() if use_own_met else None,
