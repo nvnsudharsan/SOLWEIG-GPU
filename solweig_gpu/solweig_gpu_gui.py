@@ -189,6 +189,8 @@ class SOLWEIGApp(QWidget):
         self.building_dsm = QLineEdit()
         self.dem = QLineEdit()
         self.trees = QLineEdit()
+        self.landcover = QLineEdit()
+        self.landcover.setPlaceholderText("Optional")
         self.tile_size_input = QSpinBox()
         self.tile_size_input.setRange(100, 10000)
         self.tile_size_input.setValue(3600)
@@ -196,6 +198,7 @@ class SOLWEIGApp(QWidget):
         layout.addRow(self._label_with_help("Building DSM", "Digital Surface Model representing building heights."), self._with_browse(self.building_dsm))
         layout.addRow(self._label_with_help("DEM", "Digital Elevation Model of the terrain."), self._with_browse(self.dem))
         layout.addRow(self._label_with_help("Trees", "Raster layer representing vegetation height."), self._with_browse(self.trees))
+        layout.addRow(self._label_with_help("Landcover", "Raster file for Landcover (Optional)"), self._with_browse(self.landcover))
         layout.addRow(self._label_with_help("Tile Size", "Controls resolution of GPU processing (100–10000)."), self.tile_size_input)
         return layout
 
@@ -312,6 +315,7 @@ class SOLWEIGApp(QWidget):
             building_dsm_filename=self.building_dsm.text(),
             dem_filename=self.dem.text(),
             trees_filename=self.trees.text(),
+            landcover_path=self.landcover.text() if self.landcover.text().strip() else None,
             tile_size=self.tile_size_input.value(),
             use_own_met=use_own_met,
             own_met_file=self.met_path_input.text() if use_own_met else None,
