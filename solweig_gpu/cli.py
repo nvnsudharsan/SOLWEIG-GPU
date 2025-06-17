@@ -8,6 +8,7 @@ def main():
     parser.add_argument('--building_dsm', default='Building_DSM.tif', help='Filename of the building DSM raster')
     parser.add_argument('--dem', default='DEM.tif', help='Filename of the DEM raster')
     parser.add_argument('--trees', default='Trees.tif', help='Filename of the trees raster')
+    parser.add_argument('--landcover', default = None, help = 'Filename of the landcover raster')
     parser.add_argument('--tile_size', type=int, default=3600, help='Tile size for GPU processing (e.g., 100 to 4000)')
     parser.add_argument('--use_own_met', type=bool, default=True, help='Set to True if using your own meteorological file')
     parser.add_argument('--own_metfile', default = None, help='Path to your own meteorological file')
@@ -37,6 +38,7 @@ def main():
         building_dsm_filename=args.building_dsm,
         dem_filename=args.dem,
         trees_filename=args.trees,
+        landcover_filename=args.landcover,
         tile_size=args.tile_size,
         use_own_met=args.use_own_met,
         own_met_file=args.own_metfile,
