@@ -68,7 +68,7 @@ def extract_number_from_filename(filename):
     return number
 
 
-def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover, landcover_path, met_file, 
+def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, met_file, 
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,save_ldown=False,save_shadow=False):
     a, dataset = load_raster_to_tensor(building_dsm_path)
     temp1, dataset2 = load_raster_to_tensor(tree_path)
@@ -77,10 +77,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
  
     # Added
-    if landcover == 1:
-        if landcover_path is None:
-            raise ValueError(
-                "`landcover` is 1, so you must supply `Landcover .tif file`.")
+    landcover = 0
+
+    if landcover_filename is not None:
+        landcover = 1
         lcgrid_torch, dataset6 = load_raster_to_tensor(landcover_path)
         lcgrid_np = lcgrid_torch.cpu().numpy()
         #lcgrid_np = lcgrid_np.astype(int)
@@ -94,7 +94,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         mask_vegetation = (lcgrid_np == 3) | (lcgrid_np == 4)
         if mask_vegetation.any():
             print("Attention!",
-                  "The land cover grid includes values (decidouos and/or conifer) not appropriate for SOLWEIG-formatted land cover grid (should not include 3 or 4. "
+                  "The land cover grid includes values (deciduous and/or conifer) not appropriate for the SOLWEIG-formatted land cover grid (should not include 3 or 4). "
                   "Land cover under the vegetation is required. "
                   "Setting the invalid landcover types to grass.")
             lcgrid_np[mask_vegetation] = 5
