@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="solweig-gpu",
-    version="1.1.0",
+    version="1.2.0",
     description="GPU-accelerated SOLWEIG model for urban thermal comfort simulation",
     author="Harsh Kamath, Naveen Sudharsan",
     author_email="harsh.kamath@utexas.edu, naveens@utexas.edu",
