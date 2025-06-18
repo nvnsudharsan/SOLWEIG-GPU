@@ -6,8 +6,12 @@ setup(
     description="GPU-accelerated SOLWEIG model for urban thermal comfort simulation",
     author="Harsh Kamath, Naveen Sudharsan",
     author_email="harsh.kamath@utexas.edu, naveens@utexas.edu",
-    url="https://github.com/nvnsudharsan/utci-pipeline",
-    packages=find_packages(),  # Automatically finds `solweig_gpu`
+    url="https://github.com/nvnsudharsan/SOLWEIF-GPU",
+    packages=find_packages(),  # Automatically detects `solweig_gpu`
+    include_package_data=True,  # Required to include non-code files from MANIFEST.in
+    package_data={
+        "solweig_gpu": ["landcoverclasses_2016a.txt"],  # Ensures it's installed
+    },
     install_requires=[
         "torch",
         "numpy",
