@@ -16,6 +16,7 @@ import time
 from timezonefinder import TimezoneFinder
 import pytz
 import datetime
+from .Tgmaps_v1 import Tgmaps_v1
 from .sun_position import Solweig_2015a_metdata_noload
 from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
@@ -25,8 +26,10 @@ from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
 gdal.UseExceptions()
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+script_dir = os.path.dirname(__file__)
+landcover_classes_path = os.path.join(script_dir, 'landcoverclasses_2016a.txt')
 
 # Wall and ground emissivity and albedo
 albedo_b = 0.2
@@ -65,20 +68,52 @@ def extract_number_from_filename(filename):
     return number
 
 
-def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, met_file, output_path,number,selected_date_str,save_tmrt=False,save_svf=False,
-        save_kup=False,save_kdown=False,save_lup=False,save_ldown=False,save_shadow=False):
+def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, met_file, 
+                output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,save_ldown=False,save_shadow=False):
     a, dataset = load_raster_to_tensor(building_dsm_path)
     temp1, dataset2 = load_raster_to_tensor(tree_path)
     temp2, dataset3 = load_raster_to_tensor(dem_path)
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
+ 
+    # Added
+    landcover = 0
+
+    if landcover_path is not None:
+        landcover = 1
+        lcgrid_torch, dataset6 = load_raster_to_tensor(landcover_path)
+        lcgrid_np = lcgrid_torch.cpu().numpy()
+        #lcgrid_np = lcgrid_np.astype(int)
+        
+        mask_invalid = (lcgrid_np < 1) | (lcgrid_np > 7)
+        if mask_invalid.any():
+            print("Warning: land-cover grid contains values outside 1-7. "
+                "Invalid cells are set to 6 (bare soil). ")
+            lcgrid_np[mask_invalid] = 6
+        
+        mask_vegetation = (lcgrid_np == 3) | (lcgrid_np == 4)
+        if mask_vegetation.any():
+            print("Attention!",
+                  "The land cover grid includes values (deciduous and/or conifer) not appropriate for the SOLWEIG-formatted land cover grid (should not include 3 or 4). "
+                  "Land cover under the vegetation is required. "
+                  "Setting the invalid landcover types to grass.")
+            lcgrid_np[mask_vegetation] = 5
+
+        with open(landcover_classes_path) as f:
+            lines = f.readlines()[1:]                            # skip header line
+        lc_class = np.empty((len(lines), 6), dtype=float)
+        for i, ln in enumerate(lines):
+            lc_class[i, :] = [float(x) for x in ln.split()[1:]]  # cols 1-6
+    # Added
+    
     base_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d")
     rows, cols = a.shape
     geotransform = dataset.GetGeoTransform()
     scale = 1 / geotransform[1]
     projection_wkt = dataset.GetProjection()
     old_cs = osr.SpatialReference()
-    old_cs.ImportFromWkt(projection_wkt)
+    old_cs.ImportFromWkt(projection_wkt) 
+    old_cs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     wgs84_wkt = """GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -91,20 +126,24 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         AUTHORITY["EPSG","4326"]]"""
     new_cs = osr.SpatialReference()
     new_cs.ImportFromWkt(wgs84_wkt)
+    new_cs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     transform = osr.CoordinateTransformation(old_cs, new_cs)
     widthx = dataset.RasterXSize
     heightx = dataset.RasterYSize
     geotransform = dataset.GetGeoTransform()
-    minx = geotransform[0]
-    miny = geotransform[3] + widthx * geotransform[4] + heightx * geotransform[5]
-    lonlat = transform.TransformPoint(minx, miny)
-    gdalver = float(gdal.__version__[0])
-    if gdalver == 3.:
-        lon = lonlat[1]  # changed to gdal 3
-        lat = lonlat[0]  # changed to gdal 3
-    else:
-        lon = lonlat[0]  # changed to gdal 2
-        lat = lonlat[1]  # changed to gdal 2
+    #minx = geotransform[0]
+    #miny = geotransform[3] + widthx * geotransform[4] + heightx * geotransform[5]
+    #lonlat = transform.TransformPoint(minx, miny)
+    #gdalver = float(gdal.__version__[0])
+    #if gdalver == 3.:
+    #    lon = lonlat[1]  # changed to gdal 3
+    #    lat = lonlat[0]  # changed to gdal 3
+    #else:
+    #    lon = lonlat[0]  # changed to gdal 2
+    #    lat = lonlat[1]  # changed to gdal 2
+    centre_x = geotransform[0] + geotransform[1] * widthx  / 2.0
+    centre_y = geotransform[3] + geotransform[5] * heightx / 2.0
+    lon, lat = transform.TransformPoint(centre_x, centre_y)[:2]
     alt = torch.median(temp2)
     alt = alt.cpu().item()
     if alt > 0:
@@ -139,17 +178,37 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Tgmap1W = torch.zeros((rows, cols), device=device)
     Tgmap1N = torch.zeros((rows, cols), device=device)
     TgOut1 = torch.zeros((rows, cols), device=device)
-    TgK = Knight + 0.37
-    Tstart = Knight - 3.41
-    alb_grid = Knight + albedo_g
-    emis_grid = Knight + eground
-    TgK_wall = 0.37
-    Tstart_wall = -3.41
-    TmaxLST = 15.
-    TmaxLST_wall = 15.
+    
+    # Added
+    if landcover == 1:                                     
+        (TgK_np, Tstart_np, alb_np, emis_np, TgK_wall_np, Tstart_wall_np, TmaxLST_np,
+         TmaxLST_wall_np) = Tgmaps_v1(lcgrid_np, lc_class)
+           
+        TgK           = torch.from_numpy(TgK_np).to(device).float()
+        Tstart        = torch.from_numpy(Tstart_np).to(device).float()
+        alb_grid      = torch.from_numpy(alb_np).to(device).float()
+        emis_grid     = torch.from_numpy(emis_np).to(device).float()
+        TgK_wall      = torch.tensor(float(TgK_wall_np)     , device=device)
+        Tstart_wall   = torch.tensor(float(Tstart_wall_np)  , device=device)
+        TmaxLST       = torch.from_numpy(TmaxLST_np ).to(device).float()
+        TmaxLST_wall  = torch.tensor(float(TmaxLST_wall_np) , device=device)
+    else:
+        TgK = Knight + 0.37
+        Tstart = Knight - 3.41
+        alb_grid = Knight + albedo_g
+        emis_grid = Knight + eground
+        TgK_wall = 0.37
+        Tstart_wall = -3.41
+        TmaxLST = 15.
+        TmaxLST_wall = 15.
+    # Added
+    
     transVeg = 3. / 100.
-    landcover = 0
-    lcgrid = False
+    # landcover = 1 # Modified
+    if landcover == 1:
+        lcgrid = lcgrid_torch
+    else:
+        lcgrid = False
     anisotropic_sky = 1
     patch_option = 2
     DOY = torch.tensor(met_file[:, 1], device=device)
@@ -210,7 +269,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     for i in np.arange(0, Ta.__len__()):
         if landcover == 1:
             if ((dectime[i] - np.floor(dectime[i]))) == 0 or (i == 0):
-                Twater = np.mean(Ta[jday[0] == np.floor(dectime[i])])
+                Ta_      = Ta.cpu().numpy()  # Added
+                Twater = np.mean(Ta_[jday[0] == np.floor(dectime[i])])  # Added
         if (dectime[i] - np.floor(dectime[i])) == 0:
             daylines = np.where(np.floor(dectime) == dectime[i])
             if daylines.__len__() > 1:
