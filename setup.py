@@ -2,12 +2,16 @@ from setuptools import setup, find_packages
 
 setup(
     name="solweig-gpu",
-    version="0.1.0",
+    version="1.1.0",
     description="GPU-accelerated SOLWEIG model for urban thermal comfort simulation",
     author="Harsh Kamath, Naveen Sudharsan",
     author_email="harsh.kamath@utexas.edu, naveens@utexas.edu",
-    url="https://github.com/nvnsudharsan/utci-pipeline",
-    packages=find_packages(),  # Automatically finds `solweig_gpu`
+    url="https://github.com/nvnsudharsan/SOLWEIF-GPU",
+    packages=find_packages(),  
+    include_package_data=True, 
+    package_data={
+        "solweig_gpu": ["landcoverclasses_2016a.txt"], 
+    },
     install_requires=[
         "torch",
         "numpy",

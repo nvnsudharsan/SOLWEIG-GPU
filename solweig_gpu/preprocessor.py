@@ -610,26 +610,41 @@ def create_met_files(base_path, source_met_file):
 # user-supplied met file or a netCDF file. Only the parameters required for the chosen
 # method need to be provided.
 # =============================================================================
-def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
+def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcover_filename,
          tile_size, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
          own_met_file=None):
 
     building_dsm_path = os.path.join(base_path, building_dsm_filename)
     dem_path = os.path.join(base_path, dem_filename)
     trees_path = os.path.join(base_path, trees_filename)
+    if landcover_filename is not None:
+        landcover_path = os.path.join(base_path, landcover_filename)
 
     # Check that all rasters have matching dimensions, pixel size, and CRS.
     try:
-        check_rasters([building_dsm_path, dem_path, trees_path])
+        if landcover_filename is not None:
+            check_rasters([building_dsm_path, dem_path, trees_path, landcover_path]) 
+        else:
+            check_rasters([building_dsm_path, dem_path, trees_path])
+            
     except ValueError as error:
         print(error)
         exit(1)
 
-    rasters = {
-        "Building_DSM": building_dsm_path,
-        "DEM": dem_path,
-        "Trees": trees_path
-    }
+    if landcover_filename is not None:
+        rasters = {
+            "Building_DSM": building_dsm_path,
+            "DEM": dem_path,
+            "Trees": trees_path,
+            "Landcover": landcover_path
+        }
+    else: 
+        rasters = {
+            "Building_DSM": building_dsm_path,
+            "DEM": dem_path,
+            "Trees": trees_path   
+        }  
+        
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")
         create_tiles(raster, tile_size, tile_type)
