@@ -124,7 +124,7 @@ thermal_comfort --base_path /path/to/input \
                 --building_dsm_filename Building_DSM.tif \
                 --dem_filename DEM.tif \
                 --trees_filename Trees.tif \
-                --landcover_filename None 
+                --landcover_filename None \
                 --tile_size 3600 \
                 --use_own_met True \
                 --own_met_file /path/to/met.txt \
