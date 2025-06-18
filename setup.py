@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="solweig-gpu",
-    version="1.2.2",
+    version="1.2.4",
     description="GPU-accelerated SOLWEIG model for urban thermal comfort simulation",
     author="Harsh Kamath, Naveen Sudharsan",
     author_email="harsh.kamath@utexas.edu, naveens@utexas.edu",
