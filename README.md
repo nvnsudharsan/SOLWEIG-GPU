@@ -95,7 +95,6 @@ thermal_comfort(
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
-    landcover = 0,
     landcover_filename = None,
     tile_size=3600,
     use_own_met=True,
@@ -125,7 +124,6 @@ thermal_comfort --base_path /path/to/input \
                 --building_dsm_filename Building_DSM.tif \
                 --dem_filename DEM.tif \
                 --trees_filename Trees.tif \
-                --landcover 0 \
                 --landcover_filename None 
                 --tile_size 3600 \
                 --use_own_met True \
