@@ -22,7 +22,7 @@ jobs:
           pandoc paper.md --citeproc --pdf-engine=pdflatex -o output.pdf
 
       - name: Upload PDF as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: joss-paper
-          path: output.pdf
+          path: paper.pdf
