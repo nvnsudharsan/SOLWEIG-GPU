@@ -1,1 +1,9 @@
 include solweig_gpu/landcoverclasses_2016a.txt
+include README.md
+include LICENSE.rst
+include requirements.txt
+recursive-include solweig_gpu *.py
+include GUI.png
+include solweig_diagram.png
+include Logo.png
+include UTCI_New_Delhi.jpeg
