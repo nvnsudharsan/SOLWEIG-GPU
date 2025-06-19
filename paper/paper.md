@@ -1,5 +1,5 @@
 ---
-title: 'SOLWEIG-GPU: Developing Thermal Comfort using Urban Digital Twins for the Paris Summer Olympics Marathon Track'
+title: 'Accelerated Thermal Comfort Modeling with SOLWEIG-GPU: A Case Study from the Paris 2024 Marathon'
 tags:
   - Python
   - Thermal Comfort
@@ -24,20 +24,25 @@ authors:
     affiliation: 2
   - name: Fredrik Lindberg
     orcid: 0000-0002-9648-4542
-    affiliation: 2  
+    affiliation: 2
+  - name: Valery Masson
+    orcid: 0000-0001-8807-0545
+    affiliation: 3
   - name: Dev Niyogi
     orcid: 0000-0002-1848-5080
     corresponding: true
-    affiliation: "1, 3, 4" 
+    affiliation: "1, 4, 5" 
 affiliations:
  - name: Jackson School of Geosciences, The University of Texas at Austin, USA
    index: 1
  - name: Department of Earth Sciences, University of Gothenburg, Sweden
    index: 2
- - name: Cockrell School of Engineering, The University of Texas at Austin, USA
+ - name : National Centre for Meteorological Research, Toulouse, France
    index: 3
- - name: Oden Institute of Computational Engineering and Sciences, The University of Texas at Austin, USA
+ - name: Cockrell School of Engineering, The University of Texas at Austin, USA
    index: 4
+ - name: Oden Institute of Computational Engineering and Sciences, The University of Texas at Austin, USA
+   index: 5
 date: 19 June 2025
 bibliography: paper.bib
 ---
