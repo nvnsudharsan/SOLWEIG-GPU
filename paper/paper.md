@@ -109,7 +109,6 @@ Table 1. Comparison of time taken for UTCI computation using CPU and GPU-based m
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+
 
 # References
