@@ -98,6 +98,13 @@ We present one notable application of SOLWEIG-GPU. In this first application, th
 # Comparison with SOLWEIG - CPU
 UTCI simulations were run with different tile sizes, both on CPU and GPU, using the SOLWEIG-GPU package. The CPU-based simulations were run on a Windows 11 machine with a 10th generation Intel Core i7 (i7-10700) and 16 Gigabytes (GB) of Random Access Memory (RAM). The GPU-based simulations were run on an Ubuntu machine with NVIDIA A6000 GPU with 50 GB RAM. Table 1 below reports the average time taken for the UTCI calculations (mean of 4-5 simulations with the same tile size). Note that Table 1 only reports the time for SVF and UTCI calculations for different tile sizes, as the calculations for wall height and aspect are parallelized and CPU-based (Figure 1).
 
+Table 1. Comparison of time taken for UTCI computation using CPU and GPU-based machines for different tile sizes.
+
+| Tile size     | CPU-based               | GPU-based | GPU acceleration |
+|---------------|-------------------------|-----------|------------------|
+| 1000 x 1000   | 1187 seconds (0.33 hrs) | 47 seconds| ~25×             |
+| 1500 x 1500   | 3322 seconds (0.92 hrs) | 105 seconds| ~32×            |
+| 2000 x 2000   | 6487 seconds (1.8 hrs)  | 158 seconds| ~41×            |
 
 
 # Citations
