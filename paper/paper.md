@@ -1,5 +1,5 @@
 ---
-title: 'Accelerated Thermal Comfort Modeling with SOLWEIG-GPU: A Case Study from the Paris 2024 Marathon'
+title: 'Parallelized Thermal Comfort Modeling with SOLWEIG-GPU for Urban Digital Twins: A Case Study from the Paris 2024 Marathon'
 tags:
   - Python
   - Thermal Comfort
@@ -37,7 +37,7 @@ affiliations:
    index: 1
  - name: Department of Earth Sciences, University of Gothenburg, Sweden
    index: 2
- - name : National Centre for Meteorological Research, Toulouse, France
+ - name: National Centre for Meteorological Research, Toulouse, France
    index: 3
  - name: Cockrell School of Engineering, The University of Texas at Austin, USA
    index: 4
@@ -49,7 +49,7 @@ bibliography: paper.bib
 
 # Summary
 
-Urban digital twins need a number of interlinked datasets and models that are able to represent the urban environment and are of value to the end user. As part of the urban heat mitigation studies, thermal comfort estimate is a desired outcome at the city scale. Here we present Solar and LongWave Environmental Irradiance Geometry-Graphics Processing Unit variant (SOLWEIG-GPU) as a Python package that provides a single-line code, command-line interface (CLI), and a graphical user interface (GUI) for executing the SOLWEIG model version 2022a on both GPUs and central processing units (CPUs). The package facilitates human thermal comfort modeling at meter-scale resolution across city-scale domains by computing key variables such as sky view factor (SVF), mean radiant temperature (TMRT), ground shading, and the universal thermal climate index (UTCI). The package installation instructions are available at  https://pypi.org/project/solweig-gpu/, and sample data for running the model are archived on Zenodo (temporary link: https://utexas.box.com/s/8fctqicidr5cup8kj3tk53jd444pow6z). 
+Urban digital twins need a number of interlinked datasets and models to represent a city. Rapid response modeling of urban thermal comfort is one of the desired outcomes from urban digital twins. Here we present Solar and LongWave Environmental Irradiance Geometry-Graphics Processing Unit  (SOLWEIG-GPU) as a Python package that provides a single-line code, command-line interface (CLI), and a graphical user interface (GUI) for executing the open-source SOLWEIG model version 2022a on both graphics processing units (GPUs) and central processing units (CPUs). The package facilitates GPU parallelized human thermal comfort modeling at meter-scale resolution across city-scale domains by computing key variables such as sky view factor (SVF), mean radiant temperature (TMRT), ground shading, and the universal thermal climate index (UTCI). The package installation instructions are available at  https://pypi.org/project/solweig-gpu/, and sample data for running the model are archived here: https://utexas.box.com/s/8fctqicidr5cup8kj3tk53jd444pow6z. 
 
 
 # Statement of need
@@ -58,7 +58,7 @@ The original SOLWEIG model [@lindberg2018umep] was developed to calculate TMRT o
 
 
 # Functionality 
-SOLWEIG-GPU has been tested on Ubuntu (on NVIDIA A6000 and CPU), Windows 11 (on NVIDIA RTX 4600 and CPU), and MAC OS (on CPU), and also on Texas Advanced Computing Center’s (TACC) Lonestar-6 and Vista clusters (on NVIDIA A100 and H100 GPUs). SOLWEIG-GPU requires the following inputs: (i) Building digital surface model (DSM) that includes both buildings and terrain height, (ii) Digital elevation model (DEM) that is the bare ground elevation, (iii). Tree or vegetation DSM that only represents the vegetation height (iv). UMEP-style land cover file (optional), and (v) meteorological forcing. Allowed land cover types are asphalt or paved, buildings, grass, bare soil, and wate,r but users can add their own land cover types provided they know the thermal properties for the land surface (e.g., albedo and emissivity). All the input datasets must be of the same spatial resolution, projection, and spatial extent. The recommended projection is the Universal Transverse Mercator (UTM). For example, Austin, Texas, comes under WGS 84/UTM zone 14N or EPSG: 32614. Necessary meteorological variables are (i) 2-meter air temperature (℃), (ii) relative humidity (%), (iii) barometric pressure (kPa), (iv) near-surface wind speed (m/s), (v) downwelling shortwave radiation (W/m2) and (vi) downwelling longwave radiation (W/m2). 
+SOLWEIG-GPU has been tested on Ubuntu (on NVIDIA A6000 and CPU), Windows 11 (on NVIDIA RTX 4060 and CPU), and MAC OS (on CPU), and also on Texas Advanced Computing Center’s (TACC) Lonestar-6 and Vista clusters (on NVIDIA A100 and H100 GPUs). SOLWEIG-GPU requires the following inputs: (i) Building digital surface model (DSM) that includes both buildings and terrain height, (ii) Digital elevation model (DEM) that is the bare ground elevation, (iii). Tree or vegetation DSM that only represents the vegetation height (iv). UMEP-style land cover file (optional), and (v) meteorological forcing. Allowed land cover types are asphalt or paved, buildings, grass, bare soil, and wate,r but users can add their own land cover types provided they know the thermal properties for the land surface (e.g., albedo and emissivity). All the input datasets must be of the same spatial resolution, projection, and spatial extent. The recommended projection is the Universal Transverse Mercator (UTM). For example, Austin, Texas, comes under WGS 84/UTM zone 14N or EPSG: 32614. Necessary meteorological variables are (i) 2-meter air temperature (℃), (ii) relative humidity (%), (iii) barometric pressure (kPa), (iv) near-surface wind speed (m/s), (v) downwelling shortwave radiation (W/m2) and (vi) downwelling longwave radiation (W/m2). 
 
 ![Figure 1: Different steps involved in calculation of thermal comfort using SOLWEIG-GPU. CPU and GPU based calculations are shown. The entire workflow can be executed using a Python function `thermal_comfort`, or CLI or using the GUI.](figures/figure1.png)
 
