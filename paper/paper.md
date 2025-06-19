@@ -56,7 +56,7 @@ The original SOLWEIG model [@lindberg2018umep] was developed to calculate TMRT o
 # Functionality 
 SOLWEIG-GPU has been tested on Ubuntu (on NVIDIA A6000 and CPU), Windows 11 (on NVIDIA RTX 4600 and CPU), and MAC OS (on CPU), and also on Texas Advanced Computing Center’s (TACC) Lonestar-6 and Vista clusters (on NVIDIA A100 and H100 GPUs). SOLWEIG-GPU requires the following inputs: (i) Building digital surface model (DSM) that includes both buildings and terrain height, (ii) Digital elevation model (DEM) that is the bare ground elevation, (iii). Tree or vegetation DSM that only represents the vegetation height (iv). UMEP style land cover (optional), and (v) meteorological forcing. Allowed land cover types are asphalt or paved, buildings, grass, bare soil, and wate,r but users can add their own land cover types provided they know the thermal properties for the land surface (e.g., albedo and emissivity). All the input datasets must be of the same spatial resolution, projection, and spatial extent. The recommended projection is the Universal Transverse Mercator (UTM). For example, Austin, Texas, comes under WGS 84/UTM zone 14N or EPSG: 32614. Necessary meteorological variables are (i) 2-meter air temperature (℃), (ii) relative humidity (%), (iii) barometric pressure (kPa), (iv) near-surface wind speed (m/s), (v) downwelling shortwave radiation (W/m2) and (vi) downwelling longwave radiation (W/m2). 
 
-
+![Figure 1: Different steps involved in calculation of thermal comfort using SOLWEIG-GPU. CPU and GPU based calculations are shown. The entire workflow can be executed using a Python function `thermal_comfort`, or CLI or using the GUI.](figures/figure1.png)
 
 Figure 1 shows the workflow of SOLWEIG-GPU, and a detailed description of SOLWEIG-GPU functionalities are as follows:
   1. For larger geographical domain simulations, SOLWEIG-GPU can divide the domain into smaller tiles as shown in Figure 1. The size of tiles can be set using the variable tile_size. tile_size should be selected based on the RAM availability on the GPU. If a chosen tile_size is greater than the input raster dimensions, a single tile, which is the same as the original raster, will be created.
@@ -72,15 +72,15 @@ Figure 1 shows the workflow of SOLWEIG-GPU, and a detailed description of SOLWEI
 For demonstration of the code and to familiarize oneself with the input data requirements/format, the sample dataset on Zenodo can be used. SOLWEIG-GPU can be run in three different ways depending on the code adaptation:
   1. Python or “call within your Python code”: This is useful if a user wants to calculate the required variables within their Python script or wants to directly post-process the outputs from SOLWEIG-GPU (e.g., plot or run statistical analysis). In the example shown in Figure 2: selected date is the day of the simulation, landcover = 0 implies that the land cover dataset is not used (landcover = 1 if land cover dataset is used and landcover_filename must be supplied), tile_size is set to 3600 meaning the tiles will be 3600 x 3600 pixels, meteorological data created using UMEP was used (thus use_own_met = True), use_own_file is the path to the UMEP meteorological forcing (in .txt format), and lastly only UTCI and sky-view factor outputs were saved. The rest of the inputs shown in Figure 2 are optional if use_own_met = True. However, if gridded datasets are to be used, use_own_met = False. Additionally, the source of the gridded files must be mentioned (ERA5 or WRFOUT), and the folder path where gridded data is stored should be given in data_folder. The start_time and end_time are the first and last hours of data in the gridded datasets in UTC. 
 
-
+![Figure 2: A single line code to call the function thermal_comfort that performs all the tasks described in Figure 1.](figures/figure2.png)
 
   2. Using CLI: This method is useful if the users want to run SOLWEIG-GPU on the terminal or using functions like os.system(). Figure 3 shows an example of command-line interface operation. The explanation of the code in Figure 3 follows Figure 2.
 
+![Figure 3: Running SOLWEIG-GPU using command line interface.](figures/figure3.png)
 
+  3. Using GUI: This is the simplest way of running SOLWEIG-GPU. To launch the GUI, users must type solweig_gpu in the command line, and a simple and self-explanatory GUI, as shown in Figure 4, will pop up.
 
-  3. Using GUI: This is the simplest way of running SOLWEIG-GPU. To launch the GUI, users must type solweig_gpu in the command line and a simple and self explanatory GUI as shown in Figure 4 will pop-up.
-
-
+![Figure 4: Graphical user interface (GUI) for SOLWEIG-GPU.](figures/figure4.png)
 
 When ERA-5 is chosen for meteorological forcing, the model expects two files in the data_folder that have instantaneous and accumulated data variables. Typically, these files are named ‘data_stream-oper_stepType-accum.nc’ and ‘data_stream-oper_stepType-instant.nc’. The mandatory variables, along with the variable names in the ERA-5 dataset are as follows: 
   1. Instantaneous variables: 2-meter temperature (t2m), 2-meter dew point temperature (d2m), and winds in meridional and zonal directions (u10 and v10).
