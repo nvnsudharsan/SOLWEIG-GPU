@@ -19,7 +19,12 @@ jobs:
 
       - name: Compile JOSS paper
         run: |
-           pandoc paper/paper.md --citeproc --pdf-engine=pdflatex -o paper.pdf
+          pandoc paper/paper.md \
+            --citeproc \
+            --pdf-engine=pdflatex \
+            --bibliography=paper/paper.bib \
+            --resource-path=paper \
+            -o paper.pdf
 
       - name: Upload PDF as artifact
         uses: actions/upload-artifact@v4
