@@ -6,7 +6,6 @@ tags:
   - Solweig
   - GPU
   - Urban
-  - 
 authors:
   - name: Harsh Kamath
     orcid: 0000-0002-5210-8369
