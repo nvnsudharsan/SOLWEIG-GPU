@@ -92,7 +92,7 @@ The selected outputs will be written in a new folder named ‘Outputs’. In thi
 # Applications
 We present one notable application of SOLWEIG-GPU. In this first application, thermal comfort processing time was critical. The requirement was to estimate the day-ahead thermal comfort along the 2024 Paris Olympics marathon track, which was made possible using GPU acceleration. SOLWEIG-GPU was initialized on the previous day using the  ECMWF Integrated Forecasting System (IFS) day-ahead meteorological forecasts and UT-GLOBUS building dataset [@kamath2024globus]. The entire simulation of thermal comfort was completed in about 6 hours. Figure 5 shows a 3-D map of Paris where the basemap is the UTCI and the marathon track is shown as a black solid line.
 
-
+![Figure 5: Day-ahead UTCI estimated using SOLWEIG-GPU in Paris for the marathon. Visualization created using ArcGIS.](figures/figure5.png)
 
 
 # Comparison with SOLWEIG - CPU
