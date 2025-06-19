@@ -2,10 +2,8 @@ name: Build JOSS Paper
 
 on:
   push:
-    paths:
-      - paper.md
-      - paper.bib
-      - figures/**
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
