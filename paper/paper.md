@@ -109,6 +109,6 @@ Table 1. Comparison of time taken for UTCI computation using CPU and GPU-based m
 
 # Acknowledgements
 
-
+We acknowledge the use of Texas Advanced Computing Center (TACC) system Lonestar6 (allocation ATM23014). This research funded by 
 
 # References
