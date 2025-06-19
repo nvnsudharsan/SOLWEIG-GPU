@@ -1,7 +1,7 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
 <p align="center">
-  <img src="/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
+  <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 
 **SOLWEIG** was originally developed by Dr. Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. Int J Biometeorol 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
 
-**SOLWEIG GPU** code is an extention of the original **SOLWEIG** python model that is the part of the Urban Multi-scale Environmental Predictor (UMEP) (GitHub code reference: https://github.com/UMEP-dev/UMEP). UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. Environmental modelling & software, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
+**SOLWEIG GPU** code is an extension of the original **SOLWEIG** Python model that is part of the Urban Multi-scale Environmental Predictor (UMEP) (GitHub code reference: https://github.com/UMEP-dev/UMEP). UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. Environmental modelling & software, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
 
 ---
 
@@ -26,11 +26,11 @@
 
 - CPU and GPU support (automatically uses GPU if available)
 - Divides larger areas into tiles based on the selected tile size
-- CPU-based computations of wall height and aspect parallelized across multiple CPUs
+- CPU-based computations of wall height and aspect are parallelized across multiple CPUs
 - GPU-based computation of SVF, shortwave/longwave radiation, shadows, Tmrt, and UTCI
 - Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
 
-![SOLWEIG-GPU workflow ](/solweig_diagram.png)
+![SOLWEIG-GPU workflow ](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/solweig_diagram.png)
 *Flowchart of the SOLWEIG-GPU modeling framework*
 
 ---
@@ -64,7 +64,7 @@
 - SVF: Single-band raster
 - Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
 
-![UTCI for New Delhi](/UTCI_New_Delhi.jpeg)
+![UTCI for New Delhi](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/UTCI_New_Delhi.jpeg)
 *UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
 
 ---
@@ -95,7 +95,6 @@ thermal_comfort(
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
-    landcover = 0,
     landcover_filename = None,
     tile_size=3600,
     use_own_met=True,
@@ -125,8 +124,7 @@ thermal_comfort --base_path /path/to/input \
                 --building_dsm_filename Building_DSM.tif \
                 --dem_filename DEM.tif \
                 --trees_filename Trees.tif \
-                --landcover 0 \
-                --landcover_filename None 
+                --landcover_filename None \
                 --tile_size 3600 \
                 --use_own_met True \
                 --own_met_file /path/to/met.txt \
@@ -150,7 +148,7 @@ conda activate solweig
 solweig_gpu
 ```
 
-![GUI](/GUI.png)
+![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI.png)
 
 ### GUI Workflow
 1. Select the **base path** containing input datasets.
