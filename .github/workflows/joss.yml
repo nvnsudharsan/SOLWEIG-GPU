@@ -1,0 +1,30 @@
+name: Build JOSS Paper
+
+on:
+  push:
+    paths:
+      - paper.md
+      - paper.bib
+      - figures/**
+  workflow_dispatch:
+
+jobs:
+  build-paper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Pandoc with LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive texlive-latex-extra texlive-fonts-recommended
+
+      - name: Compile JOSS paper
+        run: |
+          pandoc paper.md --citeproc --pdf-engine=pdflatex -o output.pdf
+
+      - name: Upload PDF as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: joss-paper
+          path: output.pdf
