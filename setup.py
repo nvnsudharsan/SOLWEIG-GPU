@@ -12,7 +12,7 @@ setup(
     long_description_content_type='text/markdown',
     author="Harsh Kamath, Naveen Sudharsan",
     author_email="harsh.kamath@utexas.edu, naveens@utexas.edu",
-    url="https://github.com/nvnsudharsan/SOLWEIF-GPU",
+    url="https://github.com/nvnsudharsan/SOLWEIG-GPU",
     packages=find_packages(),  
     include_package_data=True, 
     package_data={
