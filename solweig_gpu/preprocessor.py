@@ -163,7 +163,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var  = nc.createVariable('WIND', 'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
+       # glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         
         # The time units are defined relative to the start time.
         time_var.units = "hours since 1970-01-01 00:00:00"
@@ -176,7 +176,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         rh2_var.units = "%"
         wind_var.units = "m/s"
         swdown_var.units = "W/m^2"
-        glw_var.units = "W/m^2"
+       # glw_var.units = "W/m^2"
         
         time_var[:] = date2num(time_array, units=time_var.units, calendar=time_var.calendar)
         lat_var[:, :] = lat2d
@@ -187,7 +187,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         rh2_var[:, :, :]   = relative_humidities
         wind_var[:, :, :]  = wind_speeds
         swdown_var[:, :, :] = shortwave_radiation
-        glw_var[:, :, :]    = longwave_radiation
+        #glw_var[:, :, :]    = longwave_radiation
 
     print("ERA5 forcing file created:", output_file)
 
@@ -264,7 +264,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
             t2_list.append(t2)
             tsk_list.append(ds['TSK'].values)       # Land surface temperature (K)
             swdown_list.append(ds['SWDOWN'].values)    # Downwelling shortwave radiation (W/m^2)
-            glw_list.append(ds['GLW'].values)          # Downwelling longwave radiation (W/m^2)
+            #glw_list.append(ds['GLW'].values)          # Downwelling longwave radiation (W/m^2)
             psfc_list.append(psfc)
             
             # Calculate wind speed from U10 and V10 components at 10 m.
@@ -287,7 +287,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     rh2_array     = np.concatenate(rh2_list, axis=0)
     tsk_array     = np.concatenate(tsk_list, axis=0)
     swdown_array  = np.concatenate(swdown_list, axis=0)
-    glw_array     = np.concatenate(glw_list, axis=0)
+    #glw_array     = np.concatenate(glw_list, axis=0)
     psfc_array    = np.concatenate(psfc_list, axis=0)
     
     # Create a new NetCDF file and write the combined data.
@@ -305,7 +305,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         tsk_var   = nc.createVariable('TSK', 'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
+     #   glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         psfc_var  = nc.createVariable('PSFC', 'f4', ('time', 'lat', 'lon'), zlib=True)
         
         time_var.units = "hours since 1970-01-01 00:00:00"
@@ -318,7 +318,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         rh2_var.units = "%"
         tsk_var.units = "K"
         swdown_var.units = "W/m^2"
-        glw_var.units = "W/m^2"
+       # glw_var.units = "W/m^2"
         psfc_var.units = "Pa"
         
         time_var[:] = date2num(time_array, units=time_var.units, calendar=time_var.calendar)
@@ -330,7 +330,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         rh2_var[:, :, :]   = rh2_array
         tsk_var[:, :, :]   = tsk_array
         swdown_var[:, :, :] = swdown_array
-        glw_var[:, :, :]    = glw_array
+        #glw_var[:, :, :]    = glw_array
         psfc_var[:, :, :]   = psfc_array
     
     print(f"New NetCDF file created: {output_file}")
@@ -358,11 +358,11 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
         "Td": "T2",         # Temperature in Kelvin (to be converted to °C)
         "press": "PSFC",    # Pressure in Pascals (to be converted to kPa)
         "Kdn": "SWDOWN",    
-        "ldown": "GLW"      
+       # "ldown": "GLW"      
     }
     fixed_values = {
         "Q*": -999, "QH": -999, "QE": -999, "Qs": -999, "Qf": -999,
-        "snow": -999, "fcld": -999, "wuh": -999, "xsmd": -999, "lai_hr": -999,
+        "snow": -999,"ldown": -999, "fcld": -999, "wuh": -999, "xsmd": -999, "lai_hr": -999,
         "Kdiff": -999, "Kdir": -999, "Wd": -999,
         "rain": 0
     }
@@ -387,7 +387,8 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
         'iy', 'id', 'it', 'imin',
         'Q*', 'QH', 'QE', 'Qs', 'Qf',
         'Wind', 'RH', 'Td', 'press',
-        'Kdn', 'ldown','rain', 'snow', 'fcld', 'wuh', 'xsmd', 'lai_hr',
+        'Kdn','rain', 'snow', 'ldown',
+        'fcld', 'wuh', 'xsmd', 'lai_hr',
         'Kdiff', 'Kdir', 'Wd'
     ]
     columns_out = [
@@ -475,7 +476,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
             row = [year, doy, hour, minute]
             row.extend([fixed_values[key] for key in ["Q*", "QH", "QE", "Qs", "Qf"]])
             
-            for key in ["Wind", "RH", "Td", "press", "Kdn", "ldown"]:
+            for key in ["Wind", "RH", "Td", "press", "Kdn"]:
                 var_name = var_map[key]
                 if var_name in dataset.variables:
                     try:
@@ -559,7 +560,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
             
             
             row.append(fixed_values["rain"])
-            row.extend([fixed_values[key] for key in ["snow", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir", "Wd"]])
+            row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir", "Wd"]])
             met_new.append(row)
 
         df = pd.DataFrame(met_new, columns=columns)
