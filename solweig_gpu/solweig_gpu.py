@@ -6,6 +6,7 @@ def thermal_comfort(
     trees_filename='Trees.tif',
     landcover_filename: str | None = None ,  
     tile_size=3600, 
+    overlap = 20,
     use_own_met=True,
     start_time=None, 
     end_time=None, 
@@ -28,7 +29,7 @@ def thermal_comfort(
     import torch
 
     ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
-         landcover_filename, tile_size, selected_date_str, use_own_met,
+         landcover_filename, tile_size, overlap, selected_date_str, use_own_met,
          start_time, end_time, data_source_type, data_folder,
          own_met_file)
 
