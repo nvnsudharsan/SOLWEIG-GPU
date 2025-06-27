@@ -616,7 +616,7 @@ def create_met_files(base_path, source_met_file):
 # method need to be provided.
 # =============================================================================
 def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcover_filename,
-         tile_size, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
+         tile_size, overlap, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
          own_met_file=None):
 
     building_dsm_path = os.path.join(base_path, building_dsm_filename)
@@ -652,7 +652,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")
-        create_tiles(raster, tile_size, tile_type)
+        create_tiles(raster, tile_size, overlap, tile_type)
     
     # For metfiles processing, we use the DEM tiles folder.
     dem_tiles_folder = os.path.join(os.path.dirname(dem_path), "DEM")
