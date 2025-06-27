@@ -22,7 +22,7 @@ from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
 from .calculate_utci import utci_calculator
 import os
-from .preprocessor import ppr
+# from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
 gdal.UseExceptions()
 
