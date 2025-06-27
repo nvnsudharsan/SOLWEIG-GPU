@@ -56,8 +56,12 @@ def check_rasters(files):
 # =============================================================================
 # Function to tile a raster file into smaller chunks.
 # =============================================================================
-def create_tiles(infile, tilesize, tile_type):
+def create_tiles(infile, tilesize, overlap, tile_type):
     ds = gdal.Open(infile)
+
+    if overlap < 0 or overlap >= tilesize:
+        raise ValueError("overlap must be 0 ≤ overlap < tilesize")
+    
     if ds is None:
         raise FileNotFoundError(f"Could not open {infile}")
 
@@ -81,8 +85,8 @@ def create_tiles(infile, tilesize, tile_type):
 
     for i in range(0, width, tilesize):
         for j in range(0, height, tilesize):
-            tile_width = min(tilesize, width - i)
-            tile_height = min(tilesize, height - j)
+            tile_width = min(tilesize + overlap, width - i)
+            tile_height = min(tilesize + overlap, height - j)
             outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
             options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
             gdal.Translate(outfile, ds, options=options)
