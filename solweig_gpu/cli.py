@@ -10,6 +10,7 @@ def main():
     parser.add_argument('--trees', default='Trees.tif', help='Filename of the trees raster')
     parser.add_argument('--landcover', default = None, help = 'Filename of the landcover raster')
     parser.add_argument('--tile_size', type=int, default=3600, help='Tile size for GPU processing (e.g., 100 to 4000)')
+    parser.add_argument('--overlap', type=int, default=20, help='Overlap to nearby tiles, should be less than tile size')
     parser.add_argument('--use_own_met', type=bool, default=True, help='Set to True if using your own meteorological file')
     parser.add_argument('--own_metfile', default = None, help='Path to your own meteorological file')
     parser.add_argument('--data_source_type', default=None, help='Specify source of meteorological data (e.g., ERA5 or WRF), if not providing met file')
@@ -40,6 +41,7 @@ def main():
         trees_filename=args.trees,
         landcover_filename=args.landcover,
         tile_size=args.tile_size,
+        overlap=args.overlap,
         use_own_met=args.use_own_met,
         own_met_file=args.own_metfile,
         start_time=args.start,
