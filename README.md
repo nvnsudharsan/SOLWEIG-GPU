@@ -14,7 +14,7 @@
 
 
 
-**SOLWEIG-GPU** is a Python package and command-line interface for running the SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
+**SOLWEIG-GPU** is a Python package and command-line interface for running standalone SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
 **SOLWEIG** was originally developed by Dr. Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. Int J Biometeorol 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
 
@@ -96,7 +96,8 @@ thermal_comfort(
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
     landcover_filename = None,
-    tile_size=3600,
+    tile_size =3600,
+    overlap = 100,
     use_own_met=True,
     own_met_file='/path/to/met.txt',
     start_time='2020-08-13 00:00:00',
@@ -163,3 +164,14 @@ solweig_gpu
 7. Output will be saved in `Outputs/`, with subfolders for each tile.
 
 ---
+
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+Please keep your pull requests small and focused. This will make it easier to review and merge.
+
+
