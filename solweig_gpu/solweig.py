@@ -60,7 +60,7 @@ def sunonsurface_2018a(azimuthA, scale, buildings, shadow, sunwall, first, secon
     f = buildings
     Lup = SBC * emis_grid * (Tg * shadow + Ta + 273.15) ** 4 - SBC * emis_grid * (Ta + 273.15) ** 4
     if landcover == 1:
-        Tg[lc_grid == 3] = Twater - Ta
+        Tg[lc_grid == 3] = (Twater - Ta).float()
 
     Lwall = SBC * ewall * (Tgwall + Ta + 273.15) ** 4 - SBC * ewall * (Ta + 273.15) ** 4
     albshadow = alb_grid * shadow
@@ -1727,7 +1727,7 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
         # # # # Lup # # # #
         Lup = SBC * emis_grid * ((Knight + Ta + Tg + 273.15) ** 4)
         if landcover == 1:
-            Lup[lc_grid == 3] = SBC * 0.98 * (Twater + 273.15) ** 4  # nocturnal Water temp
+            Lup[lc_grid == 3] = (SBC * 0.98 * (Twater + 273.15) ** 4).float()  # nocturnal Water temp
 
         LupE = Lup
         LupS = Lup
