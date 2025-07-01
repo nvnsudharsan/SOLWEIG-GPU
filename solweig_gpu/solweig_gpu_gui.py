@@ -320,7 +320,7 @@ class SOLWEIGApp(QWidget):
             trees_filename=self.trees.text(),
             landcover_filename=self.landcover.text() if self.landcover.text().strip() else None,
             tile_size=self.tile_size_input.value(),
-            overlap=self.overlap.value()
+            overlap=self.overlap.value(),
             use_own_met=use_own_met,
             own_met_file=self.met_path_input.text() if use_own_met else None,
             data_source_type=data_source_type,
