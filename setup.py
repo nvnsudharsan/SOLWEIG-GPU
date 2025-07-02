@@ -41,8 +41,9 @@ setup(
     python_requires=">=3.8",
     entry_points={
         'console_scripts': [
+            'solweig_gpu=solweig_gpu.cli:main',
             'thermal_comfort=solweig_gpu.cli:main',
-            'solweig_gpu=solweig_gpu.solweig_gpu_gui:main',
+            'solweig_gpu_gui=solweig_gpu.solweig_gpu_gui:main',
         ],
     },
 )
