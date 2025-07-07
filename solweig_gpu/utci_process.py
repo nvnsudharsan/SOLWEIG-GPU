@@ -266,6 +266,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Lup_all   = []
     Ldown_all = []
     Shadow_all= []
+    CI = 1.0
     for i in np.arange(0, Ta.__len__()):
         if landcover == 1:
             if ((dectime[i] - np.floor(dectime[i]))) == 0 or (i == 0):
