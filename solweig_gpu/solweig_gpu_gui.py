@@ -194,12 +194,15 @@ class SOLWEIGApp(QWidget):
         self.tile_size_input = QSpinBox()
         self.tile_size_input.setRange(100, 10000)
         self.tile_size_input.setValue(3600)
+        self.overlap = QSpinBox()
+        self.overlap.setValue(20)
 
         layout.addRow(self._label_with_help("Building DSM", "Digital Surface Model representing building heights."), self._with_browse(self.building_dsm))
         layout.addRow(self._label_with_help("DEM", "Digital Elevation Model of the terrain."), self._with_browse(self.dem))
         layout.addRow(self._label_with_help("Trees", "Raster layer representing vegetation height."), self._with_browse(self.trees))
         layout.addRow(self._label_with_help("Landcover", "Raster file for Landcover (Optional)"), self._with_browse(self.landcover))
         layout.addRow(self._label_with_help("Tile Size", "Controls resolution of GPU processing (100–10000)."), self.tile_size_input)
+        layout.addRow(self._label_with_help("Overlap", "Overlap to the nearby tile, should be less than the tile size"), self.overlap)
         return layout
 
     def _met_inputs_layout(self):
@@ -317,6 +320,7 @@ class SOLWEIGApp(QWidget):
             trees_filename=self.trees.text(),
             landcover_filename=self.landcover.text() if self.landcover.text().strip() else None,
             tile_size=self.tile_size_input.value(),
+            overlap=self.overlap.value(),
             use_own_met=use_own_met,
             own_met_file=self.met_path_input.text() if use_own_met else None,
             data_source_type=data_source_type,
@@ -402,7 +406,7 @@ class SOLWEIGApp(QWidget):
     
     def on_solweig_done(self):
         self.run_button.setEnabled(True)
-        self.run_button.setText("✅ Completed - Run Again")
+        self.run_button.setText("Completed - Run Again")
         self.progress.setValue(100)
 
     def load_styles(self):
