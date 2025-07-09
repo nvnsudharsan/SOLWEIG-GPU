@@ -453,10 +453,10 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
         utc_start = local_start.astimezone(pytz.utc)
         utc_end = local_end.astimezone(pytz.utc)
         
-        print(
-            f"{shape_name_clean}: Local {selected_date_str} ({timezone_name}) → "
-            f"UTC {utc_start.date()} {utc_start.hour}:00 to {utc_end.date()} {utc_end.hour}:59"
-        )
+        #print(
+        #    f"{shape_name_clean}: Local {selected_date_str} ({timezone_name}) → "
+        #    f"UTC {utc_start.date()} {utc_start.hour} to {utc_end.date()} {utc_end.hour}"
+        #)
         
         time_indices = [
             idx for idx, dt in enumerate(time_base_date)
