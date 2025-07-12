@@ -1,10 +1,12 @@
+from typing import Optional
+
 def thermal_comfort(
     base_path,
     selected_date_str,
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
-    landcover_filename: str | None = None ,  
+    landcover_filename: Optional[str] = None , # Python < 3.10 support  
     tile_size=3600, 
     overlap = 20,
     use_own_met=True,
