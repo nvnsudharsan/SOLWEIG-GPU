@@ -6,7 +6,7 @@ def thermal_comfort(
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
-    landcover_filename: Optional[str] = None , # Python < 3.10 support  
+    landcover_filename: Optional[str] = None, 
     tile_size=3600, 
     overlap = 20,
     use_own_met=True,
