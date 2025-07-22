@@ -146,7 +146,7 @@ thermal_comfort --base_path /path/to/input \
 To launch the GUI:
 ```bash
 conda activate solweig
-solweig_gpu
+solweig_gpu_gui
 ```
 
 ![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI.png)
