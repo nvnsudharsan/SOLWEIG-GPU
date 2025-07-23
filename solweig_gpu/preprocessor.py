@@ -282,7 +282,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
             return datetime.datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
         else:
             # If not matched, return a very early date to push it to the beginning.
-            return datetime.min
+            return datetime.datetime.min
 
     # Sort the file list based on the extracted datetime.
     wrf_files_sorted = sorted(wrf_files, key=extract_datetime)
