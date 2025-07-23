@@ -21,6 +21,15 @@ gdal.UseExceptions()
 # Function to check that all raster files have matching dimensions, pixel size, and CRS.
 # =============================================================================
 def check_rasters(files):
+    """
+    Check that all provided raster files have matching dimensions, pixel size, and CRS.
+
+    Parameters:
+        files (list): List of raster file paths.
+
+    Returns:
+        bool: True if all checks pass, raises ValueError/FileNotFoundError otherwise.
+    """
     if not files:
         raise ValueError("No raster files provided.")
 
@@ -57,6 +66,19 @@ def check_rasters(files):
 # Function to tile a raster file into smaller chunks.
 # =============================================================================
 def create_tiles(infile, tilesize, overlap, tile_type):
+    """
+    Tile a raster file into smaller chunks.
+
+    Parameters:
+        infile (str): Path to input raster.
+        tilesize (int): Size of each tile in pixels.
+        overlap (int): Number of pixels to overlap between tiles.
+        tile_type (str): Label to use for naming output tiles.
+
+    Raises:
+        FileNotFoundError: If the input file is not found.
+        ValueError: If the overlap is not within the valid range.
+    """
     ds = gdal.Open(infile)
 
     if overlap < 0 or overlap >= tilesize:
@@ -106,7 +128,15 @@ def create_tiles(infile, tilesize, overlap, tile_type):
 # =============================================================================
 
 def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
+    """
+    Process ERA5 NetCDF files to create meteorological forcing data for SOLWEIG.
 
+    Parameters:
+        start_time (str): Start datetime string in format "%Y-%m-%d %H:%M:%S".
+        end_time (str): End datetime string in format "%Y-%m-%d %H:%M:%S".
+        folder_path (str): Path containing ERA5 NetCDF files.
+        output_file (str): Output NetCDF file name.
+    """
     start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
     def saturation_vapor_pressure(T):
@@ -213,7 +243,15 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
 # =============================================================================
 
 def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
+    """
+    Process WRF output files to create meteorological forcing data.
 
+    Parameters:
+        start_time (str): Start datetime string in format "%Y-%m-%d %H:%M:%S".
+        end_time (str): End datetime string in format "%Y-%m-%d %H:%M:%S".
+        folder_path (str): Directory containing wrfout files.
+        output_file (str): Output NetCDF file name.
+    """
     start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
 
@@ -244,7 +282,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
             return datetime.datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
         else:
             # If not matched, return a very early date to push it to the beginning.
-            return datetime.min
+            return datetime.datetime.min
 
     # Sort the file list based on the extracted datetime.
     wrf_files_sorted = sorted(wrf_files, key=extract_datetime)
@@ -343,6 +381,15 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
 # Function to process the NetCDF file and create metfiles based on a set of raster tiles.
 # =============================================================================
 def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
+    """
+    Extract meteorological variables from a NetCDF file for each raster tile and write formatted metfiles.
+
+    Parameters:
+        netcdf_file (str): Path to processed NetCDF file.
+        raster_folder (str): Path to raster tiles (e.g., DEM tiles).
+        base_path (str): Base directory for output.
+        selected_date_str (str): Date string (YYYY-MM-DD) for which to extract data.
+    """
     metfiles_folder = os.path.join(base_path, "metfiles")
     os.makedirs(metfiles_folder, exist_ok=True)
     
@@ -590,6 +637,13 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
 # renaming each copy based on the numeric suffix extracted from .tif files.
 # =============================================================================
 def create_met_files(base_path, source_met_file):
+    """
+    Copy a given met file to multiple outputs based on the raster tile filenames.
+
+    Parameters:
+        base_path (str): Base directory containing "Building_DSM" and where to create "metfiles".
+        source_met_file (str): Path to user-provided met file.
+    """
     raster_folder = os.path.join(base_path, 'Building_DSM')
     target_folder = os.path.join(base_path, 'metfiles')
 
@@ -618,7 +672,25 @@ def create_met_files(base_path, source_met_file):
 def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcover_filename,
          tile_size, overlap, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
          own_met_file=None):
+    """
+    Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.
 
+    Parameters:
+        base_path (str): Base working directory.
+        building_dsm_filename (str): Filename of building DSM raster.
+        dem_filename (str): Filename of DEM raster.
+        trees_filename (str): Filename of trees raster.
+        landcover_filename (str): Filename of landcover raster or None.
+        tile_size (int): Tile size in pixels.
+        overlap (int): Overlap between tiles in pixels.
+        selected_date_str (str): Selected date (YYYY-MM-DD).
+        use_own_met (bool): Whether to use a user-provided met file.
+        start_time (str): Start datetime (required if not using own met file).
+        end_time (str): End datetime (required if not using own met file).
+        data_source_type (str): Either 'ERA5' or 'wrfout'.
+        data_folder (str): Folder containing input NetCDF files.
+        own_met_file (str): Path to user-provided met file (used if use_own_met is True).
+    """
     building_dsm_path = os.path.join(base_path, building_dsm_filename)
     dem_path = os.path.join(base_path, dem_filename)
     trees_path = os.path.join(base_path, trees_filename)
