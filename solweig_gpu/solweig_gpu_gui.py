@@ -195,8 +195,8 @@ class SOLWEIGApp(QWidget):
         self.tile_size_input.setRange(100, 10000)
         self.tile_size_input.setValue(3600)
         self.overlap = QSpinBox()
-        self.overlap.setValue(20)
-        self.overlap.setRange(0, 100)
+        self.overlap.setValue(50)
+        self.overlap.setRange(0,100)
 
         layout.addRow(self._label_with_help("Building DSM", "Digital Surface Model representing building heights."), self._with_browse(self.building_dsm))
         layout.addRow(self._label_with_help("DEM", "Digital Elevation Model of the terrain."), self._with_browse(self.dem))
