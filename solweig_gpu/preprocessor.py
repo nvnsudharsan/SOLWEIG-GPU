@@ -531,7 +531,8 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
                 var_name = var_map[key]
                 if var_name in dataset.variables:
                     try:
-                        data_array = dataset.variables[var_name][t, :, :].T
+                        #data_array = dataset.variables[var_name][t, :, :].T
+                        data_array = np.flipud(dataset.variables[var_name][t, :, :])  # Bug fixed during Paris simulations
                         rows_arr, cols_arr = data_array.shape
 
                         # Create an in-memory raster using the netCDF grid
