@@ -31,6 +31,7 @@ setup(
         "xarray",
         "tqdm",
         "PyQt5",
+        "matplotlib"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
