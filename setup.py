@@ -39,7 +39,7 @@ setup(
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     entry_points={
         'console_scripts': [
             'solweig_gpu=solweig_gpu.cli:main',
