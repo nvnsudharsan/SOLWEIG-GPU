@@ -74,7 +74,7 @@
 ```bash
 conda create -n solweig python=3.10
 conda activate solweig
-conda install -c conda-forge gdal cudnn pytorch timezonefinder matplolib pyqt=5 sip
+conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib pyqt=5 sip
 pip install solweig-gpu
 
 ```
