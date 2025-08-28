@@ -63,8 +63,8 @@ def load_raster_to_tensor(dem_path):
 def extract_key(filename, is_metfile=False):
 
     if is_metfile:
-        # look for metfile_X_Y_DATE
-        match = re.search(r'metfile_(\d+)_(\d+)_\d{4}-\d{2}-\d{2}', filename)
+        # look for metfile_X_Y
+        match = re.search(r'metfile_(\d+)_(\d+)', filename)
     else:
         # look for ..._X_Y.tif
         match = re.search(r'_(\d+)_(\d+)', filename)
