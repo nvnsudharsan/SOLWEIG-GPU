@@ -55,7 +55,7 @@ def thermal_comfort(
     landcover_map = map_files_by_key(landcover_dir, ".tif") if landcover_dir else {}
     walls_map = map_files_by_key(walls_dir, ".tif")
     aspect_map = map_files_by_key(aspect_dir, ".tif")
-    met_map = map_files_by_key(inputMet, ".txt", is_metfile=True)
+    met_map = map_files_by_key(inputMet, ".txt")
 
     common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map)
     if landcover_dir:
@@ -77,13 +77,6 @@ def thermal_comfort(
 
         output_folder = os.path.join(base_output_path, key)
         os.makedirs(output_folder, exist_ok=True)
-
-        print(
-            os.path.basename(building_dsm_path), 
-            os.path.basename(tree_path), 
-            os.path.basename(dem_path), 
-            os.path.basename(met_file_path)
-        )
 
         met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ')
 
