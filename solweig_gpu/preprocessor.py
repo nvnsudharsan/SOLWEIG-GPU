@@ -21,6 +21,45 @@ import shutil
 
 gdal.UseExceptions()
 
+WRF_PATTERNS = [
+    re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}_\d{2}_\d{2})$'),  # HH_MM_SS
+    re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})$'),  # HH:MM:SS
+    re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2})$'),              # HH
+]
+
+def _match_wrfout(base):
+    for i, rx in enumerate(WRF_PATTERNS):
+        m = rx.match(base)
+        if m:
+            return i, m
+    return None, None
+
+def extract_datetime_strict(filename):
+    """
+    Return (datetime, domain_int) for strictly valid wrfout names.
+    Raises ValueError for any non-matching filename.
+    """
+    base = os.path.basename(filename)
+    idx, m = _match_wrfout(base)
+    if m is None:
+        raise ValueError(f"Unsupported wrfout filename: {base}")
+
+    dom = int(m.group(1))         
+    date = m.group(2)             
+    t    = m.group(3)              
+
+    if idx == 0:  # HH_MM_SS
+        hh, mm, ss = map(int, t.split('_'))
+        dt = datetime.datetime(
+            int(date[0:4]), int(date[5:7]), int(date[8:10]), hh, mm, ss
+        )
+    elif idx == 1:  # HH:MM:SS
+        dt = datetime.datetime.strptime(f"{date}_{t}", "%Y-%m-%d_%H:%M:%S")
+    else:  # idx == 2, HH only
+        dt = datetime.datetime.strptime(f"{date}_{t}", "%Y-%m-%d_%H")
+
+    return dt, dom
+
 # =============================================================================
 # Function to check that all raster files have matching dimensions, pixel size, and CRS.
 # =============================================================================
@@ -274,22 +313,25 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     # List and sort the WRF output files from the folder.
     # Files are assumed to be named like: "wrfout_d03_YYYY-MM-DD_HH:MM:SS"
     all_files = os.listdir(folder_path)
-    wrf_files = [f for f in all_files if f.startswith("wrfout")]
+    #wrf_files = [f for f in all_files if f.startswith("wrfout")]
     
     # Define a helper to extract datetime from the filename.
-    def extract_datetime(filename):
-        # Use regex to extract the date/time part.
-        # The expected format is something like: wrfout_d03_2020-08-12_18:00:00
-        match = re.search(r"wrfout_\w+_(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2})", filename)
-        if match:
-            dt_str = match.group(1)
-            return datetime.datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
-        else:
-            # If not matched, return a very early date to push it to the beginning.
-            return datetime.datetime.min
+    wrf_files = []
+    for f in all_files:
+        try:
+            extract_datetime_strict(f)   # will raise if not valid
+            wrf_files.append(f)
+        except ValueError:
+            continue
 
-    # Sort the file list based on the extracted datetime.
-    wrf_files_sorted = sorted(wrf_files, key=extract_datetime)
+    if not wrf_files:
+        raise FileNotFoundError(
+            "No wrfout files matching the required patterns were found "
+            "(wrfout_d0x_YYYY-MM-DD_HH_MM_SS | HH:MM:SS | HH with x=1..9)."
+        )
+
+    # Sort by timestamp, then by domain number for stable ordering
+    wrf_files_sorted = sorted(wrf_files, key=lambda f: extract_datetime_strict(f))
     
     # Generate the time array for the simulation period (hourly frequency)
     total_hours = int((end_time - start_time).total_seconds() // 3600) + 1
@@ -752,3 +794,4 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         
         # Process the generated NetCDF file to create metfiles.
         process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str)
+
