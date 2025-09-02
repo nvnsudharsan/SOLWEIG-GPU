@@ -8,3 +8,4 @@ shapely
 timezonefinder
 xarray
 tqdm
+matplotlib

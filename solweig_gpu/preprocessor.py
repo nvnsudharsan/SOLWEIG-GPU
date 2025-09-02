@@ -11,11 +11,54 @@ import shutil
 from netCDF4 import Dataset, date2num
 from datetime import timedelta
 from osgeo import gdal, ogr, osr
-from shapely.geometry import box
+from shapely.geometry import box, Polygon
+from matplotlib.path import Path
 from timezonefinder import TimezoneFinder
+from scipy.spatial import cKDTree
+import math
 from tqdm import tqdm
 import shutil
+
 gdal.UseExceptions()
+
+WRF_PATTERNS = [
+    re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}_\d{2}_\d{2})$'),  # HH_MM_SS
+    re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})$'),  # HH:MM:SS
+    re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2})$'),              # HH
+]
+
+def _match_wrfout(base):
+    for i, rx in enumerate(WRF_PATTERNS):
+        m = rx.match(base)
+        if m:
+            return i, m
+    return None, None
+
+def extract_datetime_strict(filename):
+    """
+    Return (datetime, domain_int) for strictly valid wrfout names.
+    Raises ValueError for any non-matching filename.
+    """
+    base = os.path.basename(filename)
+    idx, m = _match_wrfout(base)
+    if m is None:
+        raise ValueError(f"Unsupported wrfout filename: {base}")
+
+    dom = int(m.group(1))         
+    date = m.group(2)             
+    t    = m.group(3)              
+
+    if idx == 0:  # HH_MM_SS
+        hh, mm, ss = map(int, t.split('_'))
+        dt = datetime.datetime(
+            int(date[0:4]), int(date[5:7]), int(date[8:10]), hh, mm, ss
+        )
+    elif idx == 1:  # HH:MM:SS
+        dt = datetime.datetime.strptime(f"{date}_{t}", "%Y-%m-%d_%H:%M:%S")
+    else:  # idx == 2, HH only
+        dt = datetime.datetime.strptime(f"{date}_{t}", "%Y-%m-%d_%H")
+
+    return dt, dom
 
 # =============================================================================
 # Function to check that all raster files have matching dimensions, pixel size, and CRS.
@@ -270,22 +313,25 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     # List and sort the WRF output files from the folder.
     # Files are assumed to be named like: "wrfout_d03_YYYY-MM-DD_HH:MM:SS"
     all_files = os.listdir(folder_path)
-    wrf_files = [f for f in all_files if f.startswith("wrfout")]
+    #wrf_files = [f for f in all_files if f.startswith("wrfout")]
     
     # Define a helper to extract datetime from the filename.
-    def extract_datetime(filename):
-        # Use regex to extract the date/time part.
-        # The expected format is something like: wrfout_d03_2020-08-12_18:00:00
-        match = re.search(r"wrfout_\w+_(\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2})", filename)
-        if match:
-            dt_str = match.group(1)
-            return datetime.datetime.strptime(dt_str, "%Y-%m-%d_%H:%M:%S")
-        else:
-            # If not matched, return a very early date to push it to the beginning.
-            return datetime.datetime.min
+    wrf_files = []
+    for f in all_files:
+        try:
+            extract_datetime_strict(f)   # will raise if not valid
+            wrf_files.append(f)
+        except ValueError:
+            continue
 
-    # Sort the file list based on the extracted datetime.
-    wrf_files_sorted = sorted(wrf_files, key=extract_datetime)
+    if not wrf_files:
+        raise FileNotFoundError(
+            "No wrfout files matching the required patterns were found "
+            "(wrfout_d0x_YYYY-MM-DD_HH_MM_SS | HH:MM:SS | HH with x=1..9)."
+        )
+
+    # Sort by timestamp, then by domain number for stable ordering
+    wrf_files_sorted = sorted(wrf_files, key=lambda f: extract_datetime_strict(f))
     
     # Generate the time array for the simulation period (hourly frequency)
     total_hours = int((end_time - start_time).total_seconds() // 3600) + 1
@@ -378,24 +424,51 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     print(f"New NetCDF file created: {output_file}")
     
 # =============================================================================
-# Function to process the NetCDF file and create metfiles based on a set of raster tiles.
+# Functions to process the NetCDF file and create metfiles based on a set of raster tiles.
 # =============================================================================
+def _haversine_m(lat1, lon1, lat2, lon2):
+    # distance in meters
+    R = 6371000.0
+    phi1 = math.radians(lat1); phi2 = math.radians(lat2)
+    dphi = phi2 - phi1
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    return 2*R*math.asin(math.sqrt(a))
+
+def _local_cell_size_m(lon2d, lat2d, cx, cy, tree):
+    ny, nx = lat2d.shape
+    _, idx = tree.query([cx, cy], k=1)
+    i, j = np.unravel_index(idx, (ny, nx))
+    ew, ns = [], []
+    def dist(i1, j1, i2, j2):
+        return _haversine_m(lat2d[i1,j1], lon2d[i1,j1], lat2d[i2,j2], lon2d[i2,j2])
+    if j-1 >= 0: ew.append(dist(i,j, i, j-1))
+    if j+1 < nx: ew.append(dist(i,j, i, j+1))
+    if i-1 >= 0: ns.append(dist(i,j, i-1, j))
+    if i+1 < ny: ns.append(dist(i,j, i+1, j))
+    anyd = ew + ns
+    if not anyd:
+        return 1e30, 1e30
+    cell_w = np.median(ew) if ew else np.median(anyd)
+    cell_h = np.median(ns) if ns else np.median(anyd)
+    return cell_w, cell_h
+
+def _tile_size_m(poly):
+    minx, miny, maxx, maxy = poly.bounds
+    cx, cy = (minx+maxx)/2.0, (miny+maxy)/2.0
+    w = _haversine_m(cy, minx, cy, maxx) 
+    h = _haversine_m(miny, cx, maxy, cx) 
+    return w, h
+
 def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
     """
-    Extract meteorological variables from a NetCDF file for each raster tile and write formatted metfiles.
-
-    Parameters:
-        netcdf_file (str): Path to processed NetCDF file.
-        raster_folder (str): Path to raster tiles (e.g., DEM tiles).
-        base_path (str): Base directory for output.
-        selected_date_str (str): Date string (YYYY-MM-DD) for which to extract data.
+    Minimal-edits, curvilinear-safe version of your function.
     """
     metfiles_folder = os.path.join(base_path, "metfiles")
     os.makedirs(metfiles_folder, exist_ok=True)
     
     tf = TimezoneFinder()
     dataset = nc.Dataset(netcdf_file, "r")
-    mem_driver = gdal.GetDriverByName('MEM')
     
     tif_files = glob.glob(os.path.join(raster_folder, "*.tif"))
     if not tif_files:
@@ -406,14 +479,13 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
     var_map = {
         "Wind": "WIND",     
         "RH": "RH2",
-        "Td": "T2",         # Temperature in Kelvin (to be converted to °C)
-        "press": "PSFC",    # Pressure in Pascals (to be converted to kPa)
-        "Kdn": "SWDOWN",    
-       # "ldown": "GLW"      
+        "Td": "T2",         # K -> °C
+        "press": "PSFC",    # Pa -> kPa
+        "Kdn": "SWDOWN",       
     }
     fixed_values = {
         "Q*": -999, "QH": -999, "QE": -999, "Qs": -999, "Qf": -999,
-        "snow": -999,"ldown": -999, "fcld": -999, "wuh": -999, "xsmd": -999, "lai_hr": -999,
+        "snow": -999, "ldown": -999, "fcld": -999, "wuh": -999, "xsmd": -999, "lai_hr": -999,
         "Kdiff": -999, "Kdir": -999, "Wd": -999,
         "rain": 0
     }
@@ -421,18 +493,14 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
     time_var = dataset.variables["time"][:]
     time_units = dataset.variables["time"].units
     time_base_date = nc.num2date(time_var, units=time_units, only_use_cftime_datetimes=False)
-    
     selected_local_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d").date()
-    
-    latitudes = dataset.variables["lat"][:]
-    longitudes = dataset.variables["lon"][:]
-    min_lon_nc = np.min(longitudes)
-    max_lon_nc = np.max(longitudes)
-    min_lat_nc = np.min(latitudes)
-    max_lat_nc = np.max(latitudes)
-    width_nc = len(longitudes)
-    height_nc = len(latitudes)
-    netcdf_gt = (min_lon_nc, (max_lon_nc - min_lon_nc) / width_nc, 0, max_lat_nc, 0, -(max_lat_nc - min_lat_nc) / height_nc)
+
+    lat2d = np.array(dataset.variables["lat"][:], dtype=float)  
+    lon2d = np.array(dataset.variables["lon"][:], dtype=float)  
+    ny, nx = lat2d.shape
+    pts_flat = np.column_stack([lon2d.ravel(), lat2d.ravel()])
+    tree = cKDTree(pts_flat)
+    # ----------------------------------------------------------------------------
     
     columns = [
         'iy', 'id', 'it', 'imin',
@@ -464,6 +532,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
         if ds_tif is None:
             print(f"Could not open {tif_file}. Skipping.")
             continue
+
         gt_tif = ds_tif.GetGeoTransform()
         xsize = ds_tif.RasterXSize
         ysize = ds_tif.RasterYSize
@@ -473,6 +542,8 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
         srs_tif.ImportFromWkt(proj_tif)
         target_srs = osr.SpatialReference()
         target_srs.ImportFromEPSG(4326)
+        srs_tif.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        target_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         transform = osr.CoordinateTransformation(srs_tif, target_srs)
 
         left = gt_tif[0]
@@ -480,13 +551,20 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
         right = left + gt_tif[1] * xsize
         bottom = top + gt_tif[5] * ysize
         corners = [(left, top), (right, top), (right, bottom), (left, bottom)]
-        latlon_corners = [transform.TransformPoint(x, y) for x, y in corners]
-        lats = [pt[0] for pt in latlon_corners]
-        lons = [pt[1] for pt in latlon_corners]
+        try:
+            lonlat_corners = [transform.TransformPoint(x, y) for x, y in corners]
+            lons = [pt[0] for pt in lonlat_corners]
+            lats = [pt[1] for pt in lonlat_corners]
+        except Exception as e:
+            print(f"Warning: CRS transform failed for {tif_file}. Assuming EPSG:4326. Error: {e}")
+            lons = [p[0] for p in corners]
+            lats = [p[1] for p in corners]
 
         min_lon_tif, max_lon_tif = min(lons), max(lons)
         min_lat_tif, max_lat_tif = min(lats), max(lats)
         shape = box(min_lon_tif, min_lat_tif, max_lon_tif, max_lat_tif)
+        shape = Polygon([(x, y) for (x, y) in shape.exterior.coords])  # explicitly polygon
+
         shape_name = os.path.splitext(os.path.basename(tif_file))[0]
         shape_name_clean = re.sub(r'\W+', '_', shape_name).replace("DEM", "metfile", 1)
         output_text_file = os.path.join(metfiles_folder, f"{shape_name_clean}_{selected_date_str}.txt")
@@ -500,11 +578,6 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
         utc_start = local_start.astimezone(pytz.utc)
         utc_end = local_end.astimezone(pytz.utc)
         
-        #print(
-        #    f"{shape_name_clean}: Local {selected_date_str} ({timezone_name}) → "
-        #    f"UTC {utc_start.date()} {utc_start.hour} to {utc_end.date()} {utc_end.hour}"
-        #)
-        
         time_indices = [
             idx for idx, dt in enumerate(time_base_date)
             if utc_start <= dt.replace(tzinfo=pytz.utc) <= utc_end
@@ -514,7 +587,18 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
             ds_tif = None
             continue
         print(f"Processing {len(time_indices)} time steps for {shape_name_clean}")
-        
+
+        tile_w_m, tile_h_m = _tile_size_m(shape)
+        cell_w_m, cell_h_m = _local_cell_size_m(lon2d, lat2d, lon_center, lat_center, tree)
+        use_nn = (cell_w_m > tile_w_m) and (cell_h_m > tile_h_m)
+
+        inside_mask = None
+        if not use_nn:
+            path = Path(np.asarray(shape.exterior.coords)[:, :2])
+            inside_mask = path.contains_points(np.column_stack([lon2d.ravel(), lat2d.ravel()])).reshape(lat2d.shape)
+            if not np.any(inside_mask):
+                use_nn = True
+                
         met_new = []
         for t in time_indices:
             utc_time = time_base_date[t].replace(tzinfo=pytz.utc)
@@ -531,85 +615,40 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
                 var_name = var_map[key]
                 if var_name in dataset.variables:
                     try:
-                        #data_array = dataset.variables[var_name][t, :, :].T
-                        data_array = np.flipud(dataset.variables[var_name][t, :, :])  # Bug fixed during Paris simulations
-                        rows_arr, cols_arr = data_array.shape
+                        data_array = dataset.variables[var_name][t, :, :]  # shape (ny, nx)
+                        data_array = np.asanyarray(data_array)
+                        if np.ma.isMaskedArray(data_array):
+                            data_array = np.where(data_array.mask, np.nan, data_array.data)
 
-                        # Create an in-memory raster using the netCDF grid
-                        data_gt = (min_lon_nc, (max_lon_nc - min_lon_nc) / cols_arr, 0,
-                                   max_lat_nc, 0, -(max_lat_nc - min_lat_nc) / rows_arr)
-                        data_ds = mem_driver.Create('', cols_arr, rows_arr, 1, gdal.GDT_Float32)
-                        data_ds.SetGeoTransform(data_gt)
-                        srs = osr.SpatialReference()
-                        srs.ImportFromEPSG(4326)
-                        data_ds.SetProjection(srs.ExportToWkt())
-                        data_ds.GetRasterBand(1).WriteArray(data_array)
-
-                        # Create the mask layer from the shape (polygon from TIFF)
-                        mask_ds = mem_driver.Create('', cols_arr, rows_arr, 1, gdal.GDT_Byte)
-                        mask_ds.SetGeoTransform(data_gt)
-                        mask_ds.SetProjection(srs.ExportToWkt())
-                        mask_ds.GetRasterBand(1).Fill(0)
-
-                        ogr_driver = ogr.GetDriverByName('Memory')
-                        ogr_ds = ogr_driver.CreateDataSource('temp')
-                        layer = ogr_ds.CreateLayer('poly', srs, ogr.wkbPolygon)
-                        field_defn = ogr.FieldDefn('id', ogr.OFTInteger)
-                        layer.CreateField(field_defn)
-                        feature_defn = layer.GetLayerDefn()
-                        feature = ogr.Feature(feature_defn)
-                        geom = ogr.CreateGeometryFromWkt(shape.wkt)
-                        feature.SetGeometry(geom)
-                        feature.SetField('id', 1)
-                        layer.CreateFeature(feature)
-                        gdal.RasterizeLayer(mask_ds, [1], layer, burn_values=[1])
-                        mask_array = mask_ds.GetRasterBand(1).ReadAsArray()
-
-                        # Calculate the resolution of the netCDF data_array
-                        pixel_width = data_gt[1]
-                        pixel_height = abs(data_gt[5])
-                        # Calculate the size of the TIFF shape (polygon)
-                        shape_width = max_lon_tif - min_lon_tif
-                        shape_height = max_lat_tif - min_lat_tif
-
-                        # If the netCDF pixel is larger than the shape, use nearest neighbor
-                        if pixel_width > shape_width and pixel_height > shape_height:
-                            centroid = shape.centroid
-                            col_index = int((centroid.x - min_lon_nc) / pixel_width)
-                            row_index = int((max_lat_nc - centroid.y) / pixel_height)
-                            # Check for valid indices
-                            if 0 <= row_index < rows_arr and 0 <= col_index < cols_arr:
-                                mean_value = data_array[row_index, col_index]
-                            else:
-                                mean_value = -999
+                        if use_nn:
+                            # nearest neighbor at centroid using KDTree
+                            _, idx_nn = cKDTree(np.column_stack([lon2d.ravel(), lat2d.ravel()])).query([lon_center, lat_center], k=1)
+                            ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                            mean_value = float(data_array[ii, jj])
                         else:
-                            # Otherwise use the masked average as before
-                            masked_data = np.where(mask_array == 1, data_array, np.nan)
-                            if np.any(~np.isnan(masked_data)):
-                                mean_value = np.nanmean(masked_data)
-                            else:
-                                mean_value = -999
+                            masked_data = np.where(inside_mask, data_array, np.nan)
+                            mean_value = float(np.nanmean(masked_data)) if np.any(~np.isnan(masked_data)) else np.nan
+                            if not np.isfinite(mean_value):
+                                # fallback to NN
+                                _, idx_nn = cKDTree(np.column_stack([lon2d.ravel(), lat2d.ravel()])).query([lon_center, lat_center], k=1)
+                                ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                                mean_value = float(data_array[ii, jj])
 
                         # Adjust units if needed
-                        if key == "Td" and mean_value != -999:
+                        if key == "Td" and np.isfinite(mean_value):
                             mean_value -= 273.15
-                        if key == "press" and mean_value != -999:
+                        if key == "press" and np.isfinite(mean_value):
                             mean_value /= 1000.0
 
+                        if not np.isfinite(mean_value):
+                            mean_value = -999
                         row.append(mean_value)
 
-                        # Clean up temporary datasets
-                        data_ds = None
-                        mask_ds = None
-                        ogr_ds = None
-                    except IndexError:
-                        print(
-                            f"IndexError: Variable {var_name} has incorrect dimensions {dataset.variables[var_name].shape}"
-                        )
+                    except Exception as e:
+                        print(f"Sampling error for {var_name} at time {t}: {e}")
                         row.append(-999)
                 else:
                     row.append(-999)
-            
             
             row.append(fixed_values["rain"])
             row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir", "Wd"]])
@@ -632,7 +671,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
 
     dataset.close()
     print(f"All raster extents processed and metfiles saved in {metfiles_folder}")
-
+    
 # =============================================================================
 # Function to process own met file: copies the source met file into new files
 # renaming each copy based on the numeric suffix extracted from .tif files.
@@ -755,3 +794,4 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         
         # Process the generated NetCDF file to create metfiles.
         process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str)
+
