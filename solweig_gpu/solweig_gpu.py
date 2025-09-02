@@ -78,13 +78,6 @@ def thermal_comfort(
         output_folder = os.path.join(base_output_path, key)
         os.makedirs(output_folder, exist_ok=True)
 
-        print(
-            os.path.basename(building_dsm_path), 
-            os.path.basename(tree_path), 
-            os.path.basename(dem_path), 
-            os.path.basename(met_file_path)
-        )
-
         met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ')
 
         compute_utci(
