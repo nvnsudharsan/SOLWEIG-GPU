@@ -124,6 +124,7 @@ thermal_comfort --base_path /path/to/input \
                 --trees_filename Trees.tif \
                 --landcover_filename None \
                 --tile_size 3600 \
+                --overlap 100 \
                 --use_own_met True \
                 --own_met_file /path/to/met.txt \
                 --start_time "2020-08-13 00:00:00" \
