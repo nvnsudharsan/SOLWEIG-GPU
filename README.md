@@ -147,7 +147,7 @@ conda activate solweig
 solweig_gpu_gui
 ```
 
-![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI.png)
+![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI_new.png)
 
 ### GUI Workflow
 1. Select the **base path** containing input datasets.
