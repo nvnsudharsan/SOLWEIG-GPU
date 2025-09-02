@@ -55,7 +55,7 @@ def thermal_comfort(
     landcover_map = map_files_by_key(landcover_dir, ".tif") if landcover_dir else {}
     walls_map = map_files_by_key(walls_dir, ".tif")
     aspect_map = map_files_by_key(aspect_dir, ".tif")
-    met_map = map_files_by_key(inputMet, ".txt", is_metfile=True)
+    met_map = map_files_by_key(inputMet, ".txt")
 
     common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map)
     if landcover_dir:
