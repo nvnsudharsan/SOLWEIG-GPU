@@ -32,6 +32,7 @@ setup(
         "tqdm",
         "PyQt5",
     ],
+    license="GPL-3.0-or-later",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: POSIX :: Linux",
