@@ -45,7 +45,7 @@
   - ERA5 (both instantaneous and accumulated)
   - WRF output NetCDF (`wrfout`)
 
-> Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at https://utexas.box.com/s/8fctqicidr5cup8kj3tk53jd444pow6z
+> Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at https://utexas.box.com/s/288e33gak03agrck8v25l7ywj9d6yn87
 
 ### ERA5 Variables Required
 - 2-meter air temperature
@@ -74,12 +74,9 @@
 ```bash
 conda create -n solweig python=3.10
 conda activate solweig
-conda install -c conda-forge gdal pytorch
+conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib pyqt=5 sip
 pip install solweig-gpu
-#Or from source 
-git clone https://github.com/nvnsudharsan/solweig-gpu.git
-cd solweig-gpu
-pip install .
+
 ```
 
 ---
@@ -127,6 +124,7 @@ thermal_comfort --base_path /path/to/input \
                 --trees_filename Trees.tif \
                 --landcover_filename None \
                 --tile_size 3600 \
+                --overlap 100 \
                 --use_own_met True \
                 --own_met_file /path/to/met.txt \
                 --start_time "2020-08-13 00:00:00" \
@@ -149,7 +147,7 @@ conda activate solweig
 solweig_gpu_gui
 ```
 
-![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI.png)
+![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI_new.png)
 
 ### GUI Workflow
 1. Select the **base path** containing input datasets.

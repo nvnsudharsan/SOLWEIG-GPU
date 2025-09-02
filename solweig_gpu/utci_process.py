@@ -22,6 +22,7 @@ from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
 from .calculate_utci import utci_calculator
 import os
+import re
 # from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
 gdal.UseExceptions()
@@ -59,9 +60,31 @@ def load_raster_to_tensor(dem_path):
     array = band.ReadAsArray().astype(np.float32)
     return torch.tensor(array, device=device), dataset
 
+def extract_key(filename, is_metfile=False):
+
+    if is_metfile:
+        # look for metfile_X_Y_DATE
+        match = re.search(r'metfile_(\d+)_(\d+)_\d{4}-\d{2}-\d{2}', filename)
+    else:
+        # look for ..._X_Y.tif
+        match = re.search(r'_(\d+)_(\d+)', filename)
+
+    if match:
+        return f"{match.group(1)}_{match.group(2)}"
+    return None
+
 # Function to list matching files in a directory
 def get_matching_files(directory, extension):
     return sorted([f for f in os.listdir(directory) if f.endswith(extension)])
+
+def map_files_by_key(directory, extension, is_metfile=False):
+    files = get_matching_files(directory, extension)
+    mapping = {}
+    for f in files:
+        key = extract_key(f, is_metfile=is_metfile)
+        if key:
+            mapping[key] = os.path.join(directory, f)
+    return mapping
 
 def extract_number_from_filename(filename):
     number = filename[13:-4] # change according to the naming of building DSM files

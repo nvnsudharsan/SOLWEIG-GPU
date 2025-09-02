@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="solweig-gpu",
-    version="1.2.10",
+    version="1.2.14",
     description="GPU-accelerated SOLWEIG model for urban thermal comfort simulation",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -31,6 +31,7 @@ setup(
         "xarray",
         "tqdm",
         "PyQt5",
+        "matplotlib"
     ],
     license="GPL-3.0-or-later",
     classifiers=[
@@ -40,7 +41,7 @@ setup(
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     entry_points={
         'console_scripts': [
             'solweig_gpu=solweig_gpu.cli:main',

@@ -23,57 +23,68 @@ def thermal_comfort(
     save_ldown=False,
     save_shadow=False
 ):
+
     from .preprocessor import ppr
-    from .utci_process import compute_utci, extract_number_from_filename, get_matching_files
+    from .utci_process import compute_utci, map_files_by_key
     from .walls_aspect import run_parallel_processing
     import os
     import numpy as np
     import torch
 
-    ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
-         landcover_filename, tile_size, overlap, selected_date_str, use_own_met,
-         start_time, end_time, data_source_type, data_folder,
-         own_met_file)
+    ppr(
+        base_path, building_dsm_filename, dem_filename, trees_filename,
+        landcover_filename, tile_size, overlap, selected_date_str, use_own_met,
+        start_time, end_time, data_source_type, data_folder, own_met_file
+    )
 
     base_output_path = os.path.join(base_path, "Outputs")
     inputMet = os.path.join(base_path, "metfiles")
     building_dsm_dir = os.path.join(base_path, "Building_DSM")
     tree_dir = os.path.join(base_path, "Trees")
     dem_dir = os.path.join(base_path, "DEM")
-    if landcover_filename is not None:
-        landcover_dir = os.path.join(base_path, "Landcover")
+    landcover_dir = os.path.join(base_path, "Landcover") if landcover_filename is not None else None
     walls_dir = os.path.join(base_path, "walls")
     aspect_dir = os.path.join(base_path, "aspect")
 
-    # Wall and aspect generation
     run_parallel_processing(building_dsm_dir, walls_dir, aspect_dir)
     print("Running Solweig ...")
-    # Load file lists
-    met_files = get_matching_files(inputMet, ".txt")
-    building_dsm_files = get_matching_files(building_dsm_dir, ".tif")
-    tree_files = get_matching_files(tree_dir, ".tif")
-    dem_files = get_matching_files(dem_dir, ".tif")
-    if landcover_filename is not None:
-        landcover_files = get_matching_files(landcover_dir, ".tif")
-    walls_files = get_matching_files(walls_dir, ".tif")
-    aspect_files = get_matching_files(aspect_dir, ".tif")
 
-    # Compute UTCI
-    for i in range(len(building_dsm_files)):
-        building_dsm_path = os.path.join(building_dsm_dir, building_dsm_files[i])
-        tree_path = os.path.join(tree_dir, tree_files[i])
-        dem_path = os.path.join(dem_dir, dem_files[i])
-        if landcover_filename is not None:
-            landcover_path = os.path.join(landcover_dir, landcover_files[i])
-        else:
-            landcover_path = None
-        walls_path = os.path.join(walls_dir, walls_files[i])
-        aspect_path = os.path.join(aspect_dir, aspect_files[i])
-        number = extract_number_from_filename(building_dsm_files[i])
-        output_folder = os.path.join(base_output_path, number)
+    building_dsm_map = map_files_by_key(building_dsm_dir, ".tif")
+    tree_map = map_files_by_key(tree_dir, ".tif")
+    dem_map = map_files_by_key(dem_dir, ".tif")
+    landcover_map = map_files_by_key(landcover_dir, ".tif") if landcover_dir else {}
+    walls_map = map_files_by_key(walls_dir, ".tif")
+    aspect_map = map_files_by_key(aspect_dir, ".tif")
+    met_map = map_files_by_key(inputMet, ".txt", is_metfile=True)
+
+    common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map)
+    if landcover_dir:
+        common_keys &= set(landcover_map)
+
+    def _numeric_key(k: str):
+        x, y = k.split("_")
+        return (int(x), int(y))
+
+    for key in sorted(common_keys, key=_numeric_key):
+
+        building_dsm_path = building_dsm_map[key]
+        tree_path = tree_map[key]
+        dem_path = dem_map[key]
+        landcover_path = landcover_map.get(key) if landcover_dir else None
+        walls_path = walls_map.get(key)
+        aspect_path = aspect_map.get(key)
+        met_file_path = met_map[key]
+
+        output_folder = os.path.join(base_output_path, key)
         os.makedirs(output_folder, exist_ok=True)
 
-        met_file_path = os.path.join(inputMet, met_files[i])
+        print(
+            os.path.basename(building_dsm_path), 
+            os.path.basename(tree_path), 
+            os.path.basename(dem_path), 
+            os.path.basename(met_file_path)
+        )
+
         met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ')
 
         compute_utci(
@@ -81,11 +92,11 @@ def thermal_comfort(
             tree_path,
             dem_path,
             walls_path,
-            aspect_path,  
-            landcover_path, 
+            aspect_path,
+            landcover_path,
             met_file_data,
             output_folder,
-            number,
+            key,  
             selected_date_str,
             save_tmrt=save_tmrt,
             save_svf=save_svf,
@@ -95,4 +106,6 @@ def thermal_comfort(
             save_ldown=save_ldown,
             save_shadow=save_shadow
         )
+
+        # Free GPU memory between tiles
         torch.cuda.empty_cache()
