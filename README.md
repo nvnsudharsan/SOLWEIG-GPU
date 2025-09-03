@@ -228,7 +228,12 @@ thermal_comfort --base_path /path/to/input \
                 --data_source_type ERA5 \
                 --data_folder /path/to/era5_or_wrfout \
                 --save_tmrt True \
-                --save_svf False
+                --save_svf False \
+                --save_kup False \
+                --save_kdown False \
+                --save_lup False \
+                --save_ldown False \
+                --save_shadow False 
 ```
 
 > Tip: Use `--help` to list all CLI options.
