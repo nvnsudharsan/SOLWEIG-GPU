@@ -53,7 +53,7 @@ The original SOLWEIG model [@lindberg2008solweig] was developed to calculate TMR
 # Functionality 
 SOLWEIG-GPU requires the following inputs: (i) Building digital surface model (DSM) that includes both buildings and terrain height, (ii) Digital elevation model (DEM) that is the bare ground elevation, (iii). Tree or vegetation DSM that only represents the vegetation height (iv). UMEP [@lindberg2018umep] style ground cover (optional), and (v) meteorological forcing. Allowed land cover types are asphalt or paved, buildings, grass, bare soil, and water but users can add their own land cover types provided they know the thermal properties for the land surface (e.g., albedo and emissivity). All the input datasets must be of the same spatial resolution, projection, and spatial extent. The recommended projection is the Universal Transverse Mercator (UTM). For example, EPSG: 32614. Necessary meteorological variables for SOLWEIG are: (i) 2-meter air temperature (℃), (ii) relative humidity (%), (iii) barometric pressure (kPa), (iv) downwelling shortwave radiation (W/m2). Additionally, near-surface wind speed (m/s) is required for UTCI computation and longwave radiation is estimated using 2-meter air temperature, relative humidity and pressure. 
 
-![Figure 1: Different steps involved in calculation of `thermal comfort` using SOLWEIG-GPU: CPU and GPU based calculations in SOLWEIG-GPU are shown.](figures/figure1.png)
+![Different steps involved in calculation of `thermal comfort` using SOLWEIG-GPU: CPU and GPU based calculations in SOLWEIG-GPU are shown.](figures/figure1.png)
 
 Figure 1 shows the workflow of SOLWEIG-GPU and detailed description of functionalities are as follows:
   1. For larger geographical domain simulations, SOLWEIG-GPU can divide the domain into smaller tiles and create separate meteorological forcing for each of the tiles. 
@@ -68,7 +68,7 @@ Figure 1 shows the workflow of SOLWEIG-GPU and detailed description of functiona
 
 SOLWEIG-GPU can be run using python code, CLI or GUI depending on the code adaptation. We explain how to run SOLWEIG-GPU in python below. Examples for running the model using all three methods are provided in the repository. 
 
-![Figure 2: A single line Python code to call the function `thermal_comfort`.](figures/figure2.png)
+![A single line Python code to call the function `thermal_comfort`.](figures/figure2.png)
 
 In the example shown in Figure 2, *selected_ date_str* is the day of the simulation, landcover raster is used if *landcover_filename* is provided (else set to **None**), tile_size is set to 3600 meaning the tiles will be 3600 x 3600 pixels, *overlap* is set to 100 meaning there will be 100 pixels that overlap between the tiles for shadow transfer between the tiles, meteorological data created using UMEP is used (*thus use_own_met* = **True**), *use_own_file* is the path to the UMEP meteorological forcing, and lastly only UTCI and sky-view factor outputs are saved. The rest of the inputs shown in Figure 2 are optional if using *use_own_met* = **True**. However, if gridded datasets are to be used, *use_own_met* = **False**. Additionally, the source of the gridded files must be mentioned (ERA5 or wrfout) and the folder path where gridded data is stored should be provided in data_folder. The *start_time* and *end_time* are the first and last hour (in UTC) of meteorological data in the gridded datasets. UTC to local time conversion is done within the program.
 
