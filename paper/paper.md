@@ -7,7 +7,7 @@ tags:
   - GPU
   - Urban
 authors:
-  - name: Harsh Kamath
+  - name: Harsh G. Kamath
     orcid: 0000-0002-5210-8369
     equal-contrib: true
     corresponding: true
