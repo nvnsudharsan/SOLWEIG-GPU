@@ -205,3 +205,63 @@ thermal_comfort(
 )
 ```
 
+---
+
+## Command-Line Interface (CLI)
+
+```bash
+conda activate solweig
+thermal_comfort --base_path /path/to/input \
+                --selected_date_str 2020-08-13 \
+                --building_dsm_filename Building_DSM.tif \
+                --dem_filename DEM.tif \
+                --trees_filename Trees.tif \
+                --landcover_filename None \
+                --tile_size 3600 \
+                --overlap 100 \
+                --use_own_met True \
+                --own_met_file /path/to/met.txt \
+                --start_time "2020-08-13 00:00:00" \
+                --end_time "2020-08-13 23:00:00" \
+                --data_source_type ERA5 \
+                --data_folder /path/to/era5_or_wrfout \
+                --save_tmrt True \
+                --save_svf False
+```
+
+> Tip: Use `--help` to list all CLI options.
+
+---
+
+## GUI Usage
+
+To launch the GUI:
+```bash
+conda activate solweig
+solweig_gpu_gui
+```
+
+![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI_new.png)
+
+### GUI Workflow
+1. Select the **base path** containing input datasets.
+2. Choose the **Building DSM**, **DEM**, **Tree DSM**, and **Land cover (optional)** raster files.
+3. Set the **tile size** (e.g., 600 or 1200 pixels).
+4. Select a **meteorological source** (`metfile`, `ERA5`, or `wrfout`):
+   - If `metfile`: Provide a `.txt` file.
+   - If `ERA5`: Provide a folder with both instantaneous and accumulated files.
+   - If `wrfout`: Provide a folder with WRF output NetCDF files.
+5. Set the **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
+6. Choose which outputs to generate (e.g., Tmrt, UTCI, radiation fluxes).
+7. Output will be saved in `Outputs/`, with subfolders for each tile.
+
+---
+
+### Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+Please keep your pull requests small and focused. This will make it easier to review and merge.
