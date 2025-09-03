@@ -217,12 +217,12 @@ thermal_comfort --base_path /path/to/input \
                 --dem_filename DEM.tif \
                 --trees_filename Trees.tif \
                 --landcover_filename None \
-                --tile_size 3600 \
+                --tile_size 1000 \
                 --overlap 100 \
                 --use_own_met True \
                 --own_met_file /path/to/met.txt \
-                --start_time "2020-08-13 00:00:00" \
-                --end_time "2020-08-13 23:00:00" \
+                --start_time "2020-08-13 06:00:00" \
+                --end_time "2020-08-14 05:00:00" \
                 --data_source_type ERA5 \
                 --data_folder /path/to/era5_or_wrfout \
                 --save_tmrt True \
