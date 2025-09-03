@@ -39,6 +39,8 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 - `Building DSM`: Includes both buildings and terrain elevation (e.g., `Building_DSM.tif`)
 - `DEM`: Digital Elevation Model excluding buildings (e.g., `DEM.tif`)
 - `Tree DSM`: Vegetation height data only (e.g., `Trees.tif`)
+
+### Currently tested only for hourly data
 - Meteorological forcing:
   - Custom `.txt` file (from UMEP)
   - ERA5 (both instantaneous and accumulated)
