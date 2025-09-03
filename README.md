@@ -12,13 +12,12 @@
   <a href="https://pepy.tech/project/solweig-gpu"><img src="https://pepy.tech/badge/solweig-gpu" alt="PyPI Downloads"></a>
 </p>
 
-
-
 **SOLWEIG-GPU** is a Python package and command-line interface for running standalone SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
-**SOLWEIG** was originally developed by Dr. Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. Int J Biometeorol 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
+**SOLWEIG** was originally developed by Dr. Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. *Int J Biometeorol* 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
 
-**SOLWEIG GPU** code is an extension of the original **SOLWEIG** Python model that is part of the Urban Multi-scale Environmental Predictor (UMEP) (GitHub code reference: https://github.com/UMEP-dev/UMEP). UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. Environmental modelling & software, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
+**SOLWEIG GPU** code is an extension of the original **SOLWEIG** Python model that is part of the Urban Multi-scale Environmental Predictor (UMEP). GitHub code: https://github.com/UMEP-dev/UMEP  
+UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. *Environmental Modelling & Software*, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
 
 ---
 
@@ -30,7 +29,7 @@
 - GPU-based computation of SVF, shortwave/longwave radiation, shadows, Tmrt, and UTCI
 - Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
 
-![SOLWEIG-GPU workflow ](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/solweig_diagram.png)
+![SOLWEIG-GPU workflow ](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/solweig_diagram.png)  
 *Flowchart of the SOLWEIG-GPU modeling framework*
 
 ---
@@ -45,15 +44,14 @@
   - ERA5 (both instantaneous and accumulated)
   - WRF output NetCDF (`wrfout`)
 
-> Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at https://utexas.box.com/s/288e33gak03agrck8v25l7ywj9d6yn87
 
 ### ERA5 Variables Required
-- 2-meter air temperature
-- 2-meter dew point temperature
-- Surface pressure
-- 10-meter U and V wind components
-- Downwelling shortwave radiation (accumulated)
-- Downwelling longwave radiation (accumulated)
+- 2-meter air temperature  
+- 2-meter dew point temperature  
+- Surface pressure  
+- 10-meter U and V wind components  
+- Downwelling shortwave radiation (accumulated)  
+- Downwelling longwave radiation (accumulated)  
 
 ---
 
@@ -64,7 +62,7 @@
 - SVF: Single-band raster
 - Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
 
-![UTCI for New Delhi](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/UTCI_New_Delhi.jpeg)
+![UTCI for New Delhi](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/UTCI_New_Delhi.jpeg)  
 *UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
 
 ---
@@ -81,7 +79,38 @@ pip install solweig-gpu
 
 ---
 
+## Sample Data
+
+Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  
+https://utexas.box.com/s/288e33gak03agrck8v25l7ywj9d6yn87
+
+---
+
 ## Python Usage
+
+### Notes on sample data and forcing options
+
+- The `Input_raster` folder in the sample contains the raster files required by SOLWEIG-GPU:
+  1. `Building_DSM.tif`
+  2. `DEM.tif`
+  3. `Trees.tif`
+  4. `Landcover.tif` *(optional)*
+
+- SOLWEIG-GPU can be meteorologically forced in three ways:
+  1. Using your own meteorological `.txt` file
+  2. ERA5 reanalysis
+  3. Weather Research and Forecasting (WRF) output files. **Make sure filenames follow one of:**
+     - `wrfout_d0x_yyyy-mm-dd_hh_mm_ss` *(preferred; works across operating systems)*
+     - `wrfout_d0x_yyyy-mm-dd_hh:mm:ss`
+     - `wrfout_d0x_yyyy-mm-dd_hh`
+
+- The `Forcing_data` folder in the sample data contains example data for all forcing methods.
+
+---
+
+### Examples with the provided sample data
+
+#### Example 1: WRF
 
 ```python
 from solweig_gpu import thermal_comfort
@@ -92,22 +121,87 @@ thermal_comfort(
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
-    landcover_filename = None,
-    tile_size =3600,
-    overlap = 100,
-    use_own_met=True,
-    own_met_file='/path/to/met.txt',
-    start_time='2020-08-13 00:00:00',
-    end_time='2020-08-13 23:00:00',
-    data_source_type='ERA5',  # or 'WRFOUT'
+    landcover_filename=None,
+    tile_size=1000,
+    overlap=100,
+    use_own_met=False,
+    own_met_file='/path/to/met.txt',  # Placeholder as use_own_met=False
+    start_time='2020-08-13 06:00:00',
+    end_time='2020-08-14 05:00:00',
+    data_source_type='wrfout',
     data_folder='/path/to/era5_or_wrfout',
-    save_tmrt=False, #True if you want to save TMRT, likewise below
+    save_tmrt=False,  # True if you want to save TMRT, likewise below
     save_svf=False,
     save_kup=False,
     save_kdown=False,
     save_lup=False,
     save_ldown=False,
     save_shadow=False
+)
+```
+- The model simulation date is `2020-08-13`
+- The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are start and end time of wrfout in UTC. In local time it is `2020-08-13 01:00:00` to `2020-08-13 23:00:00` (Austin, TX). UTC to local time conversion will be done   internally.
+- The tile_size depends on the RAM of the GPU but can be set to 1000 in the example.
+- overlap is set to 100 pixels meaning the raster size will be 1100*1100 pixels. The additional 100 pixels are for shadow transfer between the tiles.
+
+#### Example 2: ERA5
+
+```python
+from solweig_gpu import thermal_comfort
+
+thermal_comfort(
+    base_path='/path/to/input',
+    selected_date_str='2020-08-13',
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    landcover_filename = None,
+    tile_size =1000,
+    overlap = 100,
+    use_own_met=False,
+    own_met_file='/path/to/met.txt',  #Placeholder as use_own_met=False
+    start_time='2020-08-13 06:00:00',
+    end_time=  '2020-08-13 23:00:00',
+    data_source_type='ERA5',
+    data_folder='/path/to/era5_or_wrfout',
+    save_tmrt=False, #True if you want to save TMRT, likewise below
+    save_svf=False,
+    save_kup=False,
+    save_kdown=False,
+    save_lup=False,
+    save_ldown=False,
+    save_shadow=False
+)
+```
+
+- For the ERA-5, the sample data provided is from `2020-08-13 06:00:00 UTC` to `2020-08-13 23:00:00 UTC`. So the simulation will run from `2020-08-13 01:00:00` to `2020-08-13 18:00:00` local time (Austin, TX)
+
+#### Example 3: Own File
+
+```python
+from solweig_gpu import thermal_comfort
+thermal_comfort(
+    base_path='/path/to/input',
+    selected_date_str='2020-08-13',
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    landcover_filename = None,
+    tile_size =1000,
+    overlap = 100,
+    use_own_met= True,
+    own_met_file='/path/to/met.txt',
+    start_time='2020-08-13 06:00:00', # Placeholder
+    end_time=  '2020-08-13 23:00:00', # Placeholder
+    data_source_type='ERA5', # Placeholder
+    data_folder='/path/to/era5_or_wrfout', # Placeholder
+    save_tmrt=False, #True if you want to save TMRT, likewise below
+    save_svf=False,
+    save_kup=False,
+    save_kdown=False,
+    save_lup=False,
+    save_ldown=False,
+    save_shadow=False
 )
 ```
 
@@ -123,12 +217,12 @@ thermal_comfort --base_path /path/to/input \
                 --dem_filename DEM.tif \
                 --trees_filename Trees.tif \
                 --landcover_filename None \
-                --tile_size 3600 \
+                --tile_size 1000 \
                 --overlap 100 \
                 --use_own_met True \
                 --own_met_file /path/to/met.txt \
-                --start_time "2020-08-13 00:00:00" \
-                --end_time "2020-08-13 23:00:00" \
+                --start_time "2020-08-13 06:00:00" \
+                --end_time "2020-08-14 05:00:00" \
                 --data_source_type ERA5 \
                 --data_folder /path/to/era5_or_wrfout \
                 --save_tmrt True \
@@ -171,5 +265,3 @@ solweig_gpu_gui
 5. Create a Pull Request
 
 Please keep your pull requests small and focused. This will make it easier to review and merge.
-
-
