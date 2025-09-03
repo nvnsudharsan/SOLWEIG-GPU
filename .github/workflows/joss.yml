@@ -1,33 +1,33 @@
-name: Build JOSS Paper
+name: Compile JOSS Paper
 
 on:
   push:
     branches:
-      - main
+      - joss
+    paths:
+      - 'paper/**'
+      - '.github/workflows/compile-joss.yml'
   workflow_dispatch:
 
 jobs:
   build-paper:
     runs-on: ubuntu-latest
+
+    container:
+      image: openjournals/whedon:latest  # Official Whedon Docker image
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Pandoc with LaTeX
+      - name: Compile paper
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pandoc texlive texlive-latex-extra texlive-fonts-recommended
+          cd paper
+          make
 
-      - name: Compile JOSS paper
-        run: |
-          pandoc paper/paper.md \
-            --citeproc \
-            --pdf-engine=pdflatex \
-            --bibliography=paper/paper.bib \
-            --resource-path=paper \
-            -o paper.pdf
-
-      - name: Upload PDF as artifact
+      - name: Upload compiled PDF
         uses: actions/upload-artifact@v4
         with:
           name: joss-paper
-          path: paper.pdf
+          path: paper/paper.pdf
+
