@@ -44,7 +44,6 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
   - ERA5 (both instantaneous and accumulated)
   - WRF output NetCDF (`wrfout`)
 
-> Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at https://utexas.box.com/s/288e33gak03agrck8v25l7ywj9d6yn87
 
 ### ERA5 Variables Required
 - 2-meter air temperature  
@@ -83,7 +82,7 @@ pip install solweig-gpu
 ## Sample Data
 
 Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  
-👉 https://utexas.box.com/s/288e33gak03agrck8v25l7ywj9d6yn87
+https://utexas.box.com/s/288e33gak03agrck8v25l7ywj9d6yn87
 
 ---
 
