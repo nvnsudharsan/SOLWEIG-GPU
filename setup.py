@@ -31,7 +31,8 @@ setup(
         "xarray",
         "tqdm",
         "PyQt5",
-        "matplotlib"
+        "matplotlib",
+        "klyne"
     ],
     license="GPL-3.0-or-later",
     classifiers=[
