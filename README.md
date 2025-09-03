@@ -211,29 +211,30 @@ thermal_comfort(
 
 ## Command-Line Interface (CLI)
 
+#### Example using sample ERA5 data
+
 ```bash
 conda activate solweig
-thermal_comfort --base_path /path/to/input \
-                --selected_date_str 2020-08-13 \
-                --building_dsm_filename Building_DSM.tif \
-                --dem_filename DEM.tif \
-                --trees_filename Trees.tif \
-                --landcover_filename None \
-                --tile_size 1000 \
-                --overlap 100 \
-                --use_own_met True \
-                --own_met_file /path/to/met.txt \
-                --start_time "2020-08-13 06:00:00" \
-                --end_time "2020-08-14 05:00:00" \
-                --data_source_type ERA5 \
-                --data_folder /path/to/era5_or_wrfout \
-                --save_tmrt True \
-                --save_svf False \
-                --save_kup False \
-                --save_kdown False \
-                --save_lup False \
-                --save_ldown False \
-                --save_shadow False 
+thermal_comfort --base_path '/path/to/input' ^
+                --date '2020-08-13' ^
+                --building_dsm 'Building_DSM.tif' ^
+                --dem 'DEM.tif' ^
+                --trees 'Trees.tif' ^
+                --tile_size 1000 ^
+                --landcover  'Landcover2.tif' ^
+                --overlap 100 ^
+                --use_own_met False ^
+                --data_source_type 'ERA5' ^
+                --data_folder '/path/to/era5' ^
+                --start '2020-08-13 06:00:00' ^
+                --end '2020-08-13 23:00:00' ^
+                --save_tmrt True ^
+                --save_svf False ^
+                --save_kup False ^
+                --save_kdown False ^
+                --save_lup False ^
+                --save_ldown False ^
+                --save_shadow False
 ```
 
 > Tip: Use `--help` to list all CLI options.
