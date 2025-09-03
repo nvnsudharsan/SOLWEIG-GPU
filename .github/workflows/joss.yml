@@ -13,21 +13,21 @@ jobs:
   build-paper:
     runs-on: ubuntu-latest
 
-    container:
-      image: openjournals/whedon:latest  # Official Whedon Docker image
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Compile paper
+      - name: Set up Pandoc and LaTeX
         run: |
-          cd paper
-          make
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex
+
+      - name: Compile paper
+        working-directory: paper
+        run: make
 
       - name: Upload compiled PDF
         uses: actions/upload-artifact@v4
         with:
           name: joss-paper
           path: paper/paper.pdf
-
