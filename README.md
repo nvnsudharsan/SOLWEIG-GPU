@@ -3,6 +3,9 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
 </p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/logo.tif" alt="SOLWEIG-GPU Logo" width="400"/>
+</p>
 
 <p align="center">
   <a href="https://www.repostatus.org/#active"><img src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active"></a>
