@@ -1,12 +1,13 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
+  <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo_solweig.jpg" alt="SOLWEIG Logo" width="400"/>
 </p>
 
 <p align="center">
   <a href="https://www.repostatus.org/#active"><img src="https://www.repostatus.org/badges/latest/active.svg" alt="Project Status: Active"></a>
   <a href="https://pypi.org/project/solweig-gpu/"><img src="https://badge.fury.io/py/solweig-gpu.svg" alt="PyPI version"></a>
+  <a href="https://doi.org/10.5281/zenodo.17048978"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17048978.svg" alt="DOI"></a>
   <!-- <a href="https://anaconda.org/conda-forge/solweig-gpu"><img src="https://anaconda.org/conda-forge/solweig-gpu/badges/version.svg" alt="Conda version"></a> -->
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3+-blue.svg" alt="License: GPL v3 or later"></a>
   <a href="https://pepy.tech/project/solweig-gpu"><img src="https://pepy.tech/badge/solweig-gpu" alt="PyPI Downloads"></a>
@@ -39,6 +40,8 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 - `Building DSM`: Includes both buildings and terrain elevation (e.g., `Building_DSM.tif`)
 - `DEM`: Digital Elevation Model excluding buildings (e.g., `DEM.tif`)
 - `Tree DSM`: Vegetation height data only (e.g., `Trees.tif`)
+
+### Currently tested only for hourly data
 - Meteorological forcing:
   - Custom `.txt` file (from UMEP)
   - ERA5 (both instantaneous and accumulated)
@@ -82,7 +85,7 @@ pip install solweig-gpu
 ## Sample Data
 
 Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  
-https://utexas.box.com/s/288e33gak03agrck8v25l7ywj9d6yn87
+https://doi.org/10.5281/zenodo.17048978
 
 ---
 
@@ -209,24 +212,30 @@ thermal_comfort(
 
 ## Command-Line Interface (CLI)
 
+#### Example using sample ERA5 data
+
 ```bash
 conda activate solweig
-thermal_comfort --base_path /path/to/input \
-                --selected_date_str 2020-08-13 \
-                --building_dsm_filename Building_DSM.tif \
-                --dem_filename DEM.tif \
-                --trees_filename Trees.tif \
-                --landcover_filename None \
-                --tile_size 1000 \
-                --overlap 100 \
-                --use_own_met True \
-                --own_met_file /path/to/met.txt \
-                --start_time "2020-08-13 06:00:00" \
-                --end_time "2020-08-14 05:00:00" \
-                --data_source_type ERA5 \
-                --data_folder /path/to/era5_or_wrfout \
-                --save_tmrt True \
-                --save_svf False
+thermal_comfort --base_path '/path/to/input' ^
+                --date '2020-08-13' ^
+                --building_dsm 'Building_DSM.tif' ^
+                --dem 'DEM.tif' ^
+                --trees 'Trees.tif' ^
+                --tile_size 1000 ^
+                --landcover  'Landcover2.tif' ^
+                --overlap 100 ^
+                --use_own_met False ^
+                --data_source_type 'ERA5' ^
+                --data_folder '/path/to/era5' ^
+                --start '2020-08-13 06:00:00' ^
+                --end '2020-08-13 23:00:00' ^
+                --save_tmrt True ^
+                --save_svf False ^
+                --save_kup False ^
+                --save_kdown False ^
+                --save_lup False ^
+                --save_ldown False ^
+                --save_shadow False
 ```
 
 > Tip: Use `--help` to list all CLI options.
