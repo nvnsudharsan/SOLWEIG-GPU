@@ -4,7 +4,7 @@
   <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo.png" alt="SOLWEIG-GPU Logo" width="400"/>
 </p>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo.tif" alt="SOLWEIG-GPU Logo" width="400"/>
+  <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo_solweig.jpg" alt="SOLWEIG Logo" width="400"/>
 </p>
 
 <p align="center">
