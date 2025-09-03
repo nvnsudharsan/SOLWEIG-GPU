@@ -5,7 +5,7 @@ paper.pdf: paper.md references.bib
 		--from markdown \
 		--output paper.pdf \
 		--citeproc \
-		--bibliography=references.bib \
+		--bibliography=paper.bib \
 		--template=/opt/pandoc/templates/default.latex \
 		--pdf-engine=xelatex \
 		paper.md
