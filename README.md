@@ -138,4 +138,8 @@ thermal_comfort(
     save_ldown=False,
     save_shadow=False
 )
-
+```
+-The model simulation date is '2020-08-13'
+-The start and end dates provided to the model are 2020-08-13 06:00:00 UTC and 2020-08-14 05:00:00 UTC, respectively. These are start and end time of wrfout in UTC. In local time it is 2020-08-13 01:00:00 to 2020-08-13 23:00:00 (Austin, TX). UTC to local time conversion will be done internally.
+-The tile_size depends on the RAM of the GPU but can be set to 1000 in the example.
+-overlap is set to 100 pixels meaning the raster size will be 1100*1100 pixels. The additional 100 pixels are for shadow transfer between the tiles.
