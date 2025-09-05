@@ -90,7 +90,7 @@ Table 1. Comparison of time taken for UTCI computation using CPU and GPU-based m
 | 2000 x 2000   | 6487 seconds (1.8 hrs)  | 158 seconds| ~41×            |
 
 
-# Acknowledgements
+# Funding
 
 This research is supported by NOAA NA21OAR4310146, NSF 2324744, NASA 80NSSC25K7417 and NIST 60NANB24D235
 
