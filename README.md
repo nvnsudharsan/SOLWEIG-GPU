@@ -86,7 +86,7 @@ pip install solweig-gpu
 ## Sample Data
 
 Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  
-https://doi.org/10.5281/zenodo.17048978
+<a href="https://doi.org/10.5281/zenodo.17048978"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17048978.svg" alt="DOI"></a>
 
 ---
 
