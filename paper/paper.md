@@ -21,7 +21,7 @@ authors:
     orcid: 0000-0002-3374-7149
     affiliation: 1
   - name: Nils Wallenberg
-  - orcid: 0000-0003-1359-658X
+    orcid: 0000-0003-1359-658X
     affiliation: 2
   - name: Fredrik Lindberg
     orcid: 0000-0002-9648-4542
