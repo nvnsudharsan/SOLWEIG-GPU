@@ -92,6 +92,6 @@ Table 1. Comparison of time taken for UTCI computation using CPU and GPU-based m
 
 # Funding
 
-This research is supported by NOAA NA21OAR4310146, NSF 2324744, NASA 80NSSC25K7417 and NIST 60NANB24D235
+This research is supported by National Oceanic and Atmospheric Administration (NOAA) National Integrated Heat Health Information System (NIHHIS) [NA21OAR4310146], National Science Foundation (NSF) Workshop on Atmospheric and Urban Digital Twins [2324744],  National Aeronautics and Space Administration (NASA) Austin Cares [80NSSC25K7417] and National Institute of Standards and Technology [60NANB24D235]
 
 # References
