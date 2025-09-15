@@ -33,9 +33,9 @@ setup(
         "PyQt5",
         "matplotlib"
     ],
-    license="GPL-3.0-or-later",
+    license="GPL-3.0-only",
     classifiers=[
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: GNU General Public License v3",
         "Programming Language :: Python :: 3",
         "Operating System :: POSIX :: Linux",
         "Intended Audience :: Science/Research",
