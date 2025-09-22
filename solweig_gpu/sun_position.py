@@ -1,3 +1,16 @@
+#SOLWEIG-GPU: GPU-accelerated SOLWEIG model for urban thermal comfort simulation
+#Copyright (C) 2022–2025 Harsh Kamath and Naveen Sudharsan
+
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#GNU General Public License for more details.
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -775,7 +788,7 @@ def sun_topocentric_zenith_angle_calculate(location, topocentric_sun_position, t
     refraction_corr = 1.02 / (60 * np.tan(argument * np.pi/180))
 
     # For exact pressure and temperature correction, use this,
-    # with P the pressure in mbar amd T the temperature in Kelvins:
+    # with P the pressure in mbar and T the temperature in Kelvins:
     # refraction_corr = (P/1010) * (283/T) * 1.02 / (60 * tan(argument * pi/180));
 
     # Apparent elevation
@@ -784,7 +797,7 @@ def sun_topocentric_zenith_angle_calculate(location, topocentric_sun_position, t
     sun = dict()
     sun['zenith'] = 90 - apparent_elevation
 
-    # Topocentric azimuth angle. The +180 conversion is to pass from astronomer
+    # Topocentric azimuth angle. The +180 conversion is to pass from an astronomer
     # notation (westward from south) to navigation notation (eastward from
     # north);
     nominator = np.sin(topocentric_local_hour * np.pi/180)
@@ -818,8 +831,8 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
     time['sec'] = 0
     time['UTC'] = UTC
     sunmaximum = 0.
-    leafon1 = 97  #TODO this should change
-    leafoff1 = 300  #TODO this should change
+    leafon1 = 97  
+    leafoff1 = 300  
 
     # initialize matrices
     altitude = np.empty(shape=(1, data_len))
@@ -864,7 +877,7 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
         time['hour'] = YMDHM.hour
         time['min'] = YMDHM.minute
         sun = sun_position(time, location)
-        if (sun['zenith'] > 89.0) & (sun['zenith'] <= 90.0):    # Hopefully fixes weird values in Perez et al. when altitude < 1.0, i.e. close to sunrise/sunset
+        if (sun['zenith'] > 89.0) & (sun['zenith'] <= 90.0):    
             sun['zenith'] = 89.0
         altitude[0, i] = 90. - sun['zenith']
         zen[0, i] = sun['zenith'] * (np.pi/180.)
@@ -885,3 +898,4 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
             leafon[0, i] = 0
 
     return YYYY, altitude, azimuth, zen, jday, leafon, dectime, altmax
+
