@@ -22,11 +22,11 @@ The model was originally developed by Dr. Fredrik Lindberg's group and has been 
 
 ## Key Features
 
-**GPU Acceleration** — The package leverages PyTorch for high-performance computation on NVIDIA GPUs, with automatic fallback to CPU when GPU is not available.
+**GPU Acceleration** — The package utilizes PyTorch for high-performance computation on NVIDIA GPUs, with an automatic fallback to the CPU when a GPU is not available.
 
 **Comprehensive Modeling** — Calculates SVF, Tmrt, UTCI, and detailed shortwave and longwave radiation fluxes for complete thermal environment characterization.
 
-**Flexible Data Input** — Supports multiple meteorological data sources including custom text files (UMEP format), ERA5 reanalysis data, and WRF model outputs.
+**Flexible Data Input** — Supports multiple meteorological data sources, including custom text files (UMEP format), ERA5 reanalysis data, and WRF model outputs.
 
 **Intelligent Tiling** — Automatically divides large study areas into manageable tiles with configurable overlap to handle memory constraints and ensure seamless results.
 
@@ -77,7 +77,7 @@ Explore example scripts for different use cases.
 <td>
 
 ### [**Developer Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/updates/docs/developer_guide.md)
-Contribute to the project and understand the architecture.
+Contribute to the project and gain an understanding of its architecture.
 
 </td>
 </tr>
