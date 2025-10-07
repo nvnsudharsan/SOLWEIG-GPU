@@ -40,13 +40,13 @@ The model was originally developed by Dr. Fredrik Lindberg's group and has been 
 <tr>
 <td>
 
-### [**Installation**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/installation.md)
+### [**Installation**](./installation.md)
 Get started by installing SOLWEIG-GPU and its dependencies.
 
 </td>
 <td>
 
-### [**Quickstart**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/quickstart.md)
+### [**Quickstart**](./quickstart.md)
 Run your first thermal comfort simulation in minutes.
 
 </td>
@@ -55,13 +55,13 @@ Run your first thermal comfort simulation in minutes.
 <tr>
 <td>
 
-### [**User Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/user_guide.md)
+### [**User Guide**](./user_guide.md)
 Learn how to prepare data and configure simulations.
 
 </td>
 <td>
 
-### [**API Reference**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/api_reference.md)
+### [**API Reference**](https://github.com/nvnsudharsan/solweig-gpu/blob/updates/docs/api_reference.md)
 Detailed documentation of functions and parameters.
 
 </td>
@@ -70,13 +70,13 @@ Detailed documentation of functions and parameters.
 <tr>
 <td>
 
-### [**Examples**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/examples.md)
+### [**Examples**](https://github.com/nvnsudharsan/solweig-gpu/blob/updates/docs/examples.md)
 Explore example scripts for different use cases.
 
 </td>
 <td>
 
-### [**Developer Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/developer_guide.md)
+### [**Developer Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/updates/docs/developer_guide.md)
 Contribute to the project and understand the architecture.
 
 </td>
