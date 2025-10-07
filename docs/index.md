@@ -76,7 +76,7 @@ Explore example scripts for different use cases.
 </td>
 <td>
 
-### 🛠️ [**Developer Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/developer_guide.md)
+### [**Developer Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/developer_guide.md)
 Contribute to the project and understand the architecture.
 
 </td>
