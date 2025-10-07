@@ -36,57 +36,53 @@ The model was originally developed by Dr. Fredrik Lindberg's group and has been 
 
 ## Quick Links
 
-<div class="grid cards" markdown>
+<table>
+<tr>
+<td>
 
--   :material-download:{ .lg .middle } **Installation**
+### [**Installation**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/installation.md)
+Get started by installing SOLWEIG-GPU and its dependencies.
 
-    ---
+</td>
+<td>
 
-    Get started by installing SOLWEIG-GPU and its dependencies
+### [**Quickstart**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/quickstart.md)
+Run your first thermal comfort simulation in minutes.
 
-    [:octicons-arrow-right-24: Installation Guide](installation.md)
+</td>
+</tr>
 
--   :material-rocket-launch:{ .lg .middle } **Quickstart**
+<tr>
+<td>
 
-    ---
+### [**User Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/user_guide.md)
+Learn how to prepare data and configure simulations.
 
-    Run your first thermal comfort simulation in minutes
+</td>
+<td>
 
-    [:octicons-arrow-right-24: Quickstart Guide](quickstart.md)
+### [**API Reference**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/api_reference.md)
+Detailed documentation of functions and parameters.
 
--   :material-book-open-variant:{ .lg .middle } **User Guide**
+</td>
+</tr>
 
-    ---
+<tr>
+<td>
 
-    Learn how to prepare data and configure simulations
+### [**Examples**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/examples.md)
+Explore example scripts for different use cases.
 
-    [:octicons-arrow-right-24: User Guide](user_guide.md)
+</td>
+<td>
 
--   :material-code-braces:{ .lg .middle } **API Reference**
+### 🛠️ [**Developer Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/main/docs/developer_guide.md)
+Contribute to the project and understand the architecture.
 
-    ---
+</td>
+</tr>
+</table>
 
-    Detailed documentation of functions and parameters
-
-    [:octicons-arrow-right-24: API Reference](api_reference.md)
-
--   :material-file-code:{ .lg .middle } **Examples**
-
-    ---
-
-    Explore example scripts for different use cases
-
-    [:octicons-arrow-right-24: Examples](examples.md)
-
--   :material-account-group:{ .lg .middle } **Developer Guide**
-
-    ---
-
-    Contribute to the project and understand the architecture
-
-    [:octicons-arrow-right-24: Developer Guide](developer_guide.md)
-
-</div>
 
 ## Citation
 
