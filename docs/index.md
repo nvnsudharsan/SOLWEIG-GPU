@@ -84,6 +84,55 @@ Contribute to the project and understand the architecture.
 </table>
 
 
+## Quick Links
+
+<div class="grid cards" markdown>
+
+-   :material-download:{ .lg .middle } **Installation**
+    
+    ---
+    
+    Get started by installing SOLWEIG-GPU and its dependencies.  
+    [:octicons-arrow-right-24: Installation Guide](installation/)
+
+-   :material-rocket-launch:{ .lg .middle } **Quickstart**
+    
+    ---
+    
+    Run your first thermal comfort simulation in minutes.  
+    [:octicons-arrow-right-24: Quickstart Guide](quickstart/)
+
+-   :material-book-open-variant:{ .lg .middle } **User Guide**
+    
+    ---
+    
+    Learn how to prepare data and configure simulations.  
+    [:octicons-arrow-right-24: User Guide](user_guide/)
+
+-   :material-code-braces:{ .lg .middle } **API Reference**
+    
+    ---
+    
+    Detailed documentation of functions and parameters.  
+    [:octicons-arrow-right-24: API Reference](api_reference/)
+
+-   :material-file-code:{ .lg .middle } **Examples**
+    
+    ---
+    
+    Explore example scripts for different use cases.  
+    [:octicons-arrow-right-24: Examples](examples/)
+
+-   :material-account-group:{ .lg .middle } **Developer Guide**
+    
+    ---
+    
+    Contribute to the project and understand the architecture.  
+    [:octicons-arrow-right-24: Developer Guide](developer_guide/)
+
+</div>
+
+
 ## Citation
 
 If you use SOLWEIG-GPU in your research, please cite:
