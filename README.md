@@ -76,7 +76,8 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 ```bash
 conda create -n solweig python=3.10
 conda activate solweig
-conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib pyqt5 sip #cudnn is required only if you are using nvidia GPU
+conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib sip #cudnn is required only if you are using nvidia GPU
+pip install PyQt5
 pip install solweig-gpu
 
 ```
