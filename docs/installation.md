@@ -31,7 +31,7 @@ This guide provides instructions for installing SOLWEIG-GPU and its dependencies
     Install the required dependencies using Conda. This step is crucial as it installs the correct versions of GDAL, PyTorch, and other libraries that are compatible with each other.
 
     ```bash
-    conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib pyqt=5 sip
+    conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib pyqt5 sip
     ```
 
 4.  **Install SOLWEIG-GPU**
