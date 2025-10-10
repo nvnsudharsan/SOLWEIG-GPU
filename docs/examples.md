@@ -19,7 +19,6 @@ thermal_comfort(
     tile_size=1000,
     overlap=100,
     use_own_met=False,
-    own_met_file='/path/to/met.txt',  # Placeholder
     start_time='2020-08-13 06:00:00',
     end_time='2020-08-14 05:00:00',
     data_source_type='wrfout',
@@ -44,7 +43,6 @@ thermal_comfort(
     tile_size=1000,
     overlap=100,
     use_own_met=False,
-    own_met_file='/path/to/met.txt',  # Placeholder
     start_time='2020-08-13 06:00:00',
     end_time='2020-08-13 23:00:00',
     data_source_type='ERA5',
