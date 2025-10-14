@@ -188,63 +188,49 @@ def _normalize_time_coord(ds: xr.Dataset) -> xr.Dataset:
     """
     Return a copy of ds with a proper 'time' coordinate.
     Handles common ERA5 layouts:
-      1) 'valid_time' (already-realized timestamps) -> rename to 'time'
-      2) 'time' + 'step' (forecast-style files) -> create time = time + step
-      3) plain 'time' -> leave as-is
+      - 'valid_time' -> rename to 'time'
+      - 'time' + 'step' -> create 'time' = time + step
+      - plain 'time' -> leave as-is
     """
     ds = ds.copy()
 
-    # If 'valid_time' dimension/coord exists, prefer that as time
     if "valid_time" in ds.dims or "valid_time" in ds.coords:
-        ds = ds.rename({"valid_time": "time"})
-        return ds
+        return ds.rename({"valid_time": "time"})
 
-    # If it has CF forecast layout: base 'time' plus 'step' offsets
-    has_time = ("time" in ds.coords) or ("time" in ds.dims)
-    has_step = ("step" in ds.coords) or ("step" in ds.dims)
+    has_time = ("time" in ds.dims) or ("time" in ds.coords)
+    has_step = ("step" in ds.dims) or ("step" in ds.coords)
+
     if has_time and has_step:
-        # Ensure both decode to datetime64 / timedelta64
-        base_time = xr.decode_cf(ds[["time"]])["time"] if "time" in ds.coords else ds["time"]
+        base = ds["time"]
         step = ds["step"]
-        # xarray usually decodes step to timedelta64[h], but if not, try pandas
+
+        # ensure timedelta
         if not np.issubdtype(step.dtype, np.timedelta64):
-            # attempt to parse as hours if it's numeric, else fall back to pandas to_timedelta
             try:
-                step_td = xr.DataArray(
-                    pd.to_timedelta(step.values),
-                    dims=step.dims,
-                    coords=step.coords
-                )
+                step_td = xr.DataArray(pd.to_timedelta(step.values),
+                                       dims=step.dims, coords=step.coords)
             except Exception:
-                # last resort: assume hours
-                step_td = xr.DataArray(
-                    pd.to_timedelta(step.values, unit="h"),
-                    dims=step.dims,
-                    coords=step.coords
-                )
+                # assume hours if not CF-decoded
+                step_td = xr.DataArray(pd.to_timedelta(step.values, unit="h"),
+                                       dims=step.dims, coords=step.coords)
         else:
             step_td = step
 
-        # Broadcast-add base time and step to get valid times
-        vt = (base_time + step_td).rename("time")
-        # If result is 2D (e.g., dims ('time','step')), flatten into a single time axis:
+        vt = (base + step_td).rename("time")
         if vt.ndim == 2:
-            vt = vt.stack(time_flat=("time", "step")).rename("time")
+            # collapse (time, step) → single time axis
+            vt_flat = vt.stack(time_flat=("time", "step")).rename("time")
             ds = ds.stack(time_flat=("time", "step")).rename_dims({"time_flat": "time"}).drop_vars(["time", "step"])
-            ds = ds.assign_coords(time=vt.values)
+            ds = ds.assign_coords(time=vt_flat.values)
         else:
-            # Typically step varies and base time is scalar -> vt has 'step' dim; rename to 'time'
             if "step" in vt.dims and "time" not in vt.dims:
                 ds = ds.swap_dims({"step": "time"}).drop_vars(["step"])
-                ds = ds.assign_coords(time=vt.values)
-            else:
-                # vt already along 'time'
-                ds = ds.assign_coords(time=vt.values)
+            ds = ds.assign_coords(time=vt.values)
 
         return ds
 
-    # If plain 'time' already present, ensure decoding
     if has_time:
+        # ensure decoding if possible
         try:
             ds = xr.decode_cf(ds)
         except Exception:
@@ -252,198 +238,133 @@ def _normalize_time_coord(ds: xr.Dataset) -> xr.Dataset:
         return ds
 
     raise KeyError(
-        "Couldn't find a usable time coordinate. "
-        "Expected one of: 'valid_time', or 'time' (+ optional 'step'). "
-        f"Dataset dims: {list(ds.dims.keys())}, coords: {list(ds.coords.keys())}")
+        "No usable time coordinate. Expected 'valid_time' or 'time' (+ optional 'step'). "
+        f"Found dims={list(ds.dims)}, coords={list(ds.coords)}"
+    )
 
 def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
     """
-    Create a SOLWEIG forcing NetCDF from ERA5 files by slicing the *existing* time range
-    in the inputs [start_time, end_time], inclusive, in UTC.
+    Process hourly ERA5 NetCDF files to create meteorological forcing for SOLWEIG.
+    Assumes:
+      - Instantaneous fields (t2m, d2m, sp, u10, v10) are hourly
+      - Accumulated fields (ssrd, strd) are 1-hour totals (J m^-2 per hour)
+    Conversion: ssrd/strd → W m^-2 by dividing by 3600 (no differencing).
 
     Inputs:
-      - start_time, end_time: "YYYY-MM-DD HH:MM:SS" in UTC (naive strings treated as UTC)
-      - folder_path: contains:
-          data_stream-oper_stepType-instant.nc  (t2m, d2m, sp, u10, v10, ...)
-          data_stream-oper_stepType-accum.nc    (ssrd, strd as accumulated J m^-2)
+      start_time, end_time: "YYYY-MM-DD HH:MM:SS" (UTC)
+      folder_path: folder with:
+        - data_stream-oper_stepType-instant.nc
+        - data_stream-oper_stepType-accum.nc
     Output:
-      - NetCDF with variables: T2 (°C), PSFC (kPa), RH2 (%), WIND (m/s), SWDOWN (W m^-2)
-        (Add GLW if desired)
+      - NetCDF with variables T2, PSFC, RH2, WIND, SWDOWN, GLW
     """
-    # --- parse times (treat naive as UTC) ---
+    # parse times (UTC)
     start_dt = dt.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     end_dt   = dt.datetime.strptime(end_time,   "%Y-%m-%d %H:%M:%S")
 
-    instant_file = os.path.join(folder_path, "data_stream-oper_stepType-instant.nc")
-    accum_file   = os.path.join(folder_path, "data_stream-oper_stepType-accum.nc")
+    # open datasets and normalize time coord
+    inst_path = os.path.join(folder_path, "data_stream-oper_stepType-instant.nc")
+    acc_path  = os.path.join(folder_path, "data_stream-oper_stepType-accum.nc")
 
-    ds_instant = xr.open_dataset(instant_file, decode_times=True)
-    ds_accum   = xr.open_dataset(accum_file, decode_times=True)
+    dsI = _normalize_time_coord(xr.open_dataset(inst_path, decode_times=True))
+    dsA = _normalize_time_coord(xr.open_dataset(acc_path,  decode_times=True))
 
-    ds_instant = _normalize_time_coord(ds_instant)
-    ds_accum   = _normalize_time_coord(ds_accum)
-
-    # --- helper: saturation vapor pressure (Tetens) with T in °C, output hPa ---
-    def esat_c(Tc):
-        return 6.112 * np.exp((17.67 * Tc) / (Tc + 243.5))
-
-    # --- Select the requested time window present in files ---
-    # We'll slice instant variables exactly on [start, end].
-    dsI = ds_instant.sel(time=slice(start_dt, end_dt))
+    # slice to requested window present in files
+    dsI = dsI.sel(time=slice(start_dt, end_dt))
+    dsA = dsA.sel(time=slice(start_dt, end_dt))
 
     if dsI.time.size == 0:
-        raise ValueError("No time steps found in 'instant' file within the requested window.")
-
-    # For accumulated variables, to compute hourly rates via differencing,
-    # we need one timestep before the start if available.
-    pre_start = ds_accum.time.sel(time=slice(None, start_dt)).max().values if "time" in ds_accum.coords else None
-    if pre_start is not None and np.isfinite(pre_start):
-        acc_slice_start = dt.datetime.utcfromtimestamp(np.datetime64(pre_start).astype('datetime64[s]').astype(int))
-        # ensure we include one step before start_dt to compute the first diff
-        dsA = ds_accum.sel(time=slice(acc_slice_start, end_dt))
-    else:
-        # no earlier step; we'll slice normally and handle the first step carefully
-        dsA = ds_accum.sel(time=slice(start_dt, end_dt))
-
+        raise ValueError("No instantaneous timestamps within requested window.")
     if dsA.time.size == 0:
-        raise ValueError("No time steps found in 'accum' file within the requested window.")
+        raise ValueError("No accumulated timestamps within requested window.")
 
-    # --- Align time axes between streams (keep only common times after rate computation step below) ---
-    # (We will compute radiation rates first, then align to dsI.time.)
-    # ---- Compute wind speed, RH, convert units (instantaneous fields) ----
-    # t2m, d2m in K: convert to °C
-    t2mK = dsI["t2m"]
-    d2mK = dsI["d2m"]
-    T2_C = (t2mK - 273.15).astype("float32")
-    Td_C = (d2mK - 273.15).astype("float32")
+    # intersect times (just in case of tiny mismatches)
+    common_t = np.intersect1d(dsI.time.values, dsA.time.values)
+    if common_t.size == 0:
+        raise ValueError("Instantaneous and accumulated streams have no overlapping hourly timestamps.")
+    dsI = dsI.sel(time=common_t)
+    dsA = dsA.sel(time=common_t)
 
-    # surface pressure Pa -> kPa
-    PS_kPa = (dsI["sp"] / 1000.0).astype("float32")
+    # --- compute variables ---
+    # temperature/dewpoint: K → °C
+    T2 = (dsI["t2m"] - 273.15).astype("float32")
+    TD = (dsI["d2m"] - 273.15).astype("float32")
 
-    # wind speed from U/V at 10 m
+    # surface pressure: Pa → kPa
+    PS = (dsI["sp"] / 1000.0).astype("float32")
+
+    # wind speed from components
     WIND = np.hypot(dsI["u10"], dsI["v10"]).astype("float32")
 
-    # relative humidity (%)
-    e_t  = xr.apply_ufunc(esat_c, T2_C, dask="allowed", vectorize=True)
-    e_td = xr.apply_ufunc(esat_c, Td_C, dask="allowed", vectorize=True)
+    # RH from Tetens (hPa), clamp 0–100
+    def esat_c(Tc):
+        return 6.112 * np.exp((17.67 * Tc) / (Tc + 243.5))
+    e_t  = xr.apply_ufunc(esat_c, T2, vectorize=True)
+    e_td = xr.apply_ufunc(esat_c, TD, vectorize=True)
     RH2  = (100.0 * (e_td / e_t)).clip(0, 100).astype("float32")
 
-    # ---- Convert accumulated radiation (J m^-2) to W m^-2 robustly ----
-    def accum_to_rate(acc):
-        """
-        Convert accumulated energy [J m^-2] to mean flux [W m^-2] over each timestep
-        using differences and dividing by seconds. Assumes regular hourly steps.
-        Falls back to divide-by-3600 for per-step totals if data already looks stepwise.
-        """
-        # Try to detect cumulative behavior (monotonic non-decreasing with resets)
-        acc_np = acc.values
-        is_cumulative = np.nanmedian(np.diff(acc_np, axis=0)) >= 0 if acc_np.shape[0] > 1 else True
+    # radiation: J m^-2 per hour → W m^-2
+    SWDOWN = (dsA["ssrd"] / 3600.0).astype("float32")
+    GLW    = (dsA["strd"] / 3600.0).astype("float32")
 
-        if is_cumulative and acc.time.size > 1:
-            # compute diff along time
-            dacc = acc.diff("time")
-            # seconds between steps (assume uniform hourly)
-            dt_seconds = np.diff(acc["time"].values.astype("datetime64[s]").astype(np.int64))
-            if not np.all(dt_seconds == dt_seconds[0]):
-                # non-uniform; compute per-step seconds array
-                # expand dims to broadcast over y,x
-                dt_fac = xr.DataArray(dt_seconds.astype("float32"), dims=["time"])
-            else:
-                dt_fac = float(dt_seconds[0])
+    # sanity: negative fluxes should not occur; clip to >= 0
+    SWDOWN = SWDOWN.clip(min=0.0)
+    GLW    = GLW.clip(min=0.0)
 
-            rate = dacc / (dt_fac if np.ndim(dt_fac) else dt_fac)  # J/s/m^2 = W/m^2
-            # The rate has one fewer time step; align it to the *upper* time stamp
-            # to represent the average over (t-Δt, t].
-            rate = rate.assign_coords(time=acc.time.isel(time=slice(1, None)))
-            return rate.astype("float32")
-        else:
-            # Likely already step-accumulated over 1 hour; convert by 3600
-            return (acc / 3600.0).astype("float32")
-
-    # Slice accumulated variables (after potential pre-start inclusion) and compute rates
-    ssrd_acc = dsA["ssrd"]
-    strd_acc = dsA["strd"]
-
-    ssrd_rate = accum_to_rate(ssrd_acc)
-    strd_rate = accum_to_rate(strd_acc)
-
-    # Now restrict both radiation rates and instantaneous vars to the *exact* instant times
-    # Note: radiation rate at time t represents average over the previous hour ending at t.
-    # We'll align by intersecting with dsI.time.
-    common_times = np.intersect1d(dsI.time.values, ssrd_rate.time.values)
-    if common_times.size == 0:
-        raise ValueError("No overlapping timestamps between instant fields and radiation rates.")
-
-    dsI = dsI.sel(time=common_times)
-    T2_C  = T2_C.sel(time=common_times)
-    PS_kPa= PS_kPa.sel(time=common_times)
-    RH2   = RH2.sel(time=common_times)
-    WIND  = WIND.sel(time=common_times)
-
-    SWDOWN = ssrd_rate.sel(time=common_times)
-    GLW    = strd_rate.sel(time=common_times)  # keep if you want to write longwave
-
-    # --- Build output arrays (ensure dims: time, lat, lon) ---
-    # Handle lat/lon as 1D -> 2D grids if needed
+    # lat/lon grid (write as 2D for compatibility with your format)
     lat = dsI["latitude"]
     lon = dsI["longitude"]
     if lat.ndim == 1 and lon.ndim == 1:
         lon2d, lat2d = np.meshgrid(lon.values, lat.values)
     else:
-        lat2d = lat.values
-        lon2d = lon.values
+        lat2d, lon2d = lat.values, lon.values
 
-    time_vals = dsI.time.values  # numpy datetime64[ns]
+    times = dsI.time.values  # numpy datetime64
 
-    # --- Write NetCDF ---
+    # --- write NetCDF ---
     with Dataset(output_file, "w", format="NETCDF4") as nc:
-        nc.createDimension("time", time_vals.shape[0])
-        nc.createDimension("lat", lat2d.shape[0])
-        nc.createDimension("lon", lon2d.shape[1])
+        nc.createDimension("time", times.shape[0])
+        nc.createDimension("lat",  lat2d.shape[0])
+        nc.createDimension("lon",  lon2d.shape[1])
 
         time_var = nc.createVariable("time", "f8", ("time",))
         lat_var  = nc.createVariable("lat",  "f4", ("lat", "lon"))
         lon_var  = nc.createVariable("lon",  "f4", ("lat", "lon"))
 
-        t2_var    = nc.createVariable("T2",     "f4", ("time", "lat", "lon"), zlib=True)
-        psfc_var  = nc.createVariable("PSFC",   "f4", ("time", "lat", "lon"), zlib=True)
-        rh2_var   = nc.createVariable("RH2",    "f4", ("time", "lat", "lon"), zlib=True)
-        wind_var  = nc.createVariable("WIND",   "f4", ("time", "lat", "lon"), zlib=True)
-        swdown_var= nc.createVariable("SWDOWN", "f4", ("time", "lat", "lon"), zlib=True)
-        glw_var   = nc.createVariable("GLW",    "f4", ("time", "lat", "lon"), zlib=True)
+        t2_var     = nc.createVariable("T2",     "f4", ("time","lat","lon"), zlib=True)
+        psfc_var   = nc.createVariable("PSFC",   "f4", ("time","lat","lon"), zlib=True)
+        rh2_var    = nc.createVariable("RH2",    "f4", ("time","lat","lon"), zlib=True)
+        wind_var   = nc.createVariable("WIND",   "f4", ("time","lat","lon"), zlib=True)
+        swdown_var = nc.createVariable("SWDOWN", "f4", ("time","lat","lon"), zlib=True)
+        glw_var    = nc.createVariable("GLW",    "f4", ("time","lat","lon"), zlib=True)
 
         time_var.units = "hours since 1970-01-01 00:00:00"
         time_var.calendar = "gregorian"
-        lat_var.units = "degrees_north"
-        lon_var.units = "degrees_east"
-
-        t2_var.units = "degC"
+        lat_var.units  = "degrees_north"
+        lon_var.units  = "degrees_east"
+        t2_var.units   = "degC"
         psfc_var.units = "kPa"
-        rh2_var.units = "%"
+        rh2_var.units  = "%"
         wind_var.units = "m s-1"
         swdown_var.units = "W m-2"
-        glw_var.units = "W m-2"
+        glw_var.units    = "W m-2"
 
-        # Convert numpy datetime64 -> numeric
-        # Use seconds since epoch -> hours since epoch
-        epoch_hours = date2num(
-            [np.datetime64(t).astype("datetime64[s]").astype(object) for t in time_vals],
-            units=time_var.units, calendar=time_var.calendar
-        )
-        time_var[:] = epoch_hours
+        # encode time from dataset times
+        py_times = [np.datetime64(t).astype("datetime64[s]").astype(object) for t in times]
+        time_var[:] = date2num(py_times, units=time_var.units, calendar=time_var.calendar)
 
         lat_var[:, :] = lat2d.astype("float32")
         lon_var[:, :] = lon2d.astype("float32")
 
-        # Write variables
-        t2_var[:, :, :]     = T2_C.transpose("time", "latitude", "longitude").values.astype("float32")
-        psfc_var[:, :, :]   = PS_kPa.transpose("time", "latitude", "longitude").values.astype("float32")
-        rh2_var[:, :, :]    = RH2.transpose("time", "latitude", "longitude").values.astype("float32")
-        wind_var[:, :, :]   = WIND.transpose("time", "latitude", "longitude").values.astype("float32")
-        swdown_var[:, :, :] = SWDOWN.transpose("time", "latitude", "longitude").values.astype("float32")
-        glw_var[:, :, :]    = GLW.transpose("time", "latitude", "longitude").values.astype("float32")
+        # ensure (time, lat, lon) ordering
+        t2_var[:, :, :]     = T2.transpose("time","latitude","longitude").values
+        psfc_var[:, :, :]   = PS.transpose("time","latitude","longitude").values
+        rh2_var[:, :, :]    = RH2.transpose("time","latitude","longitude").values
+        wind_var[:, :, :]   = WIND.transpose("time","latitude","longitude").values
+        swdown_var[:, :, :] = SWDOWN.transpose("time","latitude","longitude").values
+        glw_var[:, :, :]    = GLW.transpose("time","latitude","longitude").values
 
-    print(f"ERA5 forcing file created (sliced {start_dt} to {end_dt} UTC, {time_vals.size} steps): {output_file}")
+    print(f"ERA5 forcing file created: {output_file}  ({len(times)} hourly steps from {py_times[0]} to {py_times[-1]} UTC)")
     
 # =============================================================================
 #    The function will:
@@ -971,6 +892,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         
         # Process the generated NetCDF file to create metfiles.
         process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str)
+
 
 
 
