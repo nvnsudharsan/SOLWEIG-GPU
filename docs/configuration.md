@@ -85,16 +85,15 @@ The optimal tile size depends on your GPU memory. Here are some guidelines:
 **Type:** Integer  
 **Default:** 20  
 **Units:** Pixels  
-**Description:** The overlap between adjacent tiles.
+**Description:** To consider building the tree shading between adjacent raster tiles.
 
 ```python
-overlap = 100  # Recommended for accurate shadow calculations
+overlap = 100  
 ```
 
 The overlap ensures that shadows cast from buildings in one tile can affect adjacent tiles. A larger overlap is needed when:
 
 - Buildings are very tall
-- The sun angle is low (early morning or late afternoon)
 - High accuracy is required at tile boundaries
 
 **Recommended Overlap Values:**
