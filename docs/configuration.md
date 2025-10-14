@@ -77,8 +77,8 @@ The optimal tile size depends on your GPU memory. Here are some guidelines:
 | 12 GB | 1500-2000 | 2.25-4.0 km² |
 | 16 GB+ | 2000-3600 | 4.0-12.96 km² |
 
-!!! tip "Finding the Right Tile Size"
-    If you encounter out-of-memory errors, reduce the tile size. If processing is slow with plenty of memory available, try increasing it.
+!!! Tip: "Finding the Right Tile Size"
+    If you encounter out-of-memory errors, reduce the tile size. If processing is slow with plenty of memory available, try increasing it. You may use hit and trial to determine the raster size that works with your GPU.
 
 ### `overlap`
 
