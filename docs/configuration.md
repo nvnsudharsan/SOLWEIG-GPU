@@ -60,7 +60,7 @@ SOLWEIG-GPU uses a tiling system to process large domains efficiently. These par
 **Type:** Integer  
 **Default:** 3600  
 **Units:** Pixels  
-**Description:** Number of pixels in x and y directions.
+**Description:** Number of pixels in x and y directions. tile_size of 1000 will create rasters with 1000*1000 pixels (plus the overlap chosen by the user)
 
 ```python
 tile_size = 1000  # Recommended for most GPUs
