@@ -115,22 +115,30 @@ When `use_own_met=True`, you must provide the path to your custom meteorological
     
 ### Using ERA5 or WRF Data
 
+**WRF:**
+
 ```python
 use_own_met = False
-data_source_type = 'ERA5'  # or 'wrfout'
-data_folder = '/path/to/era5_or_wrf_data'
+data_source_type = 'wrfout'
+data_folder = '/path/to/wrf_data'
 start_time = '2020-08-13 06:00:00'  # UTC
 end_time = '2020-08-13 23:00:00'    # UTC
 ```
 
-**Parameters:**
+**ERA-5:**
 
-- `data_source_type`: Either `'ERA5'` or `'wrfout'`
-- `data_folder`: Directory containing the NetCDF files
-- `start_time` and `end_time`: Time range in UTC format `'YYYY-MM-DD HH:MM:SS'`
+```python
+use_own_met = False
+data_source_type = 'ERA5'
+data_folder = '/path/to/era5_data'
+start_time = '2020-08-13 06:00:00'  # UTC
+end_time = '2020-08-13 23:00:00'    # UTC
+```
 
-!!! important "Time Zone"
-    When using ERA5 or WRF data, `start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
+!!! Important Notes:
+   1.  When using ERA5 or WRF data, `start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
+   2.  The `start_time` and `end_time` should be the first and last time stamps in the ERA-5 and wrfout datasets. The package won't compare the selecetd `start_time` and `end_time` to the timestamps within the datasets and automatically fetch the corresponding data.
+    
 
 ## Output Configuration
 
