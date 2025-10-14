@@ -195,42 +195,118 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     """
     start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
     end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    
     def saturation_vapor_pressure(T):
         """
         Calculate saturation vapor pressure (in hPa) given temperature T in Celsius.
         """
         return 6.112 * np.exp((17.67 * T) / (T + 243.5))
     
-    instant_file = os.path.join(folder_path, 'data_stream-oper_stepType-instant.nc')
-    accum_file   = os.path.join(folder_path, 'data_stream-oper_stepType-accum.nc')
+    # Use glob to find all NetCDF files in the folder
+    nc_files = glob.glob(os.path.join(folder_path, "*.nc"))
+    if not nc_files:
+        raise FileNotFoundError(f"No NetCDF files found in {folder_path}")
     
-    ds_instant = xr.open_dataset(instant_file)
-    ds_accum   = xr.open_dataset(accum_file)
+    print(f"Found {len(nc_files)} NetCDF files: {[os.path.basename(f) for f in nc_files]}")
     
-    # Generate the correct time array using the provided start and end times (1-hour frequency)
-    time_array = [start_time + timedelta(hours=i) 
-                  for i in range(int((end_time - start_time).total_seconds() // 3600) + 1)]
+    # Open all NetCDF files using mfdataset
+    try:
+        ds = xr.open_mfdataset(nc_files, combine='by_coords')
+    except Exception as e:
+        print(f"Warning: mfdataset failed with error: {e}")
+        print("Trying to open files individually...")
+        # Fallback: try to open files individually and combine
+        datasets = []
+        for file in nc_files:
+            try:
+                ds_temp = xr.open_dataset(file)
+                datasets.append(ds_temp)
+            except Exception as e2:
+                print(f"Could not open {file}: {e2}")
+                continue
+        
+        if not datasets:
+            raise ValueError("Could not open any NetCDF files")
+        
+        # Combine datasets
+        ds = xr.merge(datasets)
     
-    temperatures = ds_instant['t2m'].values
-    dew_points   = ds_instant['d2m'].values
+    # Identify the time coordinate
+    time_coord_name = None
+    possible_time_names = ['time', 'valid_time', 'Time', 'Valid_time']
     
-    surface_pressures = ds_instant['sp'].values 
+    for time_name in possible_time_names:
+        if time_name in ds.coords:
+            time_coord_name = time_name
+            break
     
-    u10 = ds_instant['u10'].values
-    v10 = ds_instant['v10'].values
+    if time_coord_name is None:
+        raise ValueError(f"Could not find time coordinate. Available coordinates: {list(ds.coords.keys())}")
+    
+    print(f"Using time coordinate: {time_coord_name}")
+    
+    # Get the actual time array from ERA5 data
+    era5_time_array = ds[time_coord_name].values
+    
+    # Convert ERA5 time to datetime objects
+    if hasattr(era5_time_array, 'to_pydatetime'):
+        era5_datetime_array = era5_time_array.to_pydatetime()
+    else:
+        # Handle numpy datetime64
+        era5_datetime_array = [datetime.datetime.fromtimestamp(ts.astype('datetime64[ns]').astype(int) / 1e9) for ts in era5_time_array]
+    
+    print(f"ERA5 data contains {len(era5_datetime_array)} time steps")
+    print(f"Time range: {era5_datetime_array[0]} to {era5_datetime_array[-1]}")
+    
+    # Use the actual ERA5 time array instead of generating one
+    num_time_steps = len(era5_time_array)
+    
+    # Extract variables - handle missing variables gracefully
+    required_vars = ['t2m', 'd2m', 'sp', 'u10', 'v10']
+    optional_vars = ['ssrd', 'strd']
+    
+    missing_vars = []
+    for var in required_vars:
+        if var not in ds.variables:
+            missing_vars.append(var)
+    
+    if missing_vars:
+        raise ValueError(f"Missing required variables: {missing_vars}. Available variables: {list(ds.variables.keys())}")
+    
+    temperatures = ds['t2m'].values
+    dew_points = ds['d2m'].values
+    surface_pressures = ds['sp'].values
+    u10 = ds['u10'].values
+    v10 = ds['v10'].values
     wind_speeds = np.sqrt(u10**2 + v10**2)
     
-    # Convert from J m^-2 (accumulated over 3 hours) to W m^-2 by dividing by 3600.
-    shortwave_radiation = ds_accum['ssrd'].values / 3600.0
-    longwave_radiation  = ds_accum['strd'].values / 3600.0
+    # Handle optional variables
+    if 'ssrd' in ds.variables:
+        shortwave_radiation = ds['ssrd'].values / 3600.0  # Convert J/m^2 to W/m^2
+    else:
+        print("Warning: ssrd not found, setting shortwave radiation to 0")
+        shortwave_radiation = np.zeros_like(temperatures)
+    
+    if 'strd' in ds.variables:
+        longwave_radiation = ds['strd'].values / 3600.0  # Convert J/m^2 to W/m^2
+    else:
+        print("Warning: strd not found, setting longwave radiation to 0")
+        longwave_radiation = np.zeros_like(temperatures)
     
     # Compute relative humidity (in %)
-    e_temp      = saturation_vapor_pressure(temperatures - 273.15)
+    e_temp = saturation_vapor_pressure(temperatures - 273.15)
     e_dew_point = saturation_vapor_pressure(dew_points - 273.15)
     relative_humidities = 100.0 * (e_dew_point / e_temp)
     
-    latitudes = ds_instant['latitude'].values
-    longitudes = ds_instant['longitude'].values
+    # Extract coordinates
+    if 'latitude' in ds.coords and 'longitude' in ds.coords:
+        latitudes = ds['latitude'].values
+        longitudes = ds['longitude'].values
+    elif 'lat' in ds.coords and 'lon' in ds.coords:
+        latitudes = ds['lat'].values
+        longitudes = ds['lon'].values
+    else:
+        raise ValueError(f"Could not find latitude/longitude coordinates. Available: {list(ds.coords.keys())}")
     
     if latitudes.ndim == 1 and longitudes.ndim == 1:
         lon2d, lat2d = np.meshgrid(longitudes, latitudes)
@@ -240,20 +316,20 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     
     # Define the output NetCDF file
     with Dataset(output_file, 'w', format='NETCDF4') as nc:
-        nc.createDimension('time', len(time_array))
+        nc.createDimension('time', num_time_steps)
         nc.createDimension('lat', lat2d.shape[0])
         nc.createDimension('lon', lon2d.shape[1])
         
         time_var = nc.createVariable('time', 'f8', ('time',))
-        lat_var  = nc.createVariable('lat', 'f4', ('lat', 'lon'))
-        lon_var  = nc.createVariable('lon', 'f4', ('lat', 'lon'))
+        lat_var = nc.createVariable('lat', 'f4', ('lat', 'lon'))
+        lon_var = nc.createVariable('lon', 'f4', ('lat', 'lon'))
         
-        t2_var    = nc.createVariable('T2', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        psfc_var  = nc.createVariable('PSFC', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        wind_var  = nc.createVariable('WIND', 'f4', ('time', 'lat', 'lon'), zlib=True)
-        swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
-       # glw_var   = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        t2_var = nc.createVariable('T2', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        psfc_var = nc.createVariable('PSFC', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        rh2_var = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        wind_var = nc.createVariable('WIND', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        swdown_var = nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        # glw_var = nc.createVariable('GLW', 'f4', ('time', 'lat', 'lon'), zlib=True)
         
         # The time units are defined relative to the start time.
         time_var.units = "hours since 1970-01-01 00:00:00"
@@ -266,20 +342,24 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         rh2_var.units = "%"
         wind_var.units = "m/s"
         swdown_var.units = "W/m^2"
-       # glw_var.units = "W/m^2"
+        # glw_var.units = "W/m^2"
         
-        time_var[:] = date2num(time_array, units=time_var.units, calendar=time_var.calendar)
+        # Use the actual ERA5 time array
+        time_var[:] = date2num(era5_datetime_array, units=time_var.units, calendar=time_var.calendar)
         lat_var[:, :] = lat2d
         lon_var[:, :] = lon2d
         
-        t2_var[:, :, :]    = temperatures
-        psfc_var[:, :, :]  = surface_pressures
-        rh2_var[:, :, :]   = relative_humidities
-        wind_var[:, :, :]  = wind_speeds
+        t2_var[:, :, :] = temperatures
+        psfc_var[:, :, :] = surface_pressures
+        rh2_var[:, :, :] = relative_humidities
+        wind_var[:, :, :] = wind_speeds
         swdown_var[:, :, :] = shortwave_radiation
-        #glw_var[:, :, :]    = longwave_radiation
+        # glw_var[:, :, :] = longwave_radiation
 
     print("ERA5 forcing file created:", output_file)
+    
+    # Close the dataset
+    ds.close()
 
 # =============================================================================
 #    The function will:
