@@ -142,7 +142,7 @@ end_time = '2020-08-13 23:00:00'    # UTC
 
 ## Output Configuration
 
-Control which outputs are saved to disk. All outputs are optional except UTCI, which is always computed.
+Control which outputs are saved to disk. All outputs are optional except UTCI, which is always saved.
 
 ```python
 save_tmrt = True      # Mean Radiant Temperature
