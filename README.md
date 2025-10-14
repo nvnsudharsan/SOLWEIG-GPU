@@ -165,7 +165,7 @@ thermal_comfort(
     use_own_met=False,
     own_met_file='/path/to/met.txt',  #Placeholder as use_own_met=False
     start_time='2020-08-13 06:00:00',
-    end_time=  '2020-08-13 23:00:00',
+    end_time=  '2020-08-14 05:00:00',
     data_source_type='ERA5',
     data_folder='/path/to/era5_or_wrfout',
     save_tmrt=False, #True if you want to save TMRT, likewise below
