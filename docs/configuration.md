@@ -110,6 +110,9 @@ own_met_file = '/path/to/your/metfile.txt'
 
 When `use_own_met=True`, you must provide the path to your custom meteorological file. The `start_time`, `end_time`, `data_source_type`, and `data_folder` parameters are ignored.
 
+!!! Note:
+    It is recomended to create the meteorological file with the UMEP Met Processor tool: <https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html>
+    
 ### Using ERA5 or WRF Data
 
 ```python
