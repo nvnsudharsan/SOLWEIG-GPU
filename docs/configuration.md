@@ -37,8 +37,8 @@ base_path/
 selected_date_str = '2020-08-13'
 ```
 
-!!! note
-    This is the local date for your study area, not UTC.
+!!! Note:
+    This is the date in local time for your study area, not UTC. E.g., If you want to simulate an entire day of 2020-08-13 for Austin,Texas in summer (UTC - 5 hours), the selected_date_str should be '2020-08-13'
 
 ### Raster Filenames
 
