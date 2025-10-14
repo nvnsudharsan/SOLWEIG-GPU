@@ -67,7 +67,7 @@ request = {
     ],
     "year": ["2000"], # change to the desired year
     "month": ["08"], # change to the desired month
-    "day": ["13", "14"], # change to date desired date
+    "day": ["13", "14"], # change to the desired date
     "time": [
         "00:00", "01:00", "02:00",
         "03:00", "04:00", "05:00",
