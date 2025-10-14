@@ -60,7 +60,7 @@ SOLWEIG-GPU uses a tiling system to process large domains efficiently. These par
 **Type:** Integer  
 **Default:** 3600  
 **Units:** Pixels  
-**Description:** The size of each tile in pixels.
+**Description:** Number of pixels in x and y directions.
 
 ```python
 tile_size = 1000  # Recommended for most GPUs
