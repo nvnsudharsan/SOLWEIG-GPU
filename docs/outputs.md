@@ -191,28 +191,52 @@ plt.show()
 
 If your simulation generated multiple tiles, you may want to merge them into a single raster for easier visualization and analysis.
 
-### Using GDAL
-
-```bash
-# Merge all UTCI tiles
-gdal_merge.py -o UTCI_merged.tif Outputs/*/UTCI_*.tif -separate
-
-# Merge with compression
-gdal_merge.py -o UTCI_merged.tif -co COMPRESS=LZW Outputs/*/UTCI_*.tif -separate
-```
-
-### Using Python
+### UTCI tile merging example
 
 ```python
-from osgeo import gdal
+import os
 import glob
+import numpy as np
+from tempfile import TemporaryDirectory
+from osgeo import gdal
 
-# Find all UTCI tiles
-utci_files = sorted(glob.glob('Outputs/*/UTCI_*.tif'))
+base_dir = r"path_to_outputs/Outputs" # Locate the simulation output
+pattern  = os.path.join(base_dir, "**", "UTCI*.tif") # Merging UTCI but this works for other variables as well
+inputs   = glob.glob(pattern, recursive=True)
+assert inputs, "No input tiles found!"
 
-# Merge using GDAL's Warp
-gdal.Warp('UTCI_merged.tif', utci_files, format='GTiff',
-          options=['COMPRESS=LZW'])
+ds0 = gdal.Open(inputs[0])
+n_bands = ds0.RasterCount
+ds0 = None
+
+out_dir = r"output_folder/UTCI" # Provide the folder where the merged files should be saved
+os.makedirs(out_dir, exist_ok=True)
+
+with TemporaryDirectory() as tmpdir:
+    for b in range(1, n_bands + 1):
+        print(f"Merging band {b}/{n_bands}")
+
+        vrt_path = os.path.join(tmpdir, f"band{b:02d}.vrt")
+        vrt_opts = gdal.BuildVRTOptions(
+            bandList=[b],          # <- pick this band only
+            srcNodata=-999,
+            VRTNodata=np.nan       # nodata in the VRT
+        )
+        vrt_ds = gdal.BuildVRT(vrt_path, inputs, options=vrt_opts)
+        if vrt_ds is None:
+            raise RuntimeError(f"Failed to build VRT for band {b}")
+        vrt_ds = None  # flush to disk
+
+        out_tif = os.path.join(out_dir, f"merged_band{b:02d}_900.tif")
+        tr_opts = gdal.TranslateOptions(
+            format="GTiff",
+            outputType=gdal.GDT_Float32,
+            noData=np.nan,
+            creationOptions=[
+                "TILED=YES"  
+            ]
+        )
+        gdal.Translate(out_tif, vrt_path, options=tr_opts)
 ```
 
 ## Data Analysis
