@@ -38,13 +38,13 @@ thermal_comfort(
 
 -   `base_path` (str): The base directory containing the input raster data.
 -   `selected_date_str` (str): The date for the simulation in `YYYY-MM-DD` format.
--   `building_dsm_filename` (str, optional): The filename of the Building DSM raster. Defaults to `'Building_DSM.tif'`.
--   `dem_filename` (str, optional): The filename of the DEM raster. Defaults to `'DEM.tif'`.
--   `trees_filename` (str, optional): The filename of the Tree DSM raster. Defaults to `'Trees.tif'`.
+-   `building_dsm_filename` (str): The filename of the Building DSM raster. Defaults to `'Building_DSM.tif'`.
+-   `dem_filename` (str): The filename of the DEM raster. Defaults to `'DEM.tif'`.
+-   `trees_filename` (str): The filename of the Tree DSM raster. Defaults to `'Trees.tif'`.
 -   `landcover_filename` (str, optional): The filename of the land cover raster. Defaults to `None`.
--   `tile_size` (int, optional): The size of the tiles in pixels. Defaults to `3600`.
--   `overlap` (int, optional): The overlap between tiles in pixels. Defaults to `20`.
--   `use_own_met` (bool, optional): Whether to use a custom meteorological file. Defaults to `True`.
+-   `tile_size` (int): The size of the tiles in pixels. Defaults to `3600`.
+-   `overlap` (int): The overlap between tiles in pixels. Defaults to `20`.
+-   `use_own_met` (bool): Whether to use a custom meteorological file. Defaults to `True`.
 -   `start_time` (str, optional): The start time of the simulation in `YYYY-MM-DD HH:MM:SS` format (UTC). Required if `use_own_met` is `False`.
 -   `end_time` (str, optional): The end time of the simulation in `YYYY-MM-DD HH:MM:SS` format (UTC). Required if `use_own_met` is `False`.
 -   `data_source_type` (str, optional): The type of meteorological data source (`'ERA5'` or `'wrfout'`). Required if `use_own_met` is `False`.
