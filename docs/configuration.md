@@ -198,38 +198,6 @@ thermal_comfort(
 )
 ```
 
-## Advanced Configuration
-
-### Physical Parameters
-
-Some physical parameters are hardcoded in the package but can be modified by editing `utci_process.py`:
-
-```python
-# Surface properties
-albedo_b = 0.2      # Building albedo
-albedo_g = 0.15     # Ground albedo
-ewall = 0.9         # Wall emissivity
-eground = 0.95      # Ground emissivity
-absK = 0.7          # Shortwave absorption
-absL = 0.95         # Longwave absorption
-
-# Human body model
-Fside = 0.22        # Side fraction
-Fup = 0.06          # Up fraction
-Fcyl = 0.28         # Cylinder fraction
-```
-
-### Vegetation Parameters
-
-```python
-firstdayleaf = 97   # First day with leaves (day of year)
-lastdayleaf = 300   # Last day with leaves (day of year)
-usevegdem = 1       # Use vegetation DEM (1=yes, 0=no)
-```
-
-!!! warning "Modifying Source Code"
-    Modifying these parameters requires editing the source code. Future versions may expose these as configuration options.
-
 ## Performance Optimization
 
 ### GPU vs CPU
@@ -247,18 +215,3 @@ If you encounter memory issues:
 
 1. **Reduce tile size**: Smaller tiles use less GPU memory
 2. **Reduce overlap**: Less overlap means less data to process
-3. **Disable unnecessary outputs**: Only save the outputs you need
-4. **Process tiles sequentially**: The package already does this, but ensure you're not running multiple simulations simultaneously
-
-### Processing Time
-
-Typical processing times on a modern GPU (NVIDIA RTX 3080):
-
-| Domain Size | Tile Size | Hours | Time |
-|------------|-----------|-------|------|
-| 1 km² | 1000 | 24 | ~5 min |
-| 4 km² | 1000 | 24 | ~20 min |
-| 10 km² | 1000 | 24 | ~50 min |
-
-!!! tip
-    Processing time scales roughly linearly with the number of pixels and hours simulated.
