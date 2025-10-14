@@ -445,9 +445,6 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
 
     print(f"ERA5 forcing file created (sliced {start_dt} to {end_dt} UTC, {time_vals.size} steps): {output_file}")
     
-    # Close the dataset
-    ds.close()
-
 # =============================================================================
 #    The function will:
 #        - Populate the list of available WRF output files (names starting with 'wrfout')
@@ -974,6 +971,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         
         # Process the generated NetCDF file to create metfiles.
         process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str)
+
 
 
 
