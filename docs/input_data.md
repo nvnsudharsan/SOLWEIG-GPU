@@ -8,7 +8,7 @@ All input rasters must be in **GeoTIFF format** and share the same properties to
 
 ### Requirements
 
-!!! warning "Critical Requirements"
+!!! "Critical Requirements"
     All input rasters must have:
     
     - Identical Coordinate Reference System (CRS)
@@ -24,13 +24,12 @@ The package includes validation checks that will raise errors if these requireme
 
 **Filename:** `Building_DSM.tif` (default)
 
-A Digital Surface Model that includes the height of both buildings and terrain. This raster represents the top surface of all features in the urban environment.
+A Digital Surface Model that includes the height of both buildings and terrain.
 
-**Data Type:** Float32  
 **Units:** Meters above a reference datum  
-**NoData Value:** Should be properly set for areas outside the study domain
 
-!!! tip "Creating Building DSM"
+
+!!! Tip "Creating Building DSM":
     Building DSM can be created by combining:
     
     - LiDAR point cloud data
@@ -41,13 +40,11 @@ A Digital Surface Model that includes the height of both buildings and terrain. 
 
 **Filename:** `DEM.tif` (default)
 
-A Digital Elevation Model representing the bare-earth terrain, excluding buildings and vegetation. This represents the ground surface.
+A Digital Elevation Model representing the bare-earth elevation.
 
-**Data Type:** Float32  
 **Units:** Meters above a reference datum  
-**NoData Value:** Should match Building DSM
 
-!!! tip "DEM Sources"
+!!! Tip "DEM Sources":
     High-quality DEMs can be obtained from:
     
     - National elevation datasets (e.g., USGS 3DEP for USA)
@@ -58,23 +55,15 @@ A Digital Elevation Model representing the bare-earth terrain, excluding buildin
 
 **Filename:** `Trees.tif` (default)
 
-A Digital Surface Model representing vegetation height only. This should contain the height of trees and other vegetation above ground level.
+A Digital Surface Model representing only the vegetation heights (The Tree DSM should represent the height of vegetation canopy above the ground surface, not above the reference datum.). Pixels with no tree coverage should be zero.
 
-**Data Type:** Float32  
 **Units:** Meters  
-**Values:** Height of vegetation (0 for non-vegetated areas)
-
-!!! info "Vegetation Height"
-    The Tree DSM should represent the height of vegetation canopy above the ground surface, not above the reference datum. Areas without vegetation should have a value of 0.
 
 #### Land Cover (Optional)
 
 **Filename:** `Landcover.tif` (optional)
 
-A raster representing land cover types. If not provided, the model will assume default land cover properties.
-
-**Data Type:** Integer  
-**Values:** Land cover classification codes
+A raster representing land cover types. If not provided, the model will assume default land cover properties. The package accepts UMEP style landcover (<https://umep-docs.readthedocs.io/en/latest/pre-processor/Urban%20Land%20Cover%20Land%20Cover%20Reclassifier.html>
 
 The package uses the classification scheme defined in `landcoverclasses_2016a.txt`. Key classes include:
 
