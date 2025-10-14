@@ -96,15 +96,7 @@ The overlap ensures that shadows cast from buildings in one tile can affect adja
 - Buildings are very tall
 - High accuracy is required at tile boundaries
 
-**Recommended Overlap Values:**
-
-| Building Height | Sun Angle | Recommended Overlap |
-|----------------|-----------|-------------------|
-| < 20m | > 30° | 50-100 pixels |
-| 20-50m | > 30° | 100-150 pixels |
-| > 50m or low sun | < 30° | 150-200 pixels |
-
-!!! warning
+!!! Warning:
     Overlap must be less than tile_size. The actual processed tile will be `tile_size + overlap` pixels.
 
 ## Meteorological Data Configuration
