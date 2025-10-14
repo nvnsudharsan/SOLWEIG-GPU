@@ -51,29 +51,17 @@ UTCI is always computed and saved. It provides a comprehensive measure of therma
 | -40 to -27 | Very strong cold stress |
 | < -40 | Extreme cold stress |
 
-!!! info "UTCI Applications"
-    UTCI is widely used in urban planning, public health, and climate adaptation studies. It provides a standardized measure that can be compared across different locations and climates.
 
 ### Mean Radiant Temperature (Tmrt)
 
 **Filename:** `Tmrt_X_Y.tif`  
 **Format:** Multi-band GeoTIFF  
 **Units:** °C  
-**Description:** The mean radiant temperature experienced by a person.
+**Description:** The mean radiant temperature in a standing position.
 
 Tmrt represents the uniform temperature of an imaginary enclosure in which the radiant heat exchange with the human body equals the radiant heat exchange in the actual environment.
 
 **Saved when:** `save_tmrt=True`
-
-**Interpretation:**
-
-Tmrt is typically higher than air temperature in sunny conditions due to solar radiation and can be significantly lower in shaded areas. The difference between Tmrt and air temperature indicates the importance of radiation in thermal comfort.
-
-**Typical Values:**
-
-- **Full sun:** Tmrt can be 20-30°C higher than air temperature
-- **Full shade:** Tmrt is typically 0-5°C lower than air temperature
-- **Partial shade:** Tmrt varies between these extremes
 
 ### Sky View Factor (SVF)
 
@@ -86,22 +74,10 @@ SVF is a geometric parameter that quantifies the openness of a location to the s
 
 **Saved when:** `save_tmrt=True`
 
-**Interpretation:**
-
-| SVF Value | Environment |
-|-----------|-------------|
-| 1.0 | Completely open (no obstructions) |
-| 0.7-0.9 | Open urban areas, wide streets |
-| 0.4-0.7 | Urban canyons, narrow streets |
-| 0.2-0.4 | Heavily built-up areas |
-| < 0.2 | Under dense canopy or deep canyons |
-
-!!! note "SVF is Time-Independent"
+!!! Note:
     Unlike other outputs, SVF is a geometric property that doesn't change with time. It is saved as a single-band raster, not multi-band.
 
-### Shortwave Radiation
-
-#### Downwelling Shortwave (Kdown)
+#### Downwelling Shortwave
 
 **Filename:** `Kdown_X_Y.tif`  
 **Format:** Multi-band GeoTIFF  
@@ -109,8 +85,6 @@ SVF is a geometric parameter that quantifies the openness of a location to the s
 **Description:** Incoming shortwave (solar) radiation at the surface.
 
 **Saved when:** `save_kdown=True`
-
-Kdown includes both direct beam radiation and diffuse radiation from the sky, accounting for shading by buildings and vegetation.
 
 #### Upwelling Shortwave (Kup)
 
@@ -121,10 +95,6 @@ Kdown includes both direct beam radiation and diffuse radiation from the sky, ac
 
 **Saved when:** `save_kup=True`
 
-Kup represents solar radiation reflected from the ground and walls, which contributes to the radiation budget.
-
-### Longwave Radiation
-
 #### Downwelling Longwave (Ldown)
 
 **Filename:** `Ldown_X_Y.tif`  
@@ -134,8 +104,6 @@ Kup represents solar radiation reflected from the ground and walls, which contri
 
 **Saved when:** `save_ldown=True`
 
-Ldown includes atmospheric radiation and thermal emission from surrounding surfaces (walls, ground).
-
 #### Upwelling Longwave (Lup)
 
 **Filename:** `Lup_X_Y.tif`  
@@ -144,8 +112,6 @@ Ldown includes atmospheric radiation and thermal emission from surrounding surfa
 **Description:** Outgoing longwave radiation from the surface.
 
 **Saved when:** `save_lup=True`
-
-Lup represents thermal emission from the ground and walls based on their temperature.
 
 ### Shadow Maps
 
@@ -159,9 +125,7 @@ Lup represents thermal emission from the ground and walls based on their tempera
 **Values:**
 
 - **0:** In shadow
-- **1:** In direct sunlight
-
-Shadow maps show which areas receive direct solar radiation at each time step. They account for shading by buildings and vegetation.
+- **1:** In light
 
 ## Multi-Band Structure
 
@@ -305,14 +269,3 @@ plt.tight_layout()
 plt.savefig('utci_timeseries.png', dpi=300)
 plt.show()
 ```
-
-## Best Practices
-
-!!! tip "Output Management"
-    - Only save outputs you need to conserve disk space
-    - Use compression when merging tiles (`COMPRESS=LZW`)
-    - Document your output location and naming convention
-    - Keep a log of simulation parameters with outputs
-
-!!! warning "NoData Values"
-    Check for and handle NoData values appropriately when computing statistics or creating visualizations. NoData typically appears at the edges of tiles or in areas outside the study domain.
