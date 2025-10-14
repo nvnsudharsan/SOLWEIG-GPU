@@ -184,6 +184,78 @@ def create_tiles(infile, tilesize, overlap, tile_type):
 # meteogrological forcing for SOLWEIG. Note that RAIN is set to 0.
 # =============================================================================
 
+def _normalize_time_coord(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Return a copy of ds with a proper 'time' coordinate.
+    Handles common ERA5 layouts:
+      1) 'valid_time' (already-realized timestamps) -> rename to 'time'
+      2) 'time' + 'step' (forecast-style files) -> create time = time + step
+      3) plain 'time' -> leave as-is
+    """
+    ds = ds.copy()
+
+    # If 'valid_time' dimension/coord exists, prefer that as time
+    if "valid_time" in ds.dims or "valid_time" in ds.coords:
+        ds = ds.rename({"valid_time": "time"})
+        return ds
+
+    # If it has CF forecast layout: base 'time' plus 'step' offsets
+    has_time = ("time" in ds.coords) or ("time" in ds.dims)
+    has_step = ("step" in ds.coords) or ("step" in ds.dims)
+    if has_time and has_step:
+        # Ensure both decode to datetime64 / timedelta64
+        base_time = xr.decode_cf(ds[["time"]])["time"] if "time" in ds.coords else ds["time"]
+        step = ds["step"]
+        # xarray usually decodes step to timedelta64[h], but if not, try pandas
+        if not np.issubdtype(step.dtype, np.timedelta64):
+            # attempt to parse as hours if it's numeric, else fall back to pandas to_timedelta
+            try:
+                step_td = xr.DataArray(
+                    pd.to_timedelta(step.values),
+                    dims=step.dims,
+                    coords=step.coords
+                )
+            except Exception:
+                # last resort: assume hours
+                step_td = xr.DataArray(
+                    pd.to_timedelta(step.values, unit="h"),
+                    dims=step.dims,
+                    coords=step.coords
+                )
+        else:
+            step_td = step
+
+        # Broadcast-add base time and step to get valid times
+        vt = (base_time + step_td).rename("time")
+        # If result is 2D (e.g., dims ('time','step')), flatten into a single time axis:
+        if vt.ndim == 2:
+            vt = vt.stack(time_flat=("time", "step")).rename("time")
+            ds = ds.stack(time_flat=("time", "step")).rename_dims({"time_flat": "time"}).drop_vars(["time", "step"])
+            ds = ds.assign_coords(time=vt.values)
+        else:
+            # Typically step varies and base time is scalar -> vt has 'step' dim; rename to 'time'
+            if "step" in vt.dims and "time" not in vt.dims:
+                ds = ds.swap_dims({"step": "time"}).drop_vars(["step"])
+                ds = ds.assign_coords(time=vt.values)
+            else:
+                # vt already along 'time'
+                ds = ds.assign_coords(time=vt.values)
+
+        return ds
+
+    # If plain 'time' already present, ensure decoding
+    if has_time:
+        try:
+            ds = xr.decode_cf(ds)
+        except Exception:
+            pass
+        return ds
+
+    raise KeyError(
+        "Couldn't find a usable time coordinate. "
+        "Expected one of: 'valid_time', or 'time' (+ optional 'step'). "
+        f"Dataset dims: {list(ds.dims.keys())}, coords: {list(ds.coords.keys())}")
+
 def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
     """
     Create a SOLWEIG forcing NetCDF from ERA5 files by slicing the *existing* time range
@@ -205,8 +277,11 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     instant_file = os.path.join(folder_path, "data_stream-oper_stepType-instant.nc")
     accum_file   = os.path.join(folder_path, "data_stream-oper_stepType-accum.nc")
 
-    ds_instant = xr.open_dataset(instant_file)
-    ds_accum   = xr.open_dataset(accum_file)
+    ds_instant = xr.open_dataset(instant_file, decode_times=True)
+    ds_accum   = xr.open_dataset(accum_file, decode_times=True)
+
+    ds_instant = _normalize_time_coord(ds_instant)
+    ds_accum   = _normalize_time_coord(ds_accum)
 
     # --- helper: saturation vapor pressure (Tetens) with T in °C, output hPa ---
     def esat_c(Tc):
@@ -899,6 +974,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         
         # Process the generated NetCDF file to create metfiles.
         process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str)
+
 
 
 
