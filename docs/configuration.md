@@ -156,15 +156,15 @@ save_shadow = False   # Shadow maps
 
 **Output Descriptions:**
 
-| Parameter | Output | Description | File Size |
+| Parameter | Output | Description | 
 |-----------|--------|-------------|-----------|
-| `save_tmrt` | Tmrt | Mean Radiant Temperature (°C) | Large |
-| `save_svf` | SVF | Sky View Factor (0-1) | Small |
-| `save_kup` | Kup | Reflected shortwave radiation (W/m²) | Large |
-| `save_kdown` | Kdown | Incoming shortwave radiation (W/m²) | Large |
-| `save_lup` | Lup | Emitted longwave radiation (W/m²) | Large |
-| `save_ldown` | Ldown | Incoming longwave radiation (W/m²) | Large |
-| `save_shadow` | Shadow | Binary shadow maps (0/1) | Medium |
+| `save_tmrt` | Tmrt | Mean Radiant Temperature (°C) 
+| `save_svf` | SVF | Sky View Factor (0-1) 
+| `save_kup` | Kup | Reflected shortwave radiation (W/m²) 
+| `save_kdown` | Kdown | Incoming shortwave radiation (W/m²) 
+| `save_lup` | Lup | Emitted longwave radiation (W/m²) 
+| `save_ldown` | Ldown | Incoming longwave radiation (W/m²) 
+| `save_shadow` | Shadow | Binary shadow maps (0/1) 
 
 !!! tip "Disk Space"
     Each output is saved as a multi-band GeoTIFF with one band per hour. For a 24-hour simulation of a 1000×1000 pixel tile, expect approximately:
