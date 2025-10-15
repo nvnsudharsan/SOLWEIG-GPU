@@ -43,15 +43,15 @@ The model was originally developed by Dr. Fredrik Lindberg's group and has been 
       Get started by installing SOLWEIG-GPU and its dependencies.
     </td>
     <td>
-      <a href="./quickstart.md"><strong>Quickstart</strong></a><br/>
-      Run your first thermal comfort simulation in minutes.
+      <a href="./input_data.md"><strong>Input Data</strong></a><br/>
+      Learn how to prepare data for simulations.
     </td>
   </tr>
 
   <tr>
     <td>
-      <a href="./input_data.md"><strong>Input Data</strong></a><br/>
-      Learn how to prepare data for simulations.
+      <a href="./configuration.md"><strong>Configuration</strong></a><br/>
+      Learn how to configure the simulation.
     </td>
     <td>
       <a href="./api_reference.md"><strong>API Reference</strong></a><br/>
@@ -61,19 +61,19 @@ The model was originally developed by Dr. Fredrik Lindberg's group and has been 
 
   <tr>
     <td>
-      <a href="./examples.md"><strong>Examples</strong></a><br/>
-      Explore example scripts for different use cases.
+      <a href="./quickstart.md"><strong>Quickstart</strong></a><br/>
+      Run your first thermal comfort simulation in minutes.
     </td>
     <td>
-      <a href="./outputs.md"><strong>Outputs</strong></a><br/>
-      Explore outputs and postprocessing.
+      <a href="./examples.md"><strong>Examples</strong></a><br/>
+      Explore example scripts for different use cases.
     </td>
   </tr>
 
   <tr>
     <td>
-      <a href="./configuration.md"><strong>Configuration</strong></a><br/>
-      Learn how to configure the simulation.
+      <a href="./outputs.md"><strong>Outputs</strong></a><br/>
+      Explore outputs and postprocessing.
     </td>
     <td>
       <a href="./developer_guide.md"><strong>Developer Guide</strong></a><br/>
