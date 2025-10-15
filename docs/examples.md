@@ -49,6 +49,7 @@ thermal_comfort(
     data_folder='/path/to/era5',
 )
 ```
+See the [Jupyter notebook](../examples/Example_ERA5.ipynb) 
 ## You can download ERA5 as below
 ```python
 import cdsapi
