@@ -61,7 +61,7 @@ Learn how to prepare data and configure simulations.
 </td>
 <td>
 
-### [**API Reference**](https://github.com/nvnsudharsan/solweig-gpu/blob/updates/docs/api_reference.md)
+### [**API Reference**](./api_reference.md)
 Detailed documentation of functions and parameters.
 
 </td>
@@ -70,13 +70,13 @@ Detailed documentation of functions and parameters.
 <tr>
 <td>
 
-### [**Examples**](https://github.com/nvnsudharsan/solweig-gpu/blob/updates/docs/examples.md)
+### [**Examples**](./examples.md)
 Explore example scripts for different use cases.
 
 </td>
 <td>
 
-### [**Developer Guide**](https://github.com/nvnsudharsan/solweig-gpu/blob/updates/docs/developer_guide.md)
+### [**Developer Guide**](./developer_guide.md)
 Contribute to the project and gain an understanding of its architecture.
 
 </td>
