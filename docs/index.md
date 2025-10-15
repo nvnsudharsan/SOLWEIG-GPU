@@ -56,7 +56,7 @@ Run your first thermal comfort simulation in minutes.
 <td>
 
 ### [**Input Data**](./input_data.md)
-Learn how to prepare data and configure simulations.
+Learn how to prepare data for simulations.
 
 </td>
 <td>
@@ -72,6 +72,20 @@ Detailed documentation of functions and parameters.
 
 ### [**Examples**](./examples.md)
 Explore example scripts for different use cases.
+
+</td>
+<tr>
+<td>
+
+### [**Outputs**](./outputs.md)
+Explore outputs and postprocessing.
+
+</td>
+<tr>
+<td>
+
+### [**Configuration**](./configuration.md)
+Learn how to configure the simulation.
 
 </td>
 <td>
