@@ -287,10 +287,4 @@ solweig_gpu_gui
 ---
 
 ### Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-Please keep your pull requests small and focused. This will make it easier to review and merge.
+Please refer to the [documentation](./docs/developer_guide.md)
