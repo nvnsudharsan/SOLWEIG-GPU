@@ -1,5 +1,8 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
+![tests](https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg)
+[![codecov](https://codecov.io/gh/nvnsudharsan/solweig-gpu/branch/main/graph/badge.svg)](https://codecov.io/gh/nvnsudharsan/solweig-gpu)
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo_solweig.jpg" alt="SOLWEIG Logo" width="400"/>
 </p>
@@ -72,6 +75,22 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 ---
 
 ## Installation
+## Testing
+
+Run the test suite with:
+
+```bash
+pytest -q
+```
+
+With coverage:
+
+```bash
+pytest --cov=solweig_gpu --cov-report=term-missing
+```
+
+CI runs tests on Linux, macOS, and Windows across Python 3.9–3.12.
+
 
 ```bash
 conda create -n solweig python=3.10

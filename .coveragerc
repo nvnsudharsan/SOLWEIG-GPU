@@ -1,0 +1,12 @@
+[run]
+source = solweig_gpu
+branch = True
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    except Exception as e:
+fail_under = 60
+
+
