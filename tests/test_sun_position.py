@@ -23,9 +23,9 @@ class TestSolarPosition(unittest.TestCase):
             'month': 7,
             'day': 18,
             'hour': 12,
-            'minute': 0,
-            'second': 0,
-            'timezone': -5
+            'min': 0,
+            'sec': 0,
+            'UTC': -5
         }
         location_dict = {
             'latitude': 30.27,
@@ -52,9 +52,9 @@ class TestSolarPosition(unittest.TestCase):
             'month': 7,
             'day': 18,
             'hour': 6,
-            'minute': 30,
-            'second': 0,
-            'timezone': -5
+            'min': 30,
+            'sec': 0,
+            'UTC': -5
         }
         location_dict = {
             'latitude': 30.27,
@@ -78,9 +78,9 @@ class TestSolarPosition(unittest.TestCase):
             'month': 7,
             'day': 18,
             'hour': 20,
-            'minute': 0,
-            'second': 0,
-            'timezone': -5
+            'min': 0,
+            'sec': 0,
+            'UTC': -5
         }
         location_dict = {
             'latitude': 30.27,
@@ -111,9 +111,9 @@ class TestSolarPosition(unittest.TestCase):
                 'month': 7,
                 'day': 18,
                 'hour': hour,
-                'minute': 0,
-                'second': 0,
-                'timezone': -5
+                'min': 0,
+                'sec': 0,
+                'UTC': -5
             }
             sun = sun_position(time_dict, location_dict)
             # Azimuth should be in valid range
@@ -137,9 +137,9 @@ class TestSolarPosition(unittest.TestCase):
                 'month': 7,
                 'day': 18,
                 'hour': hour,
-                'minute': 0,
-                'second': 0,
-                'timezone': -5
+                'min': 0,
+                'sec': 0,
+                'UTC': -5
             }
             sun = sun_position(time_dict, location_dict)
             # Zenith should be in valid range [0, 180], which means altitude in [-90, 90]

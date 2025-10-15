@@ -6,7 +6,8 @@ import numpy as np
 from osgeo import gdal, osr
 
 
-def _create_raster(path: str, width=32, height=32, pixel_size=0.0005, epsg=4326):
+def _create_raster(path: str, width=100, height=100, pixel_size=0.0005, epsg=4326):
+    """Create a test raster with minimum viable size for SOLWEIG."""
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create(path, width, height, 1, gdal.GDT_Float32)
     geotransform = (77.0, pixel_size, 0.0, 29.25, 0.0, -pixel_size)
@@ -14,7 +15,9 @@ def _create_raster(path: str, width=32, height=32, pixel_size=0.0005, epsg=4326)
     srs = osr.SpatialReference(); srs.ImportFromEPSG(epsg)
     ds.SetProjection(srs.ExportToWkt())
     band = ds.GetRasterBand(1)
-    band.WriteArray(np.random.rand(height, width).astype(np.float32))
+    # Create simple flat terrain with some variation
+    data = np.ones((height, width), dtype=np.float32) * 100
+    band.WriteArray(data)
     ds.FlushCache(); ds = None
     return path
 
@@ -48,8 +51,8 @@ class TestEndToEnd(unittest.TestCase):
             dem_filename='DEM.tif',
             trees_filename='Trees.tif',
             landcover_filename=None,
-            tile_size=32,
-            overlap=0,
+            tile_size=100,
+            overlap=10,
             use_own_met=True,
             start_time='2020-07-18 00:00:00',
             end_time='2020-07-18 23:00:00',

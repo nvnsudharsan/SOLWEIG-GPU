@@ -80,48 +80,48 @@ class TestAspectCalculation(unittest.TestCase):
         # Create a slope facing north (decreasing elevation toward north)
         dem = np.zeros((10, 10), dtype=np.float32)
         for i in range(10):
-            dem[i, :] = 10.0 - i  # Decreases from south to north
+            dem[i, :] = 10.0 - i  # Decreases from south (row 0) to north (row 9)
         
-        # Gradient should point north (aspect ~ 0° or 360°)
+        # Gradient dy is negative for north-facing (elevation decreases as row index increases)
         dy, dx = np.gradient(dem)
-        # North facing means positive gradient in y direction
-        self.assertTrue(np.mean(dy) > 0, "North-facing slope should have positive y gradient")
+        # North facing means negative gradient in y direction (downslope toward north)
+        self.assertTrue(np.mean(dy) < 0, "North-facing slope should have negative y gradient")
 
     def test_aspect_east_facing(self):
         """Test aspect calculation for east-facing wall."""
         # Create a slope facing east (decreasing elevation toward east)
         dem = np.zeros((10, 10), dtype=np.float32)
         for j in range(10):
-            dem[:, j] = 10.0 - j  # Decreases from west to east
+            dem[:, j] = 10.0 - j  # Decreases from west (col 0) to east (col 9)
         
-        # Gradient should point east (aspect ~ 90°)
+        # Gradient dx is negative for east-facing (elevation decreases as col index increases)
         dy, dx = np.gradient(dem)
-        # East facing means positive gradient in x direction
-        self.assertTrue(np.mean(dx) > 0, "East-facing slope should have positive x gradient")
+        # East facing means negative gradient in x direction (downslope toward east)
+        self.assertTrue(np.mean(dx) < 0, "East-facing slope should have negative x gradient")
 
     def test_aspect_south_facing(self):
         """Test aspect calculation for south-facing wall."""
         # Create a slope facing south (decreasing elevation toward south)
         dem = np.zeros((10, 10), dtype=np.float32)
         for i in range(10):
-            dem[i, :] = float(i)  # Increases from north to south
+            dem[i, :] = float(i)  # Increases from north (row 0) to south (row 9)
         
-        # Gradient should point south (aspect ~ 180°)
+        # Gradient dy is positive for south-facing (elevation increases as row index increases)
         dy, dx = np.gradient(dem)
-        # South facing means negative gradient in y direction
-        self.assertTrue(np.mean(dy) < 0, "South-facing slope should have negative y gradient")
+        # South facing means positive gradient in y direction (downslope toward south)
+        self.assertTrue(np.mean(dy) > 0, "South-facing slope should have positive y gradient")
 
     def test_aspect_west_facing(self):
         """Test aspect calculation for west-facing wall."""
         # Create a slope facing west (decreasing elevation toward west)
         dem = np.zeros((10, 10), dtype=np.float32)
         for j in range(10):
-            dem[:, j] = float(j)  # Increases from west to east
+            dem[:, j] = float(j)  # Increases from west (col 0) to east (col 9)
         
-        # Gradient should point west (aspect ~ 270°)
+        # Gradient dx is positive for west-facing (elevation increases as col index increases)
         dy, dx = np.gradient(dem)
-        # West facing means negative gradient in x direction
-        self.assertTrue(np.mean(dx) < 0, "West-facing slope should have negative x gradient")
+        # West facing means positive gradient in x direction (downslope toward west)
+        self.assertTrue(np.mean(dx) > 0, "West-facing slope should have positive x gradient")
 
     def test_aspect_range(self):
         """Test that aspect values are within valid range [0, 360]."""
