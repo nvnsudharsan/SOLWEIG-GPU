@@ -20,21 +20,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Mambaforge
+      - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniforge-variant: Mambaforge
-          miniforge-version: latest
+          auto-update-conda: true
           activate-environment: test
           python-version: ${{ matrix.python-version }}
-          use-mamba: true
+          use-mamba: false
 
       - name: Install dependencies
         shell: bash -el {0}
         run: |
-          mamba install -c conda-forge gdal numpy scipy pandas netcdf4 pytz shapely timezonefinder xarray tqdm matplotlib-base pyqt
+          # Install deps following official installation guide
+          conda install -c conda-forge gdal pytorch timezonefinder matplotlib sip
+          pip install PyQt5
+          # Install additional test dependencies
           pip install pytest coverage pytest-cov
-          pip install -e . --no-deps
+          # Install package in editable mode
+          pip install -e .
 
       - name: Run tests with coverage
         shell: bash -el {0}
