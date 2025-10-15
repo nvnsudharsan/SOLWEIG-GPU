@@ -25,7 +25,7 @@ thermal_comfort(
     data_folder='/path/to/wrfout',
 )
 ```
-
+See the [Jupyter notebook](../examples/Example_wrfout.ipynb)
 ## Example 2: Using ERA5 Data
 
 This example demonstrates how to use ERA5 reanalysis data for the simulation.
@@ -108,4 +108,5 @@ thermal_comfort(
     own_met_file='/path/to/met.txt',
 )
 ```
+See the [Jupyter notebook](../examples/Example_ownmetfile.ipynb)
 
