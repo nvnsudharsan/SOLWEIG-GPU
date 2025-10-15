@@ -81,7 +81,6 @@ Explore example scripts for different use cases.
 Explore outputs and postprocessing.
 
 </td>
-<tr>
 <td>
 
 ### [**Configuration**](./configuration.md)
