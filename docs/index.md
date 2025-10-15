@@ -55,7 +55,7 @@ Run your first thermal comfort simulation in minutes.
 <tr>
 <td>
 
-### [**User Guide**](./user_guide.md)
+### [**Input Data**](./input_data.md)
 Learn how to prepare data and configure simulations.
 
 </td>
