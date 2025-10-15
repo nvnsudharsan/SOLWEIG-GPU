@@ -53,7 +53,7 @@ landcover_filename = None                   # Optional
 
 ## Tiling Configuration
 
-SOLWEIG-GPU uses a tiling system to process large domains efficiently. These parameters control how the study area is divided.
+SOLWEIG-GPU utilizes a tiling system to efficiently process large domains. These parameters control how the study area is divided.
 
 ### `tile_size`
 
@@ -63,7 +63,7 @@ SOLWEIG-GPU uses a tiling system to process large domains efficiently. These par
 **Description:** Number of pixels in x and y directions. tile_size of 1000 will create rasters with 1000*1000 pixels (plus the overlap chosen by the user)
 
 ```python
-tile_size = 1000  # Recommended for most GPUs
+tile_size = 1000  
 ```
 
 **Choosing Tile Size:**
