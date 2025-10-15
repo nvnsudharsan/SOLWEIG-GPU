@@ -16,8 +16,8 @@ data_folder = '/path/to/your/era5_data'
 selected_date = '2020-08-13'
 
 # Start and end times for the simulation (UTC)
-start_time = '2020-08-13 06:00:00'
-end_time = '2020-08-13 23:00:00'
+start_time = '2020-08-13 00:00:00'
+end_time = '2020-08-14 23:00:00'
 
 # --- Run Simulation ---
 
