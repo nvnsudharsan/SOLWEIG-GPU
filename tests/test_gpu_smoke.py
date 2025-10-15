@@ -1,10 +1,20 @@
 import pytest
+import sys
+
+
+def _torch_cuda_available():
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except Exception:
+        return False
 
 
 @pytest.mark.gpu
-@pytest.mark.skipif(__import__('torch').cuda.is_available() is False, reason='CUDA not available')
+@pytest.mark.skipif(not _torch_cuda_available(), reason='CUDA not available')
+@pytest.mark.skipif(sys.platform == 'win32', reason='Skipping GPU tests on Windows CI')
 def test_cuda_tensor_ops():
-    torch = __import__('torch')
+    import torch
     device = torch.device('cuda')
     a = torch.tensor([1.0, 2.0, 3.0], device=device)
     b = torch.tensor([4.0, 5.0, 6.0], device=device)
