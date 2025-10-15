@@ -117,15 +117,10 @@ SVF is a geometric parameter that quantifies the openness of a location to the s
 
 **Filename:** `Shadow_X_Y.tif`  
 **Format:** Multi-band GeoTIFF  
-**Units:** Binary (0 or 1)  
+**Units:** unitless (varies from 0 to 1)
 **Description:** Shadow/sunlit classification for each pixel.
 
 **Saved when:** `save_shadow=True`
-
-**Values:**
-
-- **0:** In shadow
-- **1:** In light
 
 ## Multi-Band Structure
 
