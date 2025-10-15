@@ -43,26 +43,64 @@ class TestTilingAndMetfiles(unittest.TestCase):
         create_tiles(self.dem, tile_size, overlap, 'DEM')
         out_dir = os.path.join(self.base_path, 'DEM')
         self.assertTrue(os.path.isdir(out_dir))
-        # Expect multiple tiles
+        # Expect multiple tiles (64x48 raster with 32px tiles = 2x2 grid)
         tiles = [f for f in os.listdir(out_dir) if f.endswith('.tif')]
-        self.assertTrue(len(tiles) >= 2)
+        self.assertTrue(len(tiles) >= 2, f"Expected at least 2 tiles, got {len(tiles)}")
+        
+        # Verify tile naming follows pattern DEM_X_Y.tif
+        for tile in tiles:
+            self.assertTrue(tile.startswith('DEM_'), f"Tile {tile} doesn't start with 'DEM_'")
+            self.assertTrue('_' in tile[4:], f"Tile {tile} doesn't follow naming pattern")
+        
+        # Verify a tile can be opened and has correct properties
+        first_tile = os.path.join(out_dir, tiles[0])
+        ds = gdal.Open(first_tile)
+        self.assertIsNotNone(ds)
+        # Tile should be tile_size + overlap or smaller
+        self.assertLessEqual(ds.RasterXSize, tile_size + overlap)
+        self.assertLessEqual(ds.RasterYSize, tile_size + overlap)
+        ds = None
 
     def test_create_met_files_from_single_file(self):
         from solweig_gpu.preprocessor import create_tiles, create_met_files
         # Prepare tiles of Building_DSM required by create_met_files naming
         create_tiles(self.building, tilesize=64, overlap=0, tile_type='Building_DSM')
+        
+        # Verify Building_DSM tiles were created
+        building_dir = os.path.join(self.base_path, 'Building_DSM')
+        self.assertTrue(os.path.isdir(building_dir))
+        building_tiles = [f for f in os.listdir(building_dir) if f.endswith('.tif')]
+        self.assertTrue(len(building_tiles) >= 1, "Building_DSM tiles should exist")
+        
         # Create a simple source met file
         met_src = os.path.join(self.base_path, 'source_met.txt')
         with open(met_src, 'w') as f:
             f.write('iy id it imin Q* QH QE Qs Qf Wind RH Td press rain Kdn snow ldown fcld wuh xsmd lai_hr Kdiff Kdir Wd\n')
-            f.write('2000 1 0 0 -999 -999 -999 -999 -999 1.0 50 20 100 0 0 -999 -999 -999 -999 -999 -999 -999 -999 -999\n')
+            for h in range(24):
+                f.write(f'2000 1 {h} 0 -999 -999 -999 -999 -999 1.0 50 20 100 0 0 -999 -999 -999 -999 -999 -999 -999 -999 -999\n')
+        
         # Run copier
         create_met_files(self.base_path, met_src)
         met_dir = os.path.join(self.base_path, 'metfiles')
         self.assertTrue(os.path.isdir(met_dir))
-        # Should have one met file matching a tile suffix
-        files = [f for f in os.listdir(met_dir) if f.endswith('.txt')]
-        self.assertTrue(len(files) >= 1)
+        
+        # Should have one met file per Building_DSM tile
+        met_files = [f for f in os.listdir(met_dir) if f.endswith('.txt')]
+        self.assertTrue(len(met_files) >= 1, f"Expected at least 1 metfile, got {len(met_files)}")
+        self.assertEqual(len(met_files), len(building_tiles), 
+                        "Should have one metfile per Building_DSM tile")
+        
+        # Verify metfile naming follows pattern metfile_X_Y.txt
+        for mf in met_files:
+            self.assertTrue(mf.startswith('metfile_'), f"Metfile {mf} should start with 'metfile_'")
+        
+        # Verify metfile content is copied correctly
+        first_met = os.path.join(met_dir, met_files[0])
+        with open(first_met, 'r') as f:
+            lines = f.readlines()
+            self.assertEqual(len(lines), 25)  # Header + 24 hours
+            self.assertIn('iy', lines[0])  # Header check
+            self.assertIn('2000', lines[1])  # Data check
 
 
 if __name__ == '__main__':
