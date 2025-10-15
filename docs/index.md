@@ -37,64 +37,51 @@ The model was originally developed by Dr. Fredrik Lindberg's group and has been 
 ## Quick Links
 
 <table>
-<tr>
-<td>
+  <tr>
+    <td>
+      ### [**Installation**](./installation.md)  
+      Get started by installing SOLWEIG-GPU and its dependencies.
+    </td>
+    <td>
+      ### [**Quickstart**](./quickstart.md)  
+      Run your first thermal comfort simulation in minutes.
+    </td>
+  </tr>
 
-### [**Installation**](./installation.md)
-Get started by installing SOLWEIG-GPU and its dependencies.
+  <tr>
+    <td>
+      ### [**Input Data**](./input_data.md)  
+      Learn how to prepare data for simulations.
+    </td>
+    <td>
+      ### [**API Reference**](./api_reference.md)  
+      Detailed documentation of functions and parameters.
+    </td>
+  </tr>
 
-</td>
-<td>
+  <tr>
+    <td>
+      ### [**Examples**](./examples.md)  
+      Explore example scripts for different use cases.
+    </td>
+    <td>
+      ### [**Outputs**](./outputs.md)  
+      Explore outputs and postprocessing.
+    </td>
+  </tr>
 
-### [**Quickstart**](./quickstart.md)
-Run your first thermal comfort simulation in minutes.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-### [**Input Data**](./input_data.md)
-Learn how to prepare data for simulations.
-
-</td>
-<td>
-
-### [**API Reference**](./api_reference.md)
-Detailed documentation of functions and parameters.
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-### [**Examples**](./examples.md)
-Explore example scripts for different use cases.
-
-</td>
-<tr>
-<td>
-
-### [**Outputs**](./outputs.md)
-Explore outputs and postprocessing.
-
-</td>
-<td>
-
-### [**Configuration**](./configuration.md)
-Learn how to configure the simulation.
-
-</td>
-<td>
-
-### [**Developer Guide**](./developer_guide.md)
-Contribute to the project and gain an understanding of its architecture.
-
-</td>
-</tr>
+  <tr>
+    <td>
+      ### [**Configuration**](./configuration.md)  
+      Learn how to configure the simulation.
+    </td>
+    <td>
+      ### [**Developer Guide**](./developer_guide.md)  
+      Contribute to the project and gain an understanding of its architecture.
+    </td>
+  </tr>
 </table>
+
 
 
 
