@@ -75,6 +75,15 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 ---
 
 ## Installation
+
+```bash
+conda create -n solweig python=3.10
+conda activate solweig
+conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib sip #cudnn is required only if you are using nvidia GPU
+pip install PyQt5
+pip install solweig-gpu
+
+```
 ## Testing
 
 Run the test suite with:
@@ -91,15 +100,6 @@ pytest --cov=solweig_gpu --cov-report=term-missing
 
 CI runs tests on Linux and macOS across Python 3.10–3.12.
 
-
-```bash
-conda create -n solweig python=3.10
-conda activate solweig
-conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib sip #cudnn is required only if you are using nvidia GPU
-pip install PyQt5
-pip install solweig-gpu
-
-```
 
 ---
 
