@@ -14,30 +14,138 @@ class TestSolarPosition(unittest.TestCase):
 
     def test_solar_position_noon(self):
         """Test solar position calculation at solar noon."""
-        # This is a placeholder test - actual implementation would require
-        # importing and testing the Solweig_2015a_metdata_noload function
-        # with known reference values
-        pass
+        from solweig_gpu.sun_position import sun_position
+        
+        # Test at solar noon in summer
+        # Austin, TX: 30.27°N, 97.74°W on summer day
+        time_dict = {
+            'year': 2020,
+            'month': 7,
+            'day': 18,
+            'hour': 12,
+            'minute': 0,
+            'second': 0,
+            'timezone': -5
+        }
+        location_dict = {
+            'latitude': 30.27,
+            'longitude': -97.74,
+            'altitude': 0
+        }
+        
+        sun = sun_position(time_dict, location_dict)
+        
+        # Should return a dict with zenith and azimuth
+        self.assertIsInstance(sun, dict)
+        self.assertIn('zenith', sun)
+        self.assertIn('azimuth', sun)
+        # At noon in summer, zenith should be low (high altitude)
+        self.assertLess(sun['zenith'], 30.0, "Solar zenith should be low at summer noon")
 
     def test_solar_position_sunrise(self):
         """Test solar position calculation at sunrise."""
-        # Placeholder for sunrise test
-        pass
+        from solweig_gpu.sun_position import sun_position
+        
+        # Austin, TX at sunrise (approximately 6:30 AM)
+        time_dict = {
+            'year': 2020,
+            'month': 7,
+            'day': 18,
+            'hour': 6,
+            'minute': 30,
+            'second': 0,
+            'timezone': -5
+        }
+        location_dict = {
+            'latitude': 30.27,
+            'longitude': -97.74,
+            'altitude': 0
+        }
+        
+        sun = sun_position(time_dict, location_dict)
+        
+        # At sunrise, zenith should be close to 90 (altitude close to 0)
+        self.assertIsInstance(sun, dict)
+        self.assertTrue(75 <= sun['zenith'] <= 95, f"Zenith {sun['zenith']} should be near 90 at sunrise")
 
     def test_solar_position_sunset(self):
         """Test solar position calculation at sunset."""
-        # Placeholder for sunset test
-        pass
+        from solweig_gpu.sun_position import sun_position
+        
+        # Austin, TX at sunset (approximately 8:00 PM)
+        time_dict = {
+            'year': 2020,
+            'month': 7,
+            'day': 18,
+            'hour': 20,
+            'minute': 0,
+            'second': 0,
+            'timezone': -5
+        }
+        location_dict = {
+            'latitude': 30.27,
+            'longitude': -97.74,
+            'altitude': 0
+        }
+        
+        sun = sun_position(time_dict, location_dict)
+        
+        # At sunset, zenith should be close to 90 (altitude close to 0)
+        self.assertIsInstance(sun, dict)
+        self.assertTrue(75 <= sun['zenith'] <= 95, f"Zenith {sun['zenith']} should be near 90 at sunset")
 
     def test_solar_azimuth_range(self):
         """Test that solar azimuth is within valid range [0, 360]."""
-        # Placeholder - would test that azimuth values are always in valid range
-        pass
+        from solweig_gpu.sun_position import sun_position
+        
+        # Test multiple times of day
+        location_dict = {
+            'latitude': 30.27,
+            'longitude': -97.74,
+            'altitude': 0
+        }
+        
+        for hour in [6, 9, 12, 15, 18]:
+            time_dict = {
+                'year': 2020,
+                'month': 7,
+                'day': 18,
+                'hour': hour,
+                'minute': 0,
+                'second': 0,
+                'timezone': -5
+            }
+            sun = sun_position(time_dict, location_dict)
+            # Azimuth should be in valid range
+            self.assertTrue(0 <= sun['azimuth'] <= 360, 
+                          f"Azimuth {sun['azimuth']} out of range [0, 360] at hour {hour}")
 
     def test_solar_altitude_range(self):
         """Test that solar altitude is within valid range [-90, 90]."""
-        # Placeholder - would test that altitude values are always in valid range
-        pass
+        from solweig_gpu.sun_position import sun_position
+        
+        # Test multiple times including night
+        location_dict = {
+            'latitude': 30.27,
+            'longitude': -97.74,
+            'altitude': 0
+        }
+        
+        for hour in [0, 6, 12, 18, 23]:
+            time_dict = {
+                'year': 2020,
+                'month': 7,
+                'day': 18,
+                'hour': hour,
+                'minute': 0,
+                'second': 0,
+                'timezone': -5
+            }
+            sun = sun_position(time_dict, location_dict)
+            # Zenith should be in valid range [0, 180], which means altitude in [-90, 90]
+            altitude = 90 - sun['zenith']
+            self.assertTrue(-90 <= altitude <= 90, 
+                          f"Altitude {altitude} out of range [-90, 90] at hour {hour}")
 
 
 class TestDayLength(unittest.TestCase):
