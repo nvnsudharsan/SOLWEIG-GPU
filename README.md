@@ -1,7 +1,5 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
-![tests](https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg)
-[![codecov](https://codecov.io/gh/nvnsudharsan/solweig-gpu/branch/main/graph/badge.svg)](https://codecov.io/gh/nvnsudharsan/solweig-gpu)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo_solweig.jpg" alt="SOLWEIG Logo" width="400"/>
@@ -17,6 +15,9 @@
   <a href="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34"><img src="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34/status.svg"></a>
 </p>
 
+![tests](https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg)
+[![codecov](https://codecov.io/gh/nvnsudharsan/solweig-gpu/branch/main/graph/badge.svg)](https://codecov.io/gh/nvnsudharsan/solweig-gpu)
+
 **SOLWEIG-GPU** is a Python package and command-line interface for running the standalone SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
 **SOLWEIG** was originally developed by Dr. Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. *Int J Biometeorol* 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
@@ -25,6 +26,8 @@
 UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. *Environmental Modelling & Software*, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
 
 ---
+
+For detailed documentation see [DOCS](./docs/index.md)
 
 ## Features
 
