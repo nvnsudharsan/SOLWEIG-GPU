@@ -89,7 +89,7 @@ With coverage:
 pytest --cov=solweig_gpu --cov-report=term-missing
 ```
 
-CI runs tests on Linux, macOS, and Windows across Python 3.9–3.12.
+CI runs tests on Linux and macOS across Python 3.10–3.12.
 
 
 ```bash
