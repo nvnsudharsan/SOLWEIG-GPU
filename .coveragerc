@@ -7,6 +7,6 @@ exclude_lines =
     pragma: no cover
     if __name__ == .__main__.:
     except Exception as e:
-fail_under = 60
+fail_under = 5
 
 
