@@ -6,7 +6,7 @@
 - CUDA-capable GPU (optional, but recommended for performance)
 - GDAL library
 
-## Method 1: Using Conda (Recommended)
+## Using Conda (Recommended)
 
 Conda handles the complex GDAL and PyTorch dependencies automatically:
 
@@ -16,33 +16,32 @@ conda create -n solweig python=3.10
 conda activate solweig
 
 # Install dependencies via conda
-conda install -c conda-forge gdal pytorch
+conda install -c conda-forge gdal pytorch timezonefinder matplotlib sip 
+pip install PyQt5
+pip install solweig-gpu
+
 
 # Install SOLWEIG-GPU
 pip install solweig-gpu
 ```
 
-## Method 2: Using pip with system GDAL
+## Using pip with system GDAL
 
-If you have GDAL installed system-wide:
+If you have GDAL and Pytorch installed system-wide:
 
 ```bash
 # Install SOLWEIG-GPU
 pip install solweig-gpu
 ```
 
-## Method 3: Development Installation
+## Development Installation
 
 For contributing or development:
 
 ```bash
-# Clone the repository
+# Clone the repository instead of 'pip install solweig-gpu'
 git clone https://github.com/your-username/SOLWEIG-GPU.git
 cd SOLWEIG-GPU
-
-# Create conda environment
-conda env create -f environment.yml
-conda activate solweig
 
 # Install in editable mode
 pip install -e .
@@ -65,7 +64,7 @@ print(f"CUDA devices: {torch.cuda.device_count()}")
 ### CUDA Requirements
 
 - CUDA 11.0 or higher
-- Compatible NVIDIA GPU (compute capability 3.5+)
+- Compatible NVIDIA GPU 
 - Sufficient GPU memory (4GB minimum, 8GB+ recommended)
 
 ### CPU-Only Mode
