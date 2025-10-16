@@ -33,6 +33,7 @@
           
           <a href="index.html" class="icon icon-home">
             SOLWEIG-GPU
+              <img src="_static/logo.jpg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -46,9 +47,9 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#method-1-using-conda-recommended">Method 1: Using Conda (Recommended)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#method-2-using-pip-with-system-gdal">Method 2: Using pip with system GDAL</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#method-3-development-installation">Method 3: Development Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-conda-recommended">Using Conda (Recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-pip-with-system-gdal">Using pip with system GDAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#development-installation">Development Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#verify-installation">Verify Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gpu-setup">GPU Setup</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#cuda-requirements">CUDA Requirements</a></li>
@@ -306,9 +307,12 @@
 <li class="toctree-l2"><a class="reference internal" href="testing.html#benchmark-tests">Benchmark Tests</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="developer_guide.html">Architecture Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="developer_guide.html#module-interactions">Module Interactions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="developer_guide.html#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide.html">Developer Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide.html#architecture-overview">Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide.html#module-interactions">Module Interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="developer_guide.html#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -345,39 +349,39 @@
 <li><p>GDAL library</p></li>
 </ul>
 </section>
-<section id="method-1-using-conda-recommended">
-<h2>Method 1: Using Conda (Recommended)<a class="headerlink" href="#method-1-using-conda-recommended" title="Link to this heading"></a></h2>
+<section id="using-conda-recommended">
+<h2>Using Conda (Recommended)<a class="headerlink" href="#using-conda-recommended" title="Link to this heading"></a></h2>
 <p>Conda handles the complex GDAL and PyTorch dependencies automatically:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a new environment</span>
-conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>solweig<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>solweig<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
 conda<span class="w"> </span>activate<span class="w"> </span>solweig
 
 <span class="c1"># Install dependencies via conda</span>
-conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gdal<span class="w"> </span>pytorch
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gdal<span class="w"> </span>pytorch<span class="w"> </span>timezonefinder<span class="w"> </span>matplotlib<span class="w"> </span>sip<span class="w"> </span>
+pip<span class="w"> </span>install<span class="w"> </span>PyQt5
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>cudnn<span class="w"> </span><span class="c1">#If GPU is available</span>
+pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
+
 
 <span class="c1"># Install SOLWEIG-GPU</span>
 pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
 </pre></div>
 </div>
 </section>
-<section id="method-2-using-pip-with-system-gdal">
-<h2>Method 2: Using pip with system GDAL<a class="headerlink" href="#method-2-using-pip-with-system-gdal" title="Link to this heading"></a></h2>
-<p>If you have GDAL installed system-wide:</p>
+<section id="using-pip-with-system-gdal">
+<h2>Using pip with system GDAL<a class="headerlink" href="#using-pip-with-system-gdal" title="Link to this heading"></a></h2>
+<p>If you have GDAL and Pytorch installed system-wide:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install SOLWEIG-GPU</span>
 pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
 </pre></div>
 </div>
 </section>
-<section id="method-3-development-installation">
-<h2>Method 3: Development Installation<a class="headerlink" href="#method-3-development-installation" title="Link to this heading"></a></h2>
+<section id="development-installation">
+<h2>Development Installation<a class="headerlink" href="#development-installation" title="Link to this heading"></a></h2>
 <p>For contributing or development:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone the repository</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone the repository instead of &#39;pip install solweig-gpu&#39;</span>
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/your-username/SOLWEIG-GPU.git
 <span class="nb">cd</span><span class="w"> </span>SOLWEIG-GPU
-
-<span class="c1"># Create conda environment</span>
-conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
-conda<span class="w"> </span>activate<span class="w"> </span>solweig
 
 <span class="c1"># Install in editable mode</span>
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
@@ -402,7 +406,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <h3>CUDA Requirements<a class="headerlink" href="#cuda-requirements" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>CUDA 11.0 or higher</p></li>
-<li><p>Compatible NVIDIA GPU (compute capability 3.5+)</p></li>
+<li><p>Compatible NVIDIA GPU</p></li>
 <li><p>Sufficient GPU memory (4GB minimum, 8GB+ recommended)</p></li>
 </ul>
 </section>

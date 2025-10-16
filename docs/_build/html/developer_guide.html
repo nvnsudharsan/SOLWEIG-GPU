@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Architecture Overview &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+  <title>Developer Guide &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -32,6 +32,7 @@
           
           <a href="index.html" class="icon icon-home">
             SOLWEIG-GPU
+              <img src="_static/logo.jpg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -45,9 +46,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#prerequisites">Prerequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#method-1-using-conda-recommended">Method 1: Using Conda (Recommended)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#method-2-using-pip-with-system-gdal">Method 2: Using pip with system GDAL</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#method-3-development-installation">Method 3: Development Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-conda-recommended">Using Conda (Recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-pip-with-system-gdal">Using pip with system GDAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#development-installation">Development Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#verify-installation">Verify Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#gpu-setup">GPU Setup</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="installation.html#cuda-requirements">CUDA Requirements</a></li>
@@ -305,9 +306,12 @@
 <li class="toctree-l2"><a class="reference internal" href="testing.html#benchmark-tests">Benchmark Tests</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-interactions">Module Interactions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#architecture-overview">Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-interactions">Module Interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -324,7 +328,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Architecture Overview</li>
+      <li class="breadcrumb-item active">Developer Guide</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/developer_guide.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -334,12 +338,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <blockquote>
-<div><h1 class="rubric" id="developer-guide">Developer Guide</h1>
-</div></blockquote>
+  <section id="developer-guide">
+<h1>Developer Guide<a class="headerlink" href="#developer-guide" title="Link to this heading"></a></h1>
 <p>This guide is intended for developers who want to understand the architecture of SOLWEIG-GPU and contribute to its development.</p>
 <section id="architecture-overview">
-<h1>Architecture Overview<a class="headerlink" href="#architecture-overview" title="Link to this heading"></a></h1>
+<h2>Architecture Overview<a class="headerlink" href="#architecture-overview" title="Link to this heading"></a></h2>
 <p>SOLWEIG-GPU is a modular package that separates the different stages of the thermal comfort modeling process. The main components are:</p>
 <ul class="simple">
 <li><p><strong>Data Preprocessing</strong>: Handles the validation, tiling, and extraction of input data.</p></li>
@@ -349,11 +352,11 @@
 </ul>
 </section>
 <section id="module-interactions">
-<h1>Module Interactions<a class="headerlink" href="#module-interactions" title="Link to this heading"></a></h1>
+<h2>Module Interactions<a class="headerlink" href="#module-interactions" title="Link to this heading"></a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">solweig_gpu.py</span></code> module acts as the main orchestrator, calling the other modules in the correct sequence. The <code class="docutils literal notranslate"><span class="pre">utci_process.py</span></code> module is the core of the computation, bringing together the various components to calculate the final UTCI values.</p>
 </section>
 <section id="contributing-to-solweig-gpu">
-<h1>Contributing to SOLWEIG-GPU<a class="headerlink" href="#contributing-to-solweig-gpu" title="Link to this heading"></a></h1>
+<h2>Contributing to SOLWEIG-GPU<a class="headerlink" href="#contributing-to-solweig-gpu" title="Link to this heading"></a></h2>
 <p>We welcome contributions to the SOLWEIG-GPU project. To contribute, please follow these steps:</p>
 <ol class="arabic simple">
 <li><p><strong>Fork the Repository</strong>: Create your own fork of the <a class="reference external" href="https://github.com/nvnsudharsan/SOLWEIG-GPU">SOLWEIG-GPU repository</a> on GitHub.</p></li>
@@ -363,6 +366,7 @@
 <li><p><strong>Create a Pull Request</strong>: Open a pull request from your branch to the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch of the original repository.</p></li>
 </ol>
 <p>Please ensure that your pull requests are small and focused on a single feature or bug fix. This makes it easier to review and merge your contributions.</p>
+</section>
 </section>
 
 
