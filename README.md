@@ -1,5 +1,6 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo_solweig.jpg" alt="SOLWEIG Logo" width="400"/>
 </p>
@@ -12,7 +13,9 @@
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
   <a href="https://pepy.tech/project/solweig-gpu"><img src="https://pepy.tech/badge/solweig-gpu" alt="PyPI Downloads"></a>
   <a href="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34"><img src="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34/status.svg"></a>
+  <a href="https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml"><img src="https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
+
 
 **SOLWEIG-GPU** is a Python package and command-line interface for running the standalone SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
@@ -22,6 +25,8 @@
 UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. *Environmental Modelling & Software*, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
 
 ---
+
+For detailed documentation see [DOCS](./docs/index.md)
 
 ## Features
 
@@ -81,6 +86,22 @@ pip install PyQt5
 pip install solweig-gpu
 
 ```
+## Testing
+
+Run the test suite with:
+
+```bash
+pytest -q
+```
+
+With coverage:
+
+```bash
+pytest --cov=solweig_gpu --cov-report=term-missing
+```
+
+CI runs tests on Linux and macOS across Python 3.10–3.12.
+
 
 ---
 
@@ -165,7 +186,7 @@ thermal_comfort(
     use_own_met=False,
     own_met_file='/path/to/met.txt',  #Placeholder as use_own_met=False
     start_time='2020-08-13 06:00:00',
-    end_time=  '2020-08-13 23:00:00',
+    end_time=  '2020-08-14 05:00:00',
     data_source_type='ERA5',
     data_folder='/path/to/era5_or_wrfout',
     save_tmrt=False, #True if you want to save TMRT, likewise below
@@ -268,10 +289,4 @@ solweig_gpu_gui
 ---
 
 ### Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-Please keep your pull requests small and focused. This will make it easier to review and merge.
+Please refer to the [documentation](./docs/developer_guide.md)

@@ -1,0 +1,94 @@
+site_name: SOLWEIG-GPU Documentation
+site_description: GPU-accelerated urban thermal comfort modeling framework
+site_author: Harsh Kamath, Naveen Sudharsan
+site_url: https://nvnsudharsan.github.io/SOLWEIG-GPU/
+
+repo_name: nvnsudharsan/SOLWEIG-GPU
+repo_url: https://github.com/nvnsudharsan/SOLWEIG-GPU
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quickstart: quickstart.md
+  - User Guide:
+      - Input Data: input_data.md
+      - Configuration: configuration.md
+      - Outputs: outputs.md
+  - API Reference: api_reference.md
+  - Examples: examples.md
+  - Developer Guide: developer_guide.md
+  - Testing: testing.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/nvnsudharsan/SOLWEIG-GPU
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/solweig-gpu/
+  version:
+    provider: mike
+
+copyright: Copyright &copy; 2022-2025 Harsh Kamath and Naveen Sudharsan
