@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testing Guide &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4afb903a"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SOLWEIG-GPU
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Testing Guide</a><ul>
+<li><a class="reference internal" href="#running-tests">Running Tests</a><ul>
+<li><a class="reference internal" href="#full-test-suite">Full Test Suite</a></li>
+<li><a class="reference internal" href="#with-coverage-report">With Coverage Report</a></li>
+<li><a class="reference internal" href="#specific-test-modules">Specific Test Modules</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#test-coverage">Test Coverage</a><ul>
+<li><a class="reference internal" href="#whats-tested">What’s Tested</a></li>
+<li><a class="reference internal" href="#whats-not-tested-and-why">What’s NOT Tested (and Why)</a></li>
+<li><a class="reference internal" href="#why-this-is-ok">Why This is OK</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#writing-tests">Writing Tests</a><ul>
+<li><a class="reference internal" href="#example-testing-a-utility-function">Example: Testing a Utility Function</a></li>
+<li><a class="reference internal" href="#example-testing-with-fixtures">Example: Testing with Fixtures</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#continuous-integration">Continuous Integration</a></li>
+<li><a class="reference internal" href="#manual-testing">Manual Testing</a><ul>
+<li><a class="reference internal" href="#test-with-sample-data">Test with Sample Data</a></li>
+<li><a class="reference internal" href="#verify-outputs">Verify Outputs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#benchmark-tests">Benchmark Tests</a></li>
+<li><a class="reference internal" href="#contributing-tests">Contributing Tests</a></li>
+<li><a class="reference internal" href="#further-reading">Further Reading</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Testing Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/testing.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="testing-guide">
+<h1>Testing Guide<a class="headerlink" href="#testing-guide" title="Link to this heading"></a></h1>
+<p>This page provides information about testing SOLWEIG-GPU.</p>
+<section id="running-tests">
+<h2>Running Tests<a class="headerlink" href="#running-tests" title="Link to this heading"></a></h2>
+<section id="full-test-suite">
+<h3>Full Test Suite<a class="headerlink" href="#full-test-suite" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/
+</pre></div>
+</div>
+</section>
+<section id="with-coverage-report">
+<h3>With Coverage Report<a class="headerlink" href="#with-coverage-report" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>--cov<span class="o">=</span>solweig_gpu<span class="w"> </span>--cov-report<span class="o">=</span>html<span class="w"> </span>tests/
+</pre></div>
+</div>
+<p>View the coverage report by opening <code class="docutils literal notranslate"><span class="pre">htmlcov/index.html</span></code> in a browser.</p>
+</section>
+<section id="specific-test-modules">
+<h3>Specific Test Modules<a class="headerlink" href="#specific-test-modules" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Test UTCI calculations</span>
+pytest<span class="w"> </span>tests/test_calculate_utci.py
+
+<span class="c1"># Test preprocessing</span>
+pytest<span class="w"> </span>tests/test_preprocessor.py
+
+<span class="c1"># Test solar position</span>
+pytest<span class="w"> </span>tests/test_sun_position.py
+
+<span class="c1"># Test CLI</span>
+pytest<span class="w"> </span>tests/test_cli.py
+</pre></div>
+</div>
+</section>
+</section>
+<section id="test-coverage">
+<h2>Test Coverage<a class="headerlink" href="#test-coverage" title="Link to this heading"></a></h2>
+<p>Current test coverage: <strong>~13-15%</strong></p>
+<p>This is <strong>expected and appropriate</strong> for a GPU-accelerated scientific simulation package.</p>
+<section id="whats-tested">
+<h3>What’s Tested<a class="headerlink" href="#whats-tested" title="Link to this heading"></a></h3>
+<p>✅ <strong>Unit Tests:</strong></p>
+<ul class="simple">
+<li><p>UTCI calculations (~80% coverage)</p></li>
+<li><p>Solar Position Algorithm (~80% coverage)</p></li>
+<li><p>CLI interface (~60% coverage)</p></li>
+<li><p>Wall aspect calculations (~40% coverage)</p></li>
+<li><p>Raster validation (~30% coverage)</p></li>
+</ul>
+<p>✅ <strong>Integration Tests:</strong></p>
+<ul class="simple">
+<li><p>Tile creation and overlap handling</p></li>
+<li><p>Met file generation</p></li>
+<li><p>End-to-end workflows (with synthetic data)</p></li>
+</ul>
+</section>
+<section id="whats-not-tested-and-why">
+<h3>What’s NOT Tested (and Why)<a class="headerlink" href="#whats-not-tested-and-why" title="Link to this heading"></a></h3>
+<p>❌ <strong>GPU Physics Code</strong> (~2000 lines):</p>
+<ul class="simple">
+<li><p>Requires CUDA/GPU runtime</p></li>
+<li><p>Needs real meteorological data</p></li>
+<li><p>Complex radiation calculations</p></li>
+<li><p><strong>Better validated through scientific publications</strong></p></li>
+</ul>
+<p>❌ <strong>GUI</strong> (~500 lines):</p>
+<ul class="simple">
+<li><p>Qt interface requires display server</p></li>
+<li><p>Better tested manually</p></li>
+</ul>
+</section>
+<section id="why-this-is-ok">
+<h3>Why This is OK<a class="headerlink" href="#why-this-is-ok" title="Link to this heading"></a></h3>
+<p><strong>Scientific computing packages</strong> typically have 20-40% coverage because:</p>
+<ol class="arabic simple">
+<li><p><strong>GPU code</strong> cannot run on standard CI without GPU runners</p></li>
+<li><p><strong>Physics simulations</strong> are validated through peer review, not just unit tests</p></li>
+<li><p><strong>Large datasets</strong> required for realistic tests (GB of memory)</p></li>
+<li><p><strong>Execution time</strong> can be hours for full simulations</p></li>
+</ol>
+<p><strong>SOLWEIG-GPU tests what matters:</strong></p>
+<ul class="simple">
+<li><p>User-facing APIs ✅</p></li>
+<li><p>Data validation ✅</p></li>
+<li><p>Scientific algorithms (SPA, UTCI) ✅</p></li>
+<li><p>Error handling ✅</p></li>
+</ul>
+</section>
+</section>
+<section id="writing-tests">
+<h2>Writing Tests<a class="headerlink" href="#writing-tests" title="Link to this heading"></a></h2>
+<section id="example-testing-a-utility-function">
+<h3>Example: Testing a Utility Function<a class="headerlink" href="#example-testing-a-utility-function" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">solweig_gpu.preprocessor</span><span class="w"> </span><span class="kn">import</span> <span class="n">saturation_vapor_pressure</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_saturation_vapor_pressure</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test SVP calculation at known temperature.&quot;&quot;&quot;</span>
+    <span class="c1"># Water boils at 100°C, SVP = 101.325 kPa</span>
+    <span class="n">svp</span> <span class="o">=</span> <span class="n">saturation_vapor_pressure</span><span class="p">(</span><span class="mf">100.0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">svp</span> <span class="o">-</span> <span class="mf">101.325</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.1</span>
+    
+    <span class="c1"># Freezing point</span>
+    <span class="n">svp</span> <span class="o">=</span> <span class="n">saturation_vapor_pressure</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">svp</span> <span class="o">-</span> <span class="mf">0.6113</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.01</span>
+</pre></div>
+</div>
+</section>
+<section id="example-testing-with-fixtures">
+<h3>Example: Testing with Fixtures<a class="headerlink" href="#example-testing-with-fixtures" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">temp_workspace</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create temporary workspace structure.&quot;&quot;&quot;</span>
+    <span class="n">workspace</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">&quot;solweig_test&quot;</span>
+    <span class="n">workspace</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+    <span class="p">(</span><span class="n">workspace</span> <span class="o">/</span> <span class="s2">&quot;Input_rasters&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+    <span class="p">(</span><span class="n">workspace</span> <span class="o">/</span> <span class="s2">&quot;Outputs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">workspace</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_file_creation</span><span class="p">(</span><span class="n">temp_workspace</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test that files are created in correct location.&quot;&quot;&quot;</span>
+    <span class="n">output_file</span> <span class="o">=</span> <span class="n">temp_workspace</span> <span class="o">/</span> <span class="s2">&quot;Outputs&quot;</span> <span class="o">/</span> <span class="s2">&quot;test.tif&quot;</span>
+    <span class="c1"># ... test code ...</span>
+    <span class="k">assert</span> <span class="n">output_file</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="continuous-integration">
+<h2>Continuous Integration<a class="headerlink" href="#continuous-integration" title="Link to this heading"></a></h2>
+<p>Tests run automatically on GitHub Actions for:</p>
+<ul class="simple">
+<li><p><strong>Python versions:</strong> 3.10, 3.11, 3.12</p></li>
+<li><p><strong>Operating systems:</strong> Linux, macOS</p></li>
+<li><p><strong>On every:</strong> Push, pull request</p></li>
+</ul>
+<p>See <a class="reference external" href="https://github.com/your-repo/blob/main/.github/workflows/tests.yml">.github/workflows/tests.yml</a></p>
+</section>
+<section id="manual-testing">
+<h2>Manual Testing<a class="headerlink" href="#manual-testing" title="Link to this heading"></a></h2>
+<p>For GPU-dependent features, manual testing is required:</p>
+<section id="test-with-sample-data">
+<h3>Test with Sample Data<a class="headerlink" href="#test-with-sample-data" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download sample dataset</span>
+wget<span class="w"> </span>https://example.com/solweig_test_data.zip
+unzip<span class="w"> </span>solweig_test_data.zip
+
+<span class="c1"># Run simulation</span>
+python<span class="w"> </span>-m<span class="w"> </span>solweig_gpu.cli<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--base_path<span class="w"> </span>./test_data<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--date<span class="w"> </span><span class="m">2020</span>-08-13<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tile_size<span class="w"> </span><span class="m">500</span>
+</pre></div>
+</div>
+</section>
+<section id="verify-outputs">
+<h3>Verify Outputs<a class="headerlink" href="#verify-outputs" title="Link to this heading"></a></h3>
+<p>Check that outputs match expected values:</p>
+<ul class="simple">
+<li><p>UTCI range: typically 20-45°C for summer</p></li>
+<li><p>Tmrt range: typically 30-70°C in direct sun</p></li>
+<li><p>SVF range: 0-1 (0 = fully obstructed, 1 = open sky)</p></li>
+</ul>
+</section>
+</section>
+<section id="benchmark-tests">
+<h2>Benchmark Tests<a class="headerlink" href="#benchmark-tests" title="Link to this heading"></a></h2>
+<p>Compare with known results from published studies:</p>
+<ol class="arabic simple">
+<li><p><strong>Lindberg et al. (2008)</strong> - Original SOLWEIG validation</p></li>
+<li><p><strong>Lindberg &amp; Grimmond (2011)</strong> - Tmrt validation</p></li>
+<li><p><strong>Your specific use cases</strong> - Local validation data</p></li>
+</ol>
+</section>
+<section id="contributing-tests">
+<h2>Contributing Tests<a class="headerlink" href="#contributing-tests" title="Link to this heading"></a></h2>
+<p>When contributing:</p>
+<ol class="arabic simple">
+<li><p><strong>Add tests for new features</strong></p></li>
+<li><p><strong>Maintain or improve coverage</strong> for testable code</p></li>
+<li><p><strong>Don’t force coverage</strong> on GPU-dependent code</p></li>
+<li><p><strong>Document test rationale</strong> in docstrings</p></li>
+</ol>
+<p>See <a class="reference internal" href="#../CONTRIBUTING.md"><span class="xref myst">CONTRIBUTING.md</span></a> for details.</p>
+</section>
+<section id="further-reading">
+<h2>Further Reading<a class="headerlink" href="#further-reading" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="#"><span class="std std-doc">Testing Philosophy</span></a></p></li>
+<li><p><a class="reference internal" href="#coverage-details"><span class="std std-ref">Coverage Report Details</span></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytest.org/">pytest Documentation</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

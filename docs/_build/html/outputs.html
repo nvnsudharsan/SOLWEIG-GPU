@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outputs &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4afb903a"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SOLWEIG-GPU
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Outputs</a><ul>
+<li><a class="reference internal" href="#output-structure">Output Structure</a></li>
+<li><a class="reference internal" href="#output-files">Output Files</a><ul>
+<li><a class="reference internal" href="#universal-thermal-climate-index-utci">Universal Thermal Climate Index (UTCI)</a></li>
+<li><a class="reference internal" href="#mean-radiant-temperature-tmrt">Mean Radiant Temperature (Tmrt)</a></li>
+<li><a class="reference internal" href="#sky-view-factor-svf">Sky View Factor (SVF)</a><ul>
+<li><a class="reference internal" href="#downwelling-shortwave">Downwelling Shortwave</a></li>
+<li><a class="reference internal" href="#upwelling-shortwave-kup">Upwelling Shortwave (Kup)</a></li>
+<li><a class="reference internal" href="#downwelling-longwave-ldown">Downwelling Longwave (Ldown)</a></li>
+<li><a class="reference internal" href="#upwelling-longwave-lup">Upwelling Longwave (Lup)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#shadow-maps">Shadow Maps</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#multi-band-structure">Multi-Band Structure</a></li>
+<li><a class="reference internal" href="#visualizing-outputs">Visualizing Outputs</a><ul>
+<li><a class="reference internal" href="#using-qgis">Using QGIS</a></li>
+<li><a class="reference internal" href="#using-python">Using Python</a></li>
+<li><a class="reference internal" href="#using-arcgis">Using ArcGIS</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#merging-tiles">Merging Tiles</a><ul>
+<li><a class="reference internal" href="#utci-tile-merging-example">UTCI tile merging example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-analysis">Data Analysis</a><ul>
+<li><a class="reference internal" href="#computing-statistics">Computing Statistics</a></li>
+<li><a class="reference internal" href="#extracting-time-series">Extracting Time Series</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Outputs</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/outputs.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="outputs">
+<h1>Outputs<a class="headerlink" href="#outputs" title="Link to this heading"></a></h1>
+<p>This guide explains the output files generated by SOLWEIG-GPU and how to interpret and visualize the results.</p>
+<section id="output-structure">
+<h2>Output Structure<a class="headerlink" href="#output-structure" title="Link to this heading"></a></h2>
+<p>After running a simulation, outputs are saved in the <code class="docutils literal notranslate"><span class="pre">Outputs/</span></code> directory within your <code class="docutils literal notranslate"><span class="pre">base_path</span></code>. The structure is organized by tiles:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>base_path/
+└── Outputs/
+    ├── tile_0_0/
+    │   ├── UTCI_0_0.tif
+    │   ├── Tmrt_0_0.tif
+    │   └── SVF_0_0.tif
+    ├── tile_0_1000/
+    │   ├── UTCI_0_1000.tif
+    │   ├── Tmrt_0_1000.tif
+    │   └── SVF_0_1000.tif
+    └── tile_1000_0/
+        ├── UTCI_1000_0.tif
+        ├── Tmrt_1000_0.tif
+        └── SVF_1000_0.tif
+</pre></div>
+</div>
+<p>Each tile is named according to its origin coordinates in the raster grid (e.g., <code class="docutils literal notranslate"><span class="pre">tile_0_0</span></code>, <code class="docutils literal notranslate"><span class="pre">tile_0_1000</span></code>).</p>
+</section>
+<section id="output-files">
+<h2>Output Files<a class="headerlink" href="#output-files" title="Link to this heading"></a></h2>
+<section id="universal-thermal-climate-index-utci">
+<h3>Universal Thermal Climate Index (UTCI)<a class="headerlink" href="#universal-thermal-climate-index-utci" title="Link to this heading"></a></h3>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">UTCI_X_Y.tif</span></code><br />
+<strong>Format:</strong> Multi-band GeoTIFF<br />
+<strong>Units:</strong> °C<br />
+<strong>Description:</strong> The Universal Thermal Climate Index, representing the “feels like” temperature.</p>
+<p>UTCI is always computed and saved. It provides a comprehensive measure of thermal comfort that accounts for air temperature, mean radiant temperature, wind speed, and humidity.</p>
+<p><strong>Interpretation:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>UTCI Range (°C)</p></th>
+<th class="head"><p>Thermal Stress Category</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>&gt; 46</p></td>
+<td><p>Extreme heat stress</p></td>
+</tr>
+<tr class="row-odd"><td><p>38 to 46</p></td>
+<td><p>Very strong heat stress</p></td>
+</tr>
+<tr class="row-even"><td><p>32 to 38</p></td>
+<td><p>Strong heat stress</p></td>
+</tr>
+<tr class="row-odd"><td><p>26 to 32</p></td>
+<td><p>Moderate heat stress</p></td>
+</tr>
+<tr class="row-even"><td><p>9 to 26</p></td>
+<td><p>No thermal stress</p></td>
+</tr>
+<tr class="row-odd"><td><p>0 to 9</p></td>
+<td><p>Slight cold stress</p></td>
+</tr>
+<tr class="row-even"><td><p>-13 to 0</p></td>
+<td><p>Moderate cold stress</p></td>
+</tr>
+<tr class="row-odd"><td><p>-27 to -13</p></td>
+<td><p>Strong cold stress</p></td>
+</tr>
+<tr class="row-even"><td><p>-40 to -27</p></td>
+<td><p>Very strong cold stress</p></td>
+</tr>
+<tr class="row-odd"><td><p>&lt; -40</p></td>
+<td><p>Extreme cold stress</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="mean-radiant-temperature-tmrt">
+<h3>Mean Radiant Temperature (Tmrt)<a class="headerlink" href="#mean-radiant-temperature-tmrt" title="Link to this heading"></a></h3>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">Tmrt_X_Y.tif</span></code><br />
+<strong>Format:</strong> Multi-band GeoTIFF<br />
+<strong>Units:</strong> °C<br />
+<strong>Description:</strong> The mean radiant temperature in a standing position.</p>
+<p>Tmrt represents the uniform temperature of an imaginary enclosure in which the radiant heat exchange with the human body equals the radiant heat exchange in the actual environment.</p>
+<p><strong>Saved when:</strong> <code class="docutils literal notranslate"><span class="pre">save_tmrt=True</span></code></p>
+</section>
+<section id="sky-view-factor-svf">
+<h3>Sky View Factor (SVF)<a class="headerlink" href="#sky-view-factor-svf" title="Link to this heading"></a></h3>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">SVF_X_Y.tif</span></code><br />
+<strong>Format:</strong> Single-band GeoTIFF<br />
+<strong>Units:</strong> Dimensionless (0-1)<br />
+<strong>Description:</strong> The fraction of the sky hemisphere visible from each point.</p>
+<p>SVF is a geometric parameter that quantifies the openness of a location to the sky. It affects both shortwave and longwave radiation exchange.</p>
+<p><strong>Saved when:</strong> <code class="docutils literal notranslate"><span class="pre">save_tmrt=True</span></code></p>
+<p>!!! Note:
+Unlike other outputs, SVF is a geometric property that doesn’t change with time. It is saved as a single-band raster, not multi-band.</p>
+<section id="downwelling-shortwave">
+<h4>Downwelling Shortwave<a class="headerlink" href="#downwelling-shortwave" title="Link to this heading"></a></h4>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">Kdown_X_Y.tif</span></code><br />
+<strong>Format:</strong> Multi-band GeoTIFF<br />
+<strong>Units:</strong> W/m²<br />
+<strong>Description:</strong> Incoming shortwave (solar) radiation at the surface.</p>
+<p><strong>Saved when:</strong> <code class="docutils literal notranslate"><span class="pre">save_kdown=True</span></code></p>
+</section>
+<section id="upwelling-shortwave-kup">
+<h4>Upwelling Shortwave (Kup)<a class="headerlink" href="#upwelling-shortwave-kup" title="Link to this heading"></a></h4>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">Kup_X_Y.tif</span></code><br />
+<strong>Format:</strong> Multi-band GeoTIFF<br />
+<strong>Units:</strong> W/m²<br />
+<strong>Description:</strong> Reflected shortwave radiation from surfaces.</p>
+<p><strong>Saved when:</strong> <code class="docutils literal notranslate"><span class="pre">save_kup=True</span></code></p>
+</section>
+<section id="downwelling-longwave-ldown">
+<h4>Downwelling Longwave (Ldown)<a class="headerlink" href="#downwelling-longwave-ldown" title="Link to this heading"></a></h4>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">Ldown_X_Y.tif</span></code><br />
+<strong>Format:</strong> Multi-band GeoTIFF<br />
+<strong>Units:</strong> W/m²<br />
+<strong>Description:</strong> Incoming longwave (thermal) radiation.</p>
+<p><strong>Saved when:</strong> <code class="docutils literal notranslate"><span class="pre">save_ldown=True</span></code></p>
+</section>
+<section id="upwelling-longwave-lup">
+<h4>Upwelling Longwave (Lup)<a class="headerlink" href="#upwelling-longwave-lup" title="Link to this heading"></a></h4>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">Lup_X_Y.tif</span></code><br />
+<strong>Format:</strong> Multi-band GeoTIFF<br />
+<strong>Units:</strong> W/m²<br />
+<strong>Description:</strong> Outgoing longwave radiation from the surface.</p>
+<p><strong>Saved when:</strong> <code class="docutils literal notranslate"><span class="pre">save_lup=True</span></code></p>
+</section>
+</section>
+<section id="shadow-maps">
+<h3>Shadow Maps<a class="headerlink" href="#shadow-maps" title="Link to this heading"></a></h3>
+<p><strong>Filename:</strong> <code class="docutils literal notranslate"><span class="pre">Shadow_X_Y.tif</span></code><br />
+<strong>Format:</strong> Multi-band GeoTIFF<br />
+<strong>Units:</strong> unitless (varies from 0 to 1)
+<strong>Description:</strong> Shadow/sunlit classification for each pixel.</p>
+<p><strong>Saved when:</strong> <code class="docutils literal notranslate"><span class="pre">save_shadow=True</span></code></p>
+</section>
+</section>
+<section id="multi-band-structure">
+<h2>Multi-Band Structure<a class="headerlink" href="#multi-band-structure" title="Link to this heading"></a></h2>
+<p>Most outputs (except SVF) are saved as multi-band GeoTIFFs, where each band represents one hour of the simulation.</p>
+<p><strong>Example:</strong> For a 24-hour simulation starting at 00:00:</p>
+<ul class="simple">
+<li><p>Band 1: Hour 0 (00:00)</p></li>
+<li><p>Band 2: Hour 1 (01:00)</p></li>
+<li><p>Band 3: Hour 2 (02:00)</p></li>
+<li><p>…</p></li>
+<li><p>Band 24: Hour 23 (23:00)</p></li>
+</ul>
+</section>
+<section id="visualizing-outputs">
+<h2>Visualizing Outputs<a class="headerlink" href="#visualizing-outputs" title="Link to this heading"></a></h2>
+<section id="using-qgis">
+<h3>Using QGIS<a class="headerlink" href="#using-qgis" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Open QGIS</strong> and add the GeoTIFF file</p></li>
+<li><p><strong>Multi-band rasters</strong> will appear with all bands listed</p></li>
+<li><p><strong>Select a specific band</strong> to visualize a particular hour</p></li>
+<li><p><strong>Apply color ramp</strong> for better visualization:</p>
+<ul class="simple">
+<li><p>For UTCI/Tmrt: Use a thermal color ramp (blue-red)</p></li>
+<li><p>For SVF: Use a grayscale or inverted grayscale</p></li>
+<li><p>For radiation: Use a sequential color ramp</p></li>
+</ul>
+</li>
+</ol>
+<p>!!! tip “Temporal Animation”
+In QGIS, you can use the Temporal Controller to animate the multi-band raster and see how UTCI changes throughout the day.</p>
+</section>
+<section id="using-python">
+<h3>Using Python<a class="headerlink" href="#using-python" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Open the UTCI file</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="s1">&#39;Outputs/tile_0_0/UTCI_0_0.tif&#39;</span><span class="p">)</span>
+
+<span class="c1"># Read a specific hour (e.g., hour 12 = noon)</span>
+<span class="n">band</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">utci</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span>
+
+<span class="c1"># Plot</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">utci</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdYlBu_r&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;UTCI (°C)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;UTCI at Noon&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;utci_noon.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="using-arcgis">
+<h3>Using ArcGIS<a class="headerlink" href="#using-arcgis" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Add the GeoTIFF</strong> to your map</p></li>
+<li><p><strong>Access band properties</strong> through the raster properties dialog</p></li>
+<li><p><strong>Create a mosaic</strong> if you have multiple tiles</p></li>
+<li><p><strong>Apply symbology</strong> using the Symbology pane</p></li>
+<li><p><strong>Export maps</strong> for publication or presentation</p></li>
+</ol>
+</section>
+</section>
+<section id="merging-tiles">
+<h2>Merging Tiles<a class="headerlink" href="#merging-tiles" title="Link to this heading"></a></h2>
+<p>If your simulation generated multiple tiles, you may want to merge them into a single raster for easier visualization and analysis.</p>
+<section id="utci-tile-merging-example">
+<h3>UTCI tile merging example<a class="headerlink" href="#utci-tile-merging-example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemporaryDirectory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span>
+
+<span class="n">base_dir</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;path_to_outputs/Outputs&quot;</span> <span class="c1"># Locate the simulation output</span>
+<span class="n">pattern</span>  <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="s2">&quot;**&quot;</span><span class="p">,</span> <span class="s2">&quot;UTCI*.tif&quot;</span><span class="p">)</span> <span class="c1"># Merging UTCI but this works for other variables as well</span>
+<span class="n">inputs</span>   <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">inputs</span><span class="p">,</span> <span class="s2">&quot;No input tiles found!&quot;</span>
+
+<span class="n">ds0</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">n_bands</span> <span class="o">=</span> <span class="n">ds0</span><span class="o">.</span><span class="n">RasterCount</span>
+<span class="n">ds0</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="n">out_dir</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;output_folder/UTCI&quot;</span> <span class="c1"># Provide the folder where the merged files should be saved</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_bands</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Merging band </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_bands</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">vrt_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;band</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">.vrt&quot;</span><span class="p">)</span>
+        <span class="n">vrt_opts</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">BuildVRTOptions</span><span class="p">(</span>
+            <span class="n">bandList</span><span class="o">=</span><span class="p">[</span><span class="n">b</span><span class="p">],</span>          <span class="c1"># &lt;- pick this band only</span>
+            <span class="n">srcNodata</span><span class="o">=-</span><span class="mi">999</span><span class="p">,</span>
+            <span class="n">VRTNodata</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span>       <span class="c1"># nodata in the VRT</span>
+        <span class="p">)</span>
+        <span class="n">vrt_ds</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">BuildVRT</span><span class="p">(</span><span class="n">vrt_path</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">vrt_opts</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vrt_ds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to build VRT for band </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">vrt_ds</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># flush to disk</span>
+
+        <span class="n">out_tif</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;merged_band</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">_900.tif&quot;</span><span class="p">)</span>
+        <span class="n">tr_opts</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">TranslateOptions</span><span class="p">(</span>
+            <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;GTiff&quot;</span><span class="p">,</span>
+            <span class="n">outputType</span><span class="o">=</span><span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">,</span>
+            <span class="n">noData</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+            <span class="n">creationOptions</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;TILED=YES&quot;</span>  
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">gdal</span><span class="o">.</span><span class="n">Translate</span><span class="p">(</span><span class="n">out_tif</span><span class="p">,</span> <span class="n">vrt_path</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">tr_opts</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="data-analysis">
+<h2>Data Analysis<a class="headerlink" href="#data-analysis" title="Link to this heading"></a></h2>
+<section id="computing-statistics">
+<h3>Computing Statistics<a class="headerlink" href="#computing-statistics" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span>
+
+<span class="c1"># Open UTCI file</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="s1">&#39;Outputs/tile_0_0/UTCI_0_0.tif&#39;</span><span class="p">)</span>
+
+<span class="c1"># Compute statistics for each hour</span>
+<span class="k">for</span> <span class="n">hour</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ds</span><span class="o">.</span><span class="n">RasterCount</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">band</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">hour</span><span class="p">)</span>
+    <span class="n">utci</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hour </span><span class="si">{</span><span class="n">hour</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Mean UTCI: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">utci</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">°C&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Max UTCI: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">utci</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">°C&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Min UTCI: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">utci</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">°C&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Std UTCI: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">utci</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">°C&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="extracting-time-series">
+<h3>Extracting Time Series<a class="headerlink" href="#extracting-time-series" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span>
+
+<span class="c1"># Open UTCI file</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="s1">&#39;Outputs/tile_0_0/UTCI_0_0.tif&#39;</span><span class="p">)</span>
+
+<span class="c1"># Define a point of interest (pixel coordinates)</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">500</span>
+
+<span class="c1"># Extract time series</span>
+<span class="n">utci_timeseries</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">hour</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ds</span><span class="o">.</span><span class="n">RasterCount</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">band</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">hour</span><span class="p">)</span>
+    <span class="n">utci</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span>
+    <span class="n">utci_timeseries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">utci</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+
+<span class="c1"># Plot time series</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span> <span class="n">utci_timeseries</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Hour of Day&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;UTCI (°C)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;UTCI Time Series at Point (500, 500)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;utci_timeseries.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
