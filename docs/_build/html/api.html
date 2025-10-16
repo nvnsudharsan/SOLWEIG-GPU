@@ -90,7 +90,17 @@
 <li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.solweig_gpu.thermal_comfort"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#data-preprocessing">Data Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-solweig_gpu.preprocessor">Data Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.extract_datetime_strict"><code class="docutils literal notranslate"><span class="pre">extract_datetime_strict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.check_rasters"><code class="docutils literal notranslate"><span class="pre">check_rasters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.create_tiles"><code class="docutils literal notranslate"><span class="pre">create_tiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.process_era5_data"><code class="docutils literal notranslate"><span class="pre">process_era5_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.process_wrfout_data"><code class="docutils literal notranslate"><span class="pre">process_wrfout_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.process_metfiles"><code class="docutils literal notranslate"><span class="pre">process_metfiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.create_met_files"><code class="docutils literal notranslate"><span class="pre">create_met_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.preprocessor.ppr"><code class="docutils literal notranslate"><span class="pre">ppr()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-solweig_gpu.solweig">Radiation Calculations</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.solweig.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#solweig_gpu.solweig.daylen"><code class="docutils literal notranslate"><span class="pre">daylen()</span></code></a></li>
@@ -371,8 +381,126 @@
 </dd></dl>
 
 </section>
-<section id="data-preprocessing">
-<h2>Data Preprocessing<a class="headerlink" href="#data-preprocessing" title="Link to this heading"></a></h2>
+<section id="module-solweig_gpu.preprocessor">
+<span id="data-preprocessing"></span><h2>Data Preprocessing<a class="headerlink" href="#module-solweig_gpu.preprocessor" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.extract_datetime_strict">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">extract_datetime_strict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#extract_datetime_strict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.extract_datetime_strict" title="Link to this definition"></a></dt>
+<dd><p>Return (datetime, domain_int) for strictly valid wrfout names.
+Raises ValueError for any non-matching filename.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.check_rasters">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">check_rasters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#check_rasters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.check_rasters" title="Link to this definition"></a></dt>
+<dd><p>Check that all provided raster files have matching dimensions, pixel size, and CRS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – List of raster file paths.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if all checks pass, raises ValueError/FileNotFoundError otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.create_tiles">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">create_tiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tilesize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tile_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#create_tiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.create_tiles" title="Link to this definition"></a></dt>
+<dd><p>Tile a raster file into smaller chunks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to input raster.</p></li>
+<li><p><strong>tilesize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Size of each tile in pixels.</p></li>
+<li><p><strong>overlap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of pixels to overlap between tiles.</p></li>
+<li><p><strong>tile_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Label to use for naming output tiles.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.14)"><strong>FileNotFoundError</strong></a> – If the input file is not found.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the overlap is not within the valid range.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.process_era5_data">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">process_era5_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Outfile.nc'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#process_era5_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.process_era5_data" title="Link to this definition"></a></dt>
+<dd><p>Same numeric outputs as your original function, but time is taken from the files
+and sliced to [start_time, end_time] UTC. Variables written:</p>
+<blockquote>
+<div><p>T2 (t2m, Kelvin), PSFC (sp, Pa), RH2 (%), WIND (m/s), SWDOWN (W/m^2 = ssrd/3600).</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.process_wrfout_data">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">process_wrfout_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Outfile.nc'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#process_wrfout_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.process_wrfout_data" title="Link to this definition"></a></dt>
+<dd><p>Process WRF output files to create meteorological forcing data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Start datetime string in format “%Y-%m-%d %H:%M:%S”.</p></li>
+<li><p><strong>end_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – End datetime string in format “%Y-%m-%d %H:%M:%S”.</p></li>
+<li><p><strong>folder_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Directory containing wrfout files.</p></li>
+<li><p><strong>output_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Output NetCDF file name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.process_metfiles">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">process_metfiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">netcdf_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raster_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selected_date_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#process_metfiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.process_metfiles" title="Link to this definition"></a></dt>
+<dd><p>Minimal-edits, curvilinear-safe version of your function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.create_met_files">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">create_met_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_met_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#create_met_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.create_met_files" title="Link to this definition"></a></dt>
+<dd><p>Copy a given met file to multiple outputs based on the raster tile filenames.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Base directory containing “Building_DSM” and where to create “metfiles”.</p></li>
+<li><p><strong>source_met_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to user-provided met file.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="solweig_gpu.preprocessor.ppr">
+<span class="sig-prename descclassname"><span class="pre">solweig_gpu.preprocessor.</span></span><span class="sig-name descname"><span class="pre">ppr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">building_dsm_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dem_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trees_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">landcover_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tile_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selected_date_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_own_met</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_source_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">own_met_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solweig_gpu/preprocessor.html#ppr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#solweig_gpu.preprocessor.ppr" title="Link to this definition"></a></dt>
+<dd><p>Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Base working directory.</p></li>
+<li><p><strong>building_dsm_filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Filename of building DSM raster.</p></li>
+<li><p><strong>dem_filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Filename of DEM raster.</p></li>
+<li><p><strong>trees_filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Filename of trees raster.</p></li>
+<li><p><strong>landcover_filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Filename of landcover raster or None.</p></li>
+<li><p><strong>tile_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Tile size in pixels.</p></li>
+<li><p><strong>overlap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Overlap between tiles in pixels.</p></li>
+<li><p><strong>selected_date_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Selected date (YYYY-MM-DD).</p></li>
+<li><p><strong>use_own_met</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Whether to use a user-provided met file.</p></li>
+<li><p><strong>start_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Start datetime (required if not using own met file).</p></li>
+<li><p><strong>end_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – End datetime (required if not using own met file).</p></li>
+<li><p><strong>data_source_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Either ‘ERA5’ or ‘wrfout’.</p></li>
+<li><p><strong>data_folder</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Folder containing input NetCDF files.</p></li>
+<li><p><strong>own_met_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to user-provided met file (used if use_own_met is True).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-solweig_gpu.solweig">
 <span id="radiation-calculations"></span><h2>Radiation Calculations<a class="headerlink" href="#module-solweig_gpu.solweig" title="Link to this heading"></a></h2>

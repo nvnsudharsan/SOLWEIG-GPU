@@ -25,7 +25,7 @@ Installation
 .. code-block:: bash
 
    # Using conda (recommended)
-   conda create -n solweig python=3.11
+   conda create -n solweig python=3.10
    conda activate solweig
    conda install -c conda-forge gdal pytorch
    pip install solweig-gpu

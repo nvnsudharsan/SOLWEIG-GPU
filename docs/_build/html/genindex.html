@@ -87,7 +87,17 @@
 <li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.solweig_gpu.thermal_comfort"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#data-preprocessing">Data Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.preprocessor">Data Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.extract_datetime_strict"><code class="docutils literal notranslate"><span class="pre">extract_datetime_strict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.check_rasters"><code class="docutils literal notranslate"><span class="pre">check_rasters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.create_tiles"><code class="docutils literal notranslate"><span class="pre">create_tiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.process_era5_data"><code class="docutils literal notranslate"><span class="pre">process_era5_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.process_wrfout_data"><code class="docutils literal notranslate"><span class="pre">process_wrfout_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.process_metfiles"><code class="docutils literal notranslate"><span class="pre">process_metfiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.create_met_files"><code class="docutils literal notranslate"><span class="pre">create_met_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.ppr"><code class="docutils literal notranslate"><span class="pre">ppr()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.solweig">Radiation Calculations</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.solweig.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.solweig.daylen"><code class="docutils literal notranslate"><span class="pre">daylen()</span></code></a></li>
@@ -311,13 +321,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#solweig_gpu.walls_aspect.cart2pol">cart2pol() (in module solweig_gpu.walls_aspect)</a>
 </li>
+      <li><a href="api.html#solweig_gpu.preprocessor.check_rasters">check_rasters() (in module solweig_gpu.preprocessor)</a>
+</li>
       <li><a href="api.html#solweig_gpu.solweig.clearnessindex_2013b">clearnessindex_2013b() (in module solweig_gpu.solweig)</a>
+</li>
+      <li><a href="api.html#solweig_gpu.utci_process.compute_utci">compute_utci() (in module solweig_gpu.utci_process)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#solweig_gpu.utci_process.compute_utci">compute_utci() (in module solweig_gpu.utci_process)</a>
+      <li><a href="api.html#solweig_gpu.preprocessor.create_met_files">create_met_files() (in module solweig_gpu.preprocessor)</a>
 </li>
       <li><a href="api.html#solweig_gpu.shadow.create_patches">create_patches() (in module solweig_gpu.shadow)</a>
+</li>
+      <li><a href="api.html#solweig_gpu.preprocessor.create_tiles">create_tiles() (in module solweig_gpu.preprocessor)</a>
 </li>
       <li><a href="api.html#solweig_gpu.solweig.cylindric_wedge">cylindric_wedge() (in module solweig_gpu.solweig)</a>
 </li>
@@ -351,6 +367,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#solweig_gpu.preprocessor.extract_datetime_strict">extract_datetime_strict() (in module solweig_gpu.preprocessor)</a>
+</li>
       <li><a href="api.html#solweig_gpu.utci_process.extract_key">extract_key() (in module solweig_gpu.utci_process)</a>
 </li>
       <li><a href="api.html#solweig_gpu.utci_process.extract_number_from_filename">extract_number_from_filename() (in module solweig_gpu.utci_process)</a>
@@ -443,6 +461,8 @@
 </li>
         <li><a href="api.html#module-solweig_gpu.cli">solweig_gpu.cli</a>
 </li>
+        <li><a href="api.html#module-solweig_gpu.preprocessor">solweig_gpu.preprocessor</a>
+</li>
         <li><a href="api.html#module-solweig_gpu.shadow">solweig_gpu.shadow</a>
 </li>
         <li><a href="api.html#module-solweig_gpu.solweig">solweig_gpu.solweig</a>
@@ -482,9 +502,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#solweig_gpu.solweig.Perez_v3">Perez_v3() (in module solweig_gpu.solweig)</a>
 </li>
+      <li><a href="api.html#solweig_gpu.preprocessor.ppr">ppr() (in module solweig_gpu.preprocessor)</a>
+</li>
+      <li><a href="api.html#solweig_gpu.preprocessor.process_era5_data">process_era5_data() (in module solweig_gpu.preprocessor)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#solweig_gpu.walls_aspect.process_file_parallel">process_file_parallel() (in module solweig_gpu.walls_aspect)</a>
+</li>
+      <li><a href="api.html#solweig_gpu.preprocessor.process_metfiles">process_metfiles() (in module solweig_gpu.preprocessor)</a>
+</li>
+      <li><a href="api.html#solweig_gpu.preprocessor.process_wrfout_data">process_wrfout_data() (in module solweig_gpu.preprocessor)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -526,6 +554,13 @@
 
       <ul>
         <li><a href="api.html#module-solweig_gpu.cli">module</a>
+</li>
+      </ul></li>
+      <li>
+    solweig_gpu.preprocessor
+
+      <ul>
+        <li><a href="api.html#module-solweig_gpu.preprocessor">module</a>
 </li>
       </ul></li>
       <li>
