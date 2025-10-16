@@ -34,55 +34,6 @@ pytest tests/test_sun_position.py
 pytest tests/test_cli.py
 ```
 
-## Test Coverage
-
-Current test coverage: **~13-15%**
-
-This is **expected and appropriate** for a GPU-accelerated scientific simulation package.
-
-### What's Tested
-
-✅ **Unit Tests:**
-- UTCI calculations (~80% coverage)
-- Solar Position Algorithm (~80% coverage)
-- CLI interface (~60% coverage)
-- Wall aspect calculations (~40% coverage)
-- Raster validation (~30% coverage)
-
-✅ **Integration Tests:**
-- Tile creation and overlap handling
-- Met file generation
-- End-to-end workflows (with synthetic data)
-
-### What's NOT Tested (and Why)
-
-❌ **GPU Physics Code** (~2000 lines):
-- Requires CUDA/GPU runtime
-- Needs real meteorological data
-- Complex radiation calculations
-- **Better validated through scientific publications**
-
-❌ **GUI** (~500 lines):
-- Qt interface requires display server
-- Better tested manually
-
-### Why This is OK
-
-**Scientific computing packages** typically have 20-40% coverage because:
-
-1. **GPU code** cannot run on standard CI without GPU runners
-2. **Physics simulations** are validated through peer review, not just unit tests
-3. **Large datasets** required for realistic tests (GB of memory)
-4. **Execution time** can be hours for full simulations
-
-**SOLWEIG-GPU tests what matters:**
-- User-facing APIs ✅
-- Data validation ✅
-- Scientific algorithms (SPA, UTCI) ✅
-- Error handling ✅
-
-## Writing Tests
-
 ### Example: Testing a Utility Function
 
 ```python
@@ -164,19 +115,3 @@ Compare with known results from published studies:
 2. **Lindberg & Grimmond (2011)** - Tmrt validation
 3. **Your specific use cases** - Local validation data
 
-## Contributing Tests
-
-When contributing:
-
-1. **Add tests for new features**
-2. **Maintain or improve coverage** for testable code
-3. **Don't force coverage** on GPU-dependent code
-4. **Document test rationale** in docstrings
-
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for details.
-
-## Further Reading
-
-- [Testing Philosophy](testing.md)
-- [Coverage Report Details](testing.md#coverage-details)
-- [pytest Documentation](https://docs.pytest.org/)
