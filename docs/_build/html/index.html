@@ -89,7 +89,17 @@
 <li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.solweig_gpu.thermal_comfort"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#data-preprocessing">Data Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.preprocessor">Data Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.extract_datetime_strict"><code class="docutils literal notranslate"><span class="pre">extract_datetime_strict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.check_rasters"><code class="docutils literal notranslate"><span class="pre">check_rasters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.create_tiles"><code class="docutils literal notranslate"><span class="pre">create_tiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.process_era5_data"><code class="docutils literal notranslate"><span class="pre">process_era5_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.process_wrfout_data"><code class="docutils literal notranslate"><span class="pre">process_wrfout_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.process_metfiles"><code class="docutils literal notranslate"><span class="pre">process_metfiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.create_met_files"><code class="docutils literal notranslate"><span class="pre">create_met_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.preprocessor.ppr"><code class="docutils literal notranslate"><span class="pre">ppr()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.solweig">Radiation Calculations</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.solweig.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="api.html#solweig_gpu.solweig.daylen"><code class="docutils literal notranslate"><span class="pre">daylen()</span></code></a></li>
@@ -291,7 +301,7 @@ designed for calculating mean radiant temperature (Tmrt) and Universal Thermal C
 <section id="installation">
 <h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using conda (recommended)</span>
-conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>solweig<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>solweig<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
 conda<span class="w"> </span>activate<span class="w"> </span>solweig
 conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gdal<span class="w"> </span>pytorch
 pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
@@ -347,7 +357,7 @@ pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.solweig_gpu">Main Entry Point</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api.html#data-preprocessing">Data Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.preprocessor">Data Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.solweig">Radiation Calculations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.sun_position">Solar Position Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#module-solweig_gpu.shadow">Shadow and Sky View Factor</a></li>

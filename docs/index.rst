@@ -66,7 +66,6 @@ Documentation
    :caption: Additional Resources:
 
    testing
-   README
 
 Indices and tables
 ==================
