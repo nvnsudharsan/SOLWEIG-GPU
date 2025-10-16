@@ -63,9 +63,19 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: User Guide:
+
+   input_data
+   configuration
+   outputs
+   examples
+
+.. toctree::
+   :maxdepth: 2
    :caption: Additional Resources:
 
    testing
+   developer_guide
 
 Indices and tables
 ==================
