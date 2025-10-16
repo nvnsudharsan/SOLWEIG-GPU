@@ -12,7 +12,7 @@ Conda handles the complex GDAL and PyTorch dependencies automatically:
 
 ```bash
 # Create a new environment
-conda create -n solweig python=3.11
+conda create -n solweig python=3.10
 conda activate solweig
 
 # Install dependencies via conda
