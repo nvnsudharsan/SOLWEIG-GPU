@@ -172,7 +172,7 @@ Each `.tif` is a multi-band raster (one band per hour).
 
 ## Next Steps
 
-- [Detailed Input Data Guide](guide/input_data.md)
-- [Meteorological Forcing Options](guide/meteorological_forcing.md)
+- [Detailed Input Data Guide](input_data.md)
+- [Meteorological Forcing Options](configuration.md)
 - [API Reference](api.rst)
 - [Examples Gallery](examples.md)

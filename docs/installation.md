@@ -102,5 +102,5 @@ conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
 ## Next Steps
 
 - [Quick Start Guide](quickstart.md)
-- [Input Data Preparation](guide/input_data.md)
+- [Input Data Preparation](input_data.md)
 - [API Reference](api.rst)

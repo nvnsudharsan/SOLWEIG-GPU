@@ -18,7 +18,9 @@
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Example 1: Using WRF Data" href="examples.html" />
+    <link rel="prev" title="Configuration" href="configuration.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -189,6 +191,101 @@
 </ul>
 </li>
 </ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="input_data.html">Input Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#geospatial-rasters">Geospatial Rasters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#required-rasters">Required Rasters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="input_data.html#building-dsm">Building DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="input_data.html#digital-elevation-model-dem">Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="input_data.html#tree-dsm">Tree DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="input_data.html#land-cover-optional">Land Cover (Optional)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#meteorological-forcing-data">Meteorological Forcing Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#option-1-custom-text-file-umep-format">Option 1: Custom Text File (UMEP Format)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#option-2-era5-reanalysis-data">Option 2: ERA5 Reanalysis Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#option-3-wrf-output-files">Option 3: WRF Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#data-preparation-tips">Data Preparation Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#coordinate-reference-system">Coordinate Reference System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="input_data.html#temporal-resolution">Temporal Resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="input_data.html#sample-data">Sample Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#basic-configuration">Basic Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#required-parameters">Required Parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="configuration.html#base-path"><code class="docutils literal notranslate"><span class="pre">base_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="configuration.html#selected-date-str"><code class="docutils literal notranslate"><span class="pre">selected_date_str</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#raster-filenames">Raster Filenames</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#tiling-configuration">Tiling Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#tile-size"><code class="docutils literal notranslate"><span class="pre">tile_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#overlap"><code class="docutils literal notranslate"><span class="pre">overlap</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#meteorological-data-configuration">Meteorological Data Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#using-custom-meteorological-file">Using Custom Meteorological File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#using-era5-or-wrf-data">Using ERA5 or WRF Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#output-configuration">Output Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#complete-configuration-example">Complete Configuration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#performance-optimization">Performance Optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#gpu-vs-cpu">GPU vs CPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html#memory-management">Memory Management</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Outputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#output-structure">Output Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-files">Output Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#universal-thermal-climate-index-utci">Universal Thermal Climate Index (UTCI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mean-radiant-temperature-tmrt">Mean Radiant Temperature (Tmrt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sky-view-factor-svf">Sky View Factor (SVF)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#downwelling-shortwave">Downwelling Shortwave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#upwelling-shortwave-kup">Upwelling Shortwave (Kup)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#downwelling-longwave-ldown">Downwelling Longwave (Ldown)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#upwelling-longwave-lup">Upwelling Longwave (Lup)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#shadow-maps">Shadow Maps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-band-structure">Multi-Band Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualizing-outputs">Visualizing Outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-qgis">Using QGIS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-python">Using Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-arcgis">Using ArcGIS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#merging-tiles">Merging Tiles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#utci-tile-merging-example">UTCI tile merging example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-analysis">Data Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#computing-statistics">Computing Statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extracting-time-series">Extracting Time Series</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example 1: Using WRF Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
 <p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">Testing Guide</a><ul>
@@ -209,6 +306,9 @@
 <li class="toctree-l2"><a class="reference internal" href="testing.html#benchmark-tests">Benchmark Tests</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide.html">Architecture Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide.html#module-interactions">Module Interactions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer_guide.html#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
 </ul>
 
         </div>
@@ -550,7 +650,10 @@ In QGIS, you can use the Temporal Controller to animate the multi-band raster an
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="configuration.html" class="btn btn-neutral float-left" title="Configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Example 1: Using WRF Data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
