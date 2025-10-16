@@ -13,16 +13,6 @@ formats:
   - pdf
   - epub
 
-# Python configuration
-python:
-  version: "3.11"
-  install:
-    - requirements: docs/requirements.txt
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
-
 # Build settings
 build:
   os: ubuntu-22.04
@@ -35,4 +25,13 @@ build:
     pre_install:
       # Any pre-installation steps
       - echo "Pre-install steps"
+
+# Python configuration
+python:
+  install:
+    - requirements: docs/requirements.txt
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
 
