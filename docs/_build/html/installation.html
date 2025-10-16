@@ -1,0 +1,228 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4afb903a"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SOLWEIG-GPU
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#method-1-using-conda-recommended">Method 1: Using Conda (Recommended)</a></li>
+<li><a class="reference internal" href="#method-2-using-pip-with-system-gdal">Method 2: Using pip with system GDAL</a></li>
+<li><a class="reference internal" href="#method-3-development-installation">Method 3: Development Installation</a></li>
+<li><a class="reference internal" href="#verify-installation">Verify Installation</a></li>
+<li><a class="reference internal" href="#gpu-setup">GPU Setup</a><ul>
+<li><a class="reference internal" href="#cuda-requirements">CUDA Requirements</a></li>
+<li><a class="reference internal" href="#cpu-only-mode">CPU-Only Mode</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#common-issues">Common Issues</a><ul>
+<li><a class="reference internal" href="#gdal-import-error">GDAL Import Error</a></li>
+<li><a class="reference internal" href="#pytorch-gpu-not-detected">PyTorch GPU Not Detected</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Python 3.10 or higher</p></li>
+<li><p>CUDA-capable GPU (optional, but recommended for performance)</p></li>
+<li><p>GDAL library</p></li>
+</ul>
+</section>
+<section id="method-1-using-conda-recommended">
+<h2>Method 1: Using Conda (Recommended)<a class="headerlink" href="#method-1-using-conda-recommended" title="Link to this heading"></a></h2>
+<p>Conda handles the complex GDAL and PyTorch dependencies automatically:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a new environment</span>
+conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>solweig<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.11
+conda<span class="w"> </span>activate<span class="w"> </span>solweig
+
+<span class="c1"># Install dependencies via conda</span>
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gdal<span class="w"> </span>pytorch
+
+<span class="c1"># Install SOLWEIG-GPU</span>
+pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
+</pre></div>
+</div>
+</section>
+<section id="method-2-using-pip-with-system-gdal">
+<h2>Method 2: Using pip with system GDAL<a class="headerlink" href="#method-2-using-pip-with-system-gdal" title="Link to this heading"></a></h2>
+<p>If you have GDAL installed system-wide:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install SOLWEIG-GPU</span>
+pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
+</pre></div>
+</div>
+</section>
+<section id="method-3-development-installation">
+<h2>Method 3: Development Installation<a class="headerlink" href="#method-3-development-installation" title="Link to this heading"></a></h2>
+<p>For contributing or development:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clone the repository</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/your-username/SOLWEIG-GPU.git
+<span class="nb">cd</span><span class="w"> </span>SOLWEIG-GPU
+
+<span class="c1"># Create conda environment</span>
+conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
+conda<span class="w"> </span>activate<span class="w"> </span>solweig
+
+<span class="c1"># Install in editable mode</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="verify-installation">
+<h2>Verify Installation<a class="headerlink" href="#verify-installation" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">solweig_gpu</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">solweig_gpu</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+
+<span class="c1"># Check GPU availability</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CUDA available: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CUDA devices: </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu-setup">
+<h2>GPU Setup<a class="headerlink" href="#gpu-setup" title="Link to this heading"></a></h2>
+<section id="cuda-requirements">
+<h3>CUDA Requirements<a class="headerlink" href="#cuda-requirements" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>CUDA 11.0 or higher</p></li>
+<li><p>Compatible NVIDIA GPU (compute capability 3.5+)</p></li>
+<li><p>Sufficient GPU memory (4GB minimum, 8GB+ recommended)</p></li>
+</ul>
+</section>
+<section id="cpu-only-mode">
+<h3>CPU-Only Mode<a class="headerlink" href="#cpu-only-mode" title="Link to this heading"></a></h3>
+<p>SOLWEIG-GPU automatically falls back to CPU if no GPU is detected, though performance will be significantly slower.</p>
+</section>
+</section>
+<section id="common-issues">
+<h2>Common Issues<a class="headerlink" href="#common-issues" title="Link to this heading"></a></h2>
+<section id="gdal-import-error">
+<h3>GDAL Import Error<a class="headerlink" href="#gdal-import-error" title="Link to this heading"></a></h3>
+<p>If you get <code class="docutils literal notranslate"><span class="pre">ModuleNotFoundError:</span> <span class="pre">No</span> <span class="pre">module</span> <span class="pre">named</span> <span class="pre">'_gdal'</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Uninstall and reinstall GDAL via conda</span>
+conda<span class="w"> </span>uninstall<span class="w"> </span>gdal
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gdal
+</pre></div>
+</div>
+</section>
+<section id="pytorch-gpu-not-detected">
+<h3>PyTorch GPU Not Detected<a class="headerlink" href="#pytorch-gpu-not-detected" title="Link to this heading"></a></h3>
+<p>Verify CUDA installation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nvidia-smi<span class="w">  </span><span class="c1"># Check GPU driver</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import torch; print(torch.cuda.is_available())&quot;</span>
+</pre></div>
+</div>
+<p>If False, reinstall PyTorch with CUDA:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>pytorch<span class="w"> </span>pytorch-cuda<span class="o">=</span><span class="m">11</span>.8<span class="w"> </span>-c<span class="w"> </span>pytorch<span class="w"> </span>-c<span class="w"> </span>nvidia
+</pre></div>
+</div>
+</section>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="quickstart.html"><span class="std std-doc">Quick Start Guide</span></a></p></li>
+<li><p><a class="reference internal" href="#guide/input_data.md"><span class="xref myst">Input Data Preparation</span></a></p></li>
+<li><p><a class="reference internal" href="api.html"><span class="std std-doc">API Reference</span></a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,165 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>thermal_comfort() &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4afb903a"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SOLWEIG-GPU
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a><ul>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api_reference.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <blockquote>
+<div><h1 class="rubric" id="api-reference">API Reference</h1>
+</div></blockquote>
+<p>This section provides a detailed reference for the functions and classes in the SOLWEIG-GPU package. The primary entry point for running simulations is the <code class="docutils literal notranslate"><span class="pre">thermal_comfort</span></code> function.</p>
+<section id="thermal-comfort">
+<h1><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code><a class="headerlink" href="#thermal-comfort" title="Link to this heading"></a></h1>
+<p>This is the main function to run a SOLWEIG-GPU simulation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">solweig_gpu</span><span class="w"> </span><span class="kn">import</span> <span class="n">thermal_comfort</span>
+
+<span class="n">thermal_comfort</span><span class="p">(</span>
+    <span class="n">base_path</span><span class="p">,</span>
+    <span class="n">selected_date_str</span><span class="p">,</span>
+    <span class="n">building_dsm_filename</span><span class="o">=</span><span class="s1">&#39;Building_DSM.tif&#39;</span><span class="p">,</span>
+    <span class="n">dem_filename</span><span class="o">=</span><span class="s1">&#39;DEM.tif&#39;</span><span class="p">,</span>
+    <span class="n">trees_filename</span><span class="o">=</span><span class="s1">&#39;Trees.tif&#39;</span><span class="p">,</span>
+    <span class="n">landcover_filename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+    <span class="n">tile_size</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> 
+    <span class="n">overlap</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="n">use_own_met</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">start_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+    <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+    <span class="n">data_source_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+    <span class="n">data_folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">own_met_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">save_tmrt</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_svf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_kup</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_kdown</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_lup</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_ldown</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">save_shadow</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">base_path</span></code> (str): The base directory containing the input raster data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">selected_date_str</span></code> (str): The date for the simulation in <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span></code> format.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">building_dsm_filename</span></code> (str): The filename of the Building DSM raster. Defaults to <code class="docutils literal notranslate"><span class="pre">'Building_DSM.tif'</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dem_filename</span></code> (str): The filename of the DEM raster. Defaults to <code class="docutils literal notranslate"><span class="pre">'DEM.tif'</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">trees_filename</span></code> (str): The filename of the Tree DSM raster. Defaults to <code class="docutils literal notranslate"><span class="pre">'Trees.tif'</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">landcover_filename</span></code> (str, optional): The filename of the land cover raster. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tile_size</span></code> (int): The size of the tiles in pixels. Defaults to <code class="docutils literal notranslate"><span class="pre">3600</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">overlap</span></code> (int): The overlap between tiles in pixels. Defaults to <code class="docutils literal notranslate"><span class="pre">20</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">use_own_met</span></code> (bool): Whether to use a custom meteorological file. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">start_time</span></code> (str, optional): The start time of the simulation in <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span> <span class="pre">HH:MM:SS</span></code> format (UTC). Required if <code class="docutils literal notranslate"><span class="pre">use_own_met</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">end_time</span></code> (str, optional): The end time of the simulation in <code class="docutils literal notranslate"><span class="pre">YYYY-MM-DD</span> <span class="pre">HH:MM:SS</span></code> format (UTC). Required if <code class="docutils literal notranslate"><span class="pre">use_own_met</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data_source_type</span></code> (str, optional): The type of meteorological data source (<code class="docutils literal notranslate"><span class="pre">'ERA5'</span></code> or <code class="docutils literal notranslate"><span class="pre">'wrfout'</span></code>). Required if <code class="docutils literal notranslate"><span class="pre">use_own_met</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data_folder</span></code> (str, optional): The directory containing the meteorological data files. Required if <code class="docutils literal notranslate"><span class="pre">use_own_met</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">own_met_file</span></code> (str, optional): The path to the custom meteorological file. Required if <code class="docutils literal notranslate"><span class="pre">use_own_met</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_tmrt</span></code> (bool, optional): Whether to save the Mean Radiant Temperature output. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_svf</span></code> (bool, optional): Whether to save the Sky View Factor output. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_kup</span></code> (bool, optional): Whether to save the upwelling shortwave radiation output. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_kdown</span></code> (bool, optional): Whether to save the downwelling shortwave radiation output. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_lup</span></code> (bool, optional): Whether to save the upwelling longwave radiation output. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_ldown</span></code> (bool, optional): Whether to save the downwelling longwave radiation output. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">save_shadow</span></code> (bool, optional): Whether to save the shadow map output. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
