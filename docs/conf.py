@@ -84,6 +84,7 @@ autodoc_mock_imports = [
     'pytz',
     'matplotlib',
     'matplotlib.path',
+    'tqdm',  # Progress bar library
 ]
 
 # Additional autodoc settings to handle import errors
