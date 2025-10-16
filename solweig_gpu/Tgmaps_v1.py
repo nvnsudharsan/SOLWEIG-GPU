@@ -13,9 +13,21 @@
 import numpy as np
 
 def Tgmaps_v1(lc_grid, lc_class):
-
-    #Tgmaps_v1 Populates grids with cooeficients for Tg wave
-    #   Detailed explanation goes here
+    """
+    Populate surface property grids from land cover classification.
+    
+    Maps land cover classes to their corresponding thermal and optical properties
+    for ground temperature wave calculations.
+    
+    Args:
+        lc_grid (np.ndarray): Land cover classification grid
+        lc_class (np.ndarray): Land cover lookup table with columns:
+            [class_id, albedo, emissivity, TgK, Tstart, TmaxLST]
+    
+    Returns:
+        tuple: (TgK, Tstart, alb_grid, emis_grid, TgK_wall, Tstart_wall, 
+                TmaxLST, TmaxLST_wall) - Surface property grids and wall parameters
+    """
 
     id = np.unique(lc_grid)
     TgK = np.copy(lc_grid)

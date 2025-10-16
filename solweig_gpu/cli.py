@@ -17,12 +17,36 @@ from . import __version__
 
 # Helper for parsing boolean arguments from strings
 def str2bool(v):
+    """
+    Convert string to boolean for argparse.
+    
+    Args:
+        v: Input value (str or bool)
+    
+    Returns:
+        bool: Converted boolean value
+    
+    Raises:
+        argparse.ArgumentTypeError: If value cannot be converted to boolean
+    """
     if isinstance(v, bool): return v
     if v.lower() in ('yes', 'true', 't', '1'): return True
     elif v.lower() in ('no', 'false', 'f', '0'): return False
     raise argparse.ArgumentTypeError("Boolean value expected (True/False)")
 
 def main():
+    """
+    Command-line interface for SOLWEIG-GPU thermal comfort modeling.
+    
+    Parses command-line arguments and runs the thermal_comfort function.
+    This is the entry point for the 'thermal_comfort' console script.
+    
+    Usage:
+        thermal_comfort --base_path /path/to/input --date 2020-08-13 [options]
+    
+    For full help:
+        thermal_comfort --help
+    """
     parser = argparse.ArgumentParser(description="Run SOLWEIG with GPU acceleration.")
     parser.add_argument('--version', action='version', version=f'solweig_gpu {__version__}')
 

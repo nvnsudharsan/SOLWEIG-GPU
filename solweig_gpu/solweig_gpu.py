@@ -35,6 +35,75 @@ def thermal_comfort(
     save_ldown=False,
     save_shadow=False
 ):
+    """
+    Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
+    
+    This function orchestrates the complete workflow:
+    1. Preprocesses input rasters (tiling, validation)
+    2. Processes meteorological data (ERA5, WRF, or custom)
+    3. Calculates wall heights and aspects (parallel CPU)
+    4. Computes shadows, radiation, and SVF (GPU-accelerated)
+    5. Calculates UTCI thermal comfort index
+    6. Saves outputs as georeferenced rasters
+    
+    Args:
+        base_path (str): Base directory containing input rasters
+        selected_date_str (str): Simulation date in format 'YYYY-MM-DD'
+        building_dsm_filename (str): Building+terrain DSM filename. Default: 'Building_DSM.tif'
+        dem_filename (str): Digital Elevation Model filename. Default: 'DEM.tif'
+        trees_filename (str): Vegetation DSM filename. Default: 'Trees.tif'
+        landcover_filename (str, optional): Land cover raster filename. Default: None
+        tile_size (int): Tile size in pixels. Default: 3600. Adjust based on GPU RAM.
+        overlap (int): Overlap between tiles in pixels. Default: 20. Used for shadow transfer.
+        use_own_met (bool): Use custom meteorological file. Default: True
+        start_time (str, optional): Start datetime 'YYYY-MM-DD HH:MM:SS' (UTC for ERA5/WRF)
+        end_time (str, optional): End datetime 'YYYY-MM-DD HH:MM:SS' (UTC for ERA5/WRF)
+        data_source_type (str, optional): 'ERA5' or 'wrfout' if not using own met file
+        data_folder (str, optional): Folder containing ERA5/WRF NetCDF files
+        own_met_file (str, optional): Path to custom meteorological text file
+        save_tmrt (bool): Save mean radiant temperature output. Default: True
+        save_svf (bool): Save sky view factor output. Default: False
+        save_kup (bool): Save upward shortwave radiation. Default: False
+        save_kdown (bool): Save downward shortwave radiation. Default: False
+        save_lup (bool): Save upward longwave radiation. Default: False
+        save_ldown (bool): Save downward longwave radiation. Default: False
+        save_shadow (bool): Save shadow maps. Default: False
+    
+    Returns:
+        None: Outputs are saved to `{base_path}/Outputs/` directory
+    
+    Output Structure:
+        - Outputs/{tile_key}/ - One folder per tile
+          - UTCI_{date}.tif - Universal Thermal Climate Index (always saved)
+          - Tmrt_{date}.tif - Mean radiant temperature (if save_tmrt=True)
+          - SVF.tif - Sky view factor (if save_svf=True)
+          - Kup_{date}.tif - Upward shortwave (if save_kup=True)
+          - Kdown_{date}.tif - Downward shortwave (if save_kdown=True)
+          - Lup_{date}.tif - Upward longwave (if save_lup=True)
+          - Ldown_{date}.tif - Downward longwave (if save_ldown=True)
+          - Shadow_{date}.tif - Shadow maps (if save_shadow=True)
+    
+    Notes:
+        - Automatically uses GPU if available, falls back to CPU
+        - Processes tiles in parallel for large domains
+        - UTC to local time conversion handled automatically
+        - Multi-band rasters: one band per hour
+    
+    Example:
+        >>> from solweig_gpu import thermal_comfort
+        >>> thermal_comfort(
+        ...     base_path='/path/to/input',
+        ...     selected_date_str='2020-08-13',
+        ...     tile_size=1000,
+        ...     overlap=100,
+        ...     use_own_met=True,
+        ...     own_met_file='/path/to/met.txt'
+        ... )
+    
+    Raises:
+        ValueError: If input rasters have mismatched dimensions, CRS, or pixel sizes
+        FileNotFoundError: If required input files are missing
+    """
 
     from .preprocessor import ppr
     from .utci_process import compute_utci, map_files_by_key
@@ -74,6 +143,7 @@ def thermal_comfort(
         common_keys &= set(landcover_map)
 
     def _numeric_key(k: str):
+        """Sort tiles by numeric coordinates (x, y)."""
         x, y = k.split("_")
         return (int(x), int(y))
 
