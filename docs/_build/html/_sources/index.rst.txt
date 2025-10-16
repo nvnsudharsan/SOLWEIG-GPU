@@ -45,69 +45,28 @@ Basic Usage
        own_met_file='met_data.txt'
    )
 
+Documentation
+-------------
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started:
 
    installation
    quickstart
-   api
-   examples
-   testing
-   contributing
-
-User Guide
-----------
-
-.. toctree::
-   :maxdepth: 2
-   :caption: User Guide:
-
-   guide/installation
-   guide/input_data
-   guide/meteorological_forcing
-   guide/configuration
-   guide/output_files
-   guide/troubleshooting
-
-API Reference
--------------
 
 .. toctree::
    :maxdepth: 2
    :caption: API Reference:
 
-   api/main
-   api/preprocessing
-   api/radiation
-   api/utci
-   api/shadow
-   api/cli
-
-Developer Guide
----------------
+   api
 
 .. toctree::
    :maxdepth: 2
-   :caption: Developer Guide:
+   :caption: Additional Resources:
 
-   dev/architecture
-   dev/algorithms
-   dev/testing
-   dev/contributing
-
-Scientific Background
----------------------
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Science:
-
-   science/solweig_model
-   science/solar_position
-   science/radiation_balance
-   science/utci
-   science/references
+   testing
+   README
 
 Indices and tables
 ==================
