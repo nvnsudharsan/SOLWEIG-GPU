@@ -11,7 +11,13 @@ sys.path.insert(0, os.path.abspath('..'))
 project = 'SOLWEIG-GPU'
 copyright = '2022-2025, Harsh Kamath and Naveen Sudharsan'
 author = 'Harsh Kamath and Naveen Sudharsan'
-release = '1.0.0'
+
+# Try to get version from package, fallback to static version
+try:
+    from solweig_gpu import __version__
+    release = __version__
+except ImportError:
+    release = '1.2.15'
 
 # -- General configuration ---------------------------------------------------
 extensions = [
@@ -49,7 +55,27 @@ autodoc_default_options = {
     'exclude-members': '__weakref__'
 }
 autodoc_typehints = 'description'
-autodoc_mock_imports = ['torch', 'gdal', 'osr', 'ogr', 'netCDF4', 'PyQt5']
+autodoc_mock_imports = [
+    'torch',
+    'gdal', 
+    'osgeo',
+    'osgeo.gdal',
+    'osgeo.osr',
+    'osgeo.ogr',
+    'osr', 
+    'ogr', 
+    'netCDF4', 
+    'PyQt5',
+    'scipy',
+    'scipy.ndimage',
+    'numpy',
+    'pandas',
+    'xarray',
+    'shapely',
+    'shapely.geometry',
+    'timezonefinder',
+    'pytz',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
