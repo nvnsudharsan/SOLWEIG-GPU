@@ -1,62 +1,106 @@
 # Installation
 
-This guide provides instructions for installing SOLWEIG-GPU and its dependencies. As the package relies on specific versions of CUDA and GDAL, it is highly recommended to use Conda for environment management.
-
 ## Prerequisites
 
-- **NVIDIA GPU**: A CUDA-enabled NVIDIA GPU is required for GPU acceleration. The model will automatically fall back to CPU if no compatible GPU is found.
-- **NVIDIA Drivers**: Ensure you have the latest NVIDIA drivers installed for your GPU.
-- **Conda**: It is recommended to use either Anaconda or Miniconda to manage the environment and dependencies.
+- Python 3.10 or higher
+- CUDA-capable GPU (optional, but recommended for performance)
+- GDAL library
 
-## Installation Steps
+## Method 1: Using Conda (Recommended)
 
-1.  **Create a Conda Environment**
-
-    First, create a new Conda environment with Python 3.10. This ensures that the package dependencies do not conflict with other Python projects on your system.
-
-    ```bash
-    conda create -n solweig python=3.10
-    ```
-
-2.  **Activate the Environment**
-
-    Activate the newly created environment before proceeding with the installation.
-
-    ```bash
-    conda activate solweig
-    ```
-
-3.  **Install Dependencies**
-
-    Install the required dependencies using Conda. This step is crucial as it installs the correct versions of GDAL, PyTorch, and other libraries that are compatible with each other.
-
-    ```bash
-    conda install -c conda-forge gdal pytorch timezonefinder matplotlib sip
-    pip install pyqt5
-    conda install -c conda-forge cudnn # for GPU
-    ```
-
-4.  **Install SOLWEIG-GPU**
-
-    Finally, install the SOLWEIG-GPU package from PyPI using pip.
-
-    ```bash
-    pip install solweig-gpu
-    ```
-
-## Verifying the Installation
-
-To verify that the package has been installed correctly, you can run the following command to display the help message for the command-line interface:
+Conda handles the complex GDAL and PyTorch dependencies automatically:
 
 ```bash
-thermal_comfort --help
+# Create a new environment
+conda create -n solweig python=3.11
+conda activate solweig
+
+# Install dependencies via conda
+conda install -c conda-forge gdal pytorch
+
+# Install SOLWEIG-GPU
+pip install solweig-gpu
 ```
 
-If the installation was successful, you should see a list of available command-line options. You can also launch the GUI to confirm that the graphical interface is working:
+## Method 2: Using pip with system GDAL
+
+If you have GDAL installed system-wide:
 
 ```bash
-solweig_gpu_gui
+# Install SOLWEIG-GPU
+pip install solweig-gpu
 ```
 
-If the GUI window appears, the installation is complete and you are ready to start using SOLWEIG-GPU.
+## Method 3: Development Installation
 
+For contributing or development:
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/SOLWEIG-GPU.git
+cd SOLWEIG-GPU
+
+# Create conda environment
+conda env create -f environment.yml
+conda activate solweig
+
+# Install in editable mode
+pip install -e .
+```
+
+## Verify Installation
+
+```python
+import solweig_gpu
+print(solweig_gpu.__version__)
+
+# Check GPU availability
+import torch
+print(f"CUDA available: {torch.cuda.is_available()}")
+print(f"CUDA devices: {torch.cuda.device_count()}")
+```
+
+## GPU Setup
+
+### CUDA Requirements
+
+- CUDA 11.0 or higher
+- Compatible NVIDIA GPU (compute capability 3.5+)
+- Sufficient GPU memory (4GB minimum, 8GB+ recommended)
+
+### CPU-Only Mode
+
+SOLWEIG-GPU automatically falls back to CPU if no GPU is detected, though performance will be significantly slower.
+
+## Common Issues
+
+### GDAL Import Error
+
+If you get `ModuleNotFoundError: No module named '_gdal'`:
+
+```bash
+# Uninstall and reinstall GDAL via conda
+conda uninstall gdal
+conda install -c conda-forge gdal
+```
+
+### PyTorch GPU Not Detected
+
+Verify CUDA installation:
+
+```bash
+nvidia-smi  # Check GPU driver
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+If False, reinstall PyTorch with CUDA:
+
+```bash
+conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
+```
+
+## Next Steps
+
+- [Quick Start Guide](quickstart.md)
+- [Input Data Preparation](guide/input_data.md)
+- [API Reference](api.rst)

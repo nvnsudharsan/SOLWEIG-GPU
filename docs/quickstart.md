@@ -1,67 +1,178 @@
-># Quickstart
+# Quick Start Guide
 
-This guide will walk you through the process of running your first thermal comfort simulation using SOLWEIG-GPU. We will use the sample data provided with the package to get you started as quickly as possible.
+This guide will get you running SOLWEIG-GPU in minutes.
 
-## 1. Download Sample Data
+## Basic Workflow
 
-The first step is to download the sample dataset. This dataset contains the required input rasters and meteorological forcing data. You can download it from the following Zenodo repository:
+1. Prepare input rasters
+2. Prepare meteorological data
+3. Run simulation
+4. Analyze outputs
 
-<a href="https://doi.org/10.5281/zenodo.17048978"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17048978.svg" alt="DOI"></a>
+## Example 1: Using Your Own Met Data
 
-Once downloaded, extract the contents of the zip file to a location of your choice. For this guide, we will assume you have extracted it to `/path/to/sample_data`.
+The simplest way to run SOLWEIG-GPU:
 
-## 2. Running a Simulation with the CLI
+```python
+from solweig_gpu import thermal_comfort
 
-The easiest way to run a simulation is by using the command-line interface (CLI). Here is an example of how to run a simulation using the sample ERA5 data.
-
-Open your terminal, activate the `solweig` conda environment, and run the following command. Make sure to replace `/path/to/sample_data` with the actual path to your extracted sample data.
-
-```bash
-conda activate solweig
-
-thermal_comfort --base_path '/path/to/sample_data/Input_raster' ^
-                --date '2020-08-13' ^
-                --building_dsm 'Building_DSM.tif' ^
-                --dem 'DEM.tif' ^
-                --trees 'Trees.tif' ^
-                --tile_size 1000 ^
-                --landcover  'Landcover2.tif' ^
-                --overlap 100 ^
-                --use_own_met False ^
-                --data_source_type 'ERA5' ^
-                --data_folder '/path/to/sample_data/Forcing_data/ERA5' ^
-                --start '2020-08-13 06:00:00' ^
-                --end '2020-08-13 23:00:00' ^
-                --save_tmrt True
+thermal_comfort(
+    base_path='/path/to/your/data',
+    selected_date_str='2020-08-13',
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    use_own_met=True,
+    own_met_file='met_data.txt'
+)
 ```
 
-## 3. Running a Simulation with the GUI
+### Required Input Files
 
-If you prefer a graphical interface, you can use the SOLWEIG-GPU GUI.
+Place these in your `base_path` directory:
 
-1.  **Launch the GUI**
+1. **Building_DSM.tif** - Building + terrain heights
+2. **DEM.tif** - Digital elevation model (terrain only)
+3. **Trees.tif** - Vegetation heights
+4. **met_data.txt** - Meteorological forcing data
 
-    ```bash
-    conda activate solweig
-    solweig_gpu_gui
-    ```
+### Met Data Format
 
-2.  **Configure the Simulation**
+Create a text file with hourly data:
 
-    -   **Base Path**: Select the `Input_raster` directory from the sample data.
-    -   **Rasters**: Select the `Building_DSM.tif`, `DEM.tif`, and `Trees.tif` files.
-    -   **Tile Size**: Set the tile size to `1000`.
-    -   **Meteorological Source**: Select `ERA5` and point to the `Forcing_data/ERA5` directory.
-    -   **Time**: Set the start and end times as in the CLI example.
-    -   **Outputs**: Check the outputs you want to generate (e.g., Tmrt).
+```
+yyyy id it imin Ta RH G D I radD W P
+2020 213 14 0 25.3 45 650 150 500 0.85 3.2 101.3
+2020 213 15 0 26.1 43 700 180 520 0.82 3.5 101.3
+```
 
-3.  **Run the Simulation**
+Where:
+- `yyyy` = year
+- `id` = day of year
+- `it` = hour
+- `imin` = minute
+- `Ta` = air temperature (°C)
+- `RH` = relative humidity (%)
+- `G` = global radiation (W/m²)
+- `D` = diffuse radiation (W/m²)
+- `I` = direct radiation (W/m²)
+- `radD` = diffuse ratio
+- `W` = wind speed (m/s)
+- `P` = pressure (kPa)
 
-    Click the "Run" button to start the simulation.
+## Example 2: Using ERA5 Data
 
-## 4. Checking the Outputs
+Download ERA5 from the Climate Data Store and run:
 
-After the simulation is complete, you will find the output files in the `Outputs` directory created within your base path. The outputs will be organized in subdirectories for each tile (e.g., `tile_0_0`).
+```python
+from solweig_gpu import thermal_comfort
 
-The output files are multi-band GeoTIFFs, which can be opened with GIS software such as QGIS or ArcGIS to visualize the results.
+thermal_comfort(
+    base_path='/path/to/data',
+    selected_date_str='2020-08-13',
+    use_own_met=False,
+    data_source_type='ERA5',
+    data_folder='/path/to/era5/files',
+    start_time='2020-08-13 00:00:00',
+    end_time='2020-08-13 23:00:00'
+)
+```
 
+## Example 3: Using WRF Output
+
+```python
+from solweig_gpu import thermal_comfort
+
+thermal_comfort(
+    base_path='/path/to/data',
+    selected_date_str='2020-08-13',
+    use_own_met=False,
+    data_source_type='wrfout',
+    data_folder='/path/to/wrfout/files',
+    start_time='2020-08-13 00:00:00',
+    end_time='2020-08-13 23:00:00'
+)
+```
+
+## Command-Line Usage
+
+```bash
+# Using own met data
+thermal_comfort \
+    --base_path /path/to/data \
+    --date 2020-08-13 \
+    --tile_size 1000 \
+    --use_own_met \
+    --met_file met_data.txt
+
+# Using ERA5
+thermal_comfort \
+    --base_path /path/to/data \
+    --date 2020-08-13 \
+    --data_source ERA5 \
+    --data_folder /path/to/era5 \
+    --start_time "2020-08-13 00:00:00" \
+    --end_time "2020-08-13 23:00:00"
+```
+
+## Configuration Options
+
+### Tile Size
+
+Adjust based on GPU memory:
+
+```python
+thermal_comfort(
+    base_path='/path/to/data',
+    selected_date_str='2020-08-13',
+    tile_size=1000,  # Smaller = less memory, more tiles
+    overlap=100,     # Overlap for shadow continuity
+    ...
+)
+```
+
+**Guidelines:**
+- 8GB GPU: `tile_size=1000-2000`
+- 16GB GPU: `tile_size=2000-4000`
+- 32GB GPU: `tile_size=4000+`
+
+### Output Options
+
+```python
+thermal_comfort(
+    base_path='/path/to/data',
+    selected_date_str='2020-08-13',
+    save_tmrt=True,      # Mean radiant temperature
+    save_svf=True,       # Sky view factor
+    save_kup=True,       # Upward shortwave
+    save_kdown=True,     # Downward shortwave
+    save_lup=True,       # Upward longwave
+    save_ldown=True,     # Downward longwave
+    save_shadow=True,    # Shadow maps
+    ...
+)
+```
+
+## Output Files
+
+Results are saved in `{base_path}/Outputs/{tile_key}/`:
+
+```
+Outputs/
+├── 0_0/
+│   ├── UTCI_2020-08-13.tif       # Thermal comfort index
+│   ├── Tmrt_2020-08-13.tif       # Mean radiant temperature
+│   ├── SVF.tif                    # Sky view factor
+│   └── ...
+├── 1000_0/
+│   └── ...
+```
+
+Each `.tif` is a multi-band raster (one band per hour).
+
+## Next Steps
+
+- [Detailed Input Data Guide](guide/input_data.md)
+- [Meteorological Forcing Options](guide/meteorological_forcing.md)
+- [API Reference](api.rst)
+- [Examples Gallery](examples.md)
