@@ -13,10 +13,9 @@
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
   <a href="https://pepy.tech/project/solweig-gpu"><img src="https://pepy.tech/badge/solweig-gpu" alt="PyPI Downloads"></a>
   <a href="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34"><img src="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34/status.svg"></a>
+  <a href="https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml"><img src="https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
 </p>
 
-![tests](https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg)
-[![codecov](https://codecov.io/gh/nvnsudharsan/solweig-gpu/branch/main/graph/badge.svg)](https://codecov.io/gh/nvnsudharsan/solweig-gpu)
 
 **SOLWEIG-GPU** is a Python package and command-line interface for running the standalone SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
