@@ -1,7 +1,5 @@
 # SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework
 
-![tests](https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg)
-[![codecov](https://codecov.io/gh/nvnsudharsan/solweig-gpu/branch/main/graph/badge.svg)](https://codecov.io/gh/nvnsudharsan/solweig-gpu)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/Logo_solweig.jpg" alt="SOLWEIG Logo" width="400"/>
@@ -17,6 +15,9 @@
   <a href="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34"><img src="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34/status.svg"></a>
 </p>
 
+![tests](https://github.com/nvnsudharsan/solweig-gpu/actions/workflows/tests.yml/badge.svg)
+[![codecov](https://codecov.io/gh/nvnsudharsan/solweig-gpu/branch/main/graph/badge.svg)](https://codecov.io/gh/nvnsudharsan/solweig-gpu)
+
 **SOLWEIG-GPU** is a Python package and command-line interface for running the standalone SOLWEIG (Solar and LongWave Environmental Irradiance Geometry) model on CPU or GPU (if available). It enables high-resolution urban microclimate modeling by computing key variables such as Sky View Factor (SVF), Mean Radiant Temperature (Tmrt), and the Universal Thermal Climate Index (UTCI).
 
 **SOLWEIG** was originally developed by Dr. Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. *Int J Biometeorol* 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
@@ -25,6 +26,8 @@
 UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Kent, C.W., Sun, T., Theeuwes, N.E., Järvi, L., Ward, H.C., Capel-Timms, I. and Chang, Y., 2018. Urban Multi-scale Environmental Predictor (UMEP): An integrated tool for city-based climate services. *Environmental Modelling & Software*, 99, pp.70-87. https://doi.org/10.1016/j.envsoft.2017.09.020
 
 ---
+
+For detailed documentation see [DOCS](./docs/index.md)
 
 ## Features
 
@@ -75,6 +78,15 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 ---
 
 ## Installation
+
+```bash
+conda create -n solweig python=3.10
+conda activate solweig
+conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib sip #cudnn is required only if you are using nvidia GPU
+pip install PyQt5
+pip install solweig-gpu
+
+```
 ## Testing
 
 Run the test suite with:
@@ -91,15 +103,6 @@ pytest --cov=solweig_gpu --cov-report=term-missing
 
 CI runs tests on Linux and macOS across Python 3.10–3.12.
 
-
-```bash
-conda create -n solweig python=3.10
-conda activate solweig
-conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib sip #cudnn is required only if you are using nvidia GPU
-pip install PyQt5
-pip install solweig-gpu
-
-```
 
 ---
 
@@ -287,10 +290,4 @@ solweig_gpu_gui
 ---
 
 ### Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-Please keep your pull requests small and focused. This will make it easier to review and merge.
+Please refer to the [documentation](./docs/developer_guide.md)
