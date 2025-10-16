@@ -1,6 +1,18 @@
 SOLWEIG-GPU Documentation
 =========================
 
+.. image:: https://readthedocs.org/projects/solweig-gpu/badge/?version=latest
+    :target: https://solweig-gpu.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://img.shields.io/pypi/v/solweig-gpu.svg
+    :target: https://pypi.org/project/solweig-gpu/
+    :alt: PyPI version
+
+.. image:: https://img.shields.io/pypi/pyversions/solweig-gpu.svg
+    :target: https://pypi.org/project/solweig-gpu/
+    :alt: Python versions
+
 GPU-accelerated SOLWEIG model for urban thermal comfort simulation.
 
 **SOLWEIG-GPU** is a high-performance implementation of the Solar and Longwave Environmental Irradiance Geometry (SOLWEIG) model, 

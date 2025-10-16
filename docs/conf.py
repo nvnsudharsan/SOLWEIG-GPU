@@ -102,6 +102,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = 'sphinx_rtd_theme'  # Read the Docs theme
 html_static_path = ['_static']
 
+# Logo
+html_logo = '_static/logo.jpg'
+
 # Theme options
 html_theme_options = {
     'navigation_depth': 4,
@@ -110,6 +113,9 @@ html_theme_options = {
     'includehidden': True,
     'titles_only': False,
     'display_version': True,
+    # Uncomment to show logo without text:
+    # 'logo_only': True,
+    # 'style_nav_header_background': '#2980B9',  # Custom header color
 }
 
 # The master toctree document.
