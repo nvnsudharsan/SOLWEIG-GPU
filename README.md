@@ -155,7 +155,7 @@ thermal_comfort(
     end_time='2020-08-14 05:00:00',
     data_source_type='wrfout',
     data_folder='/path/to/era5_or_wrfout',
-    save_tmrt=False,  # True if you want to save TMRT, likewise below
+    save_tmrt=False,  # True if you want to save TMRT, likewise below, default True
     save_svf=False,
     save_kup=False,
     save_kdown=False,
