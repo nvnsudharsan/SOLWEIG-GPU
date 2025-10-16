@@ -57,17 +57,24 @@ autodoc_default_options = {
 autodoc_typehints = 'description'
 autodoc_mock_imports = [
     'torch',
+    'torch.nn',
+    'torch.nn.functional',
     'gdal', 
     'osgeo',
     'osgeo.gdal',
     'osgeo.osr',
     'osgeo.ogr',
+    '_gdal',
     'osr', 
     'ogr', 
     'netCDF4', 
     'PyQt5',
+    'PyQt5.QtWidgets',
+    'PyQt5.QtCore',
+    'PyQt5.QtGui',
     'scipy',
     'scipy.ndimage',
+    'scipy.spatial',
     'numpy',
     'pandas',
     'xarray',
@@ -75,7 +82,13 @@ autodoc_mock_imports = [
     'shapely.geometry',
     'timezonefinder',
     'pytz',
+    'matplotlib',
+    'matplotlib.path',
 ]
+
+# Additional autodoc settings to handle import errors
+autodoc_inherit_docstrings = True
+autodoc_class_signature = "separated"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
