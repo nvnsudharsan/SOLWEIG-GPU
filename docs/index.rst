@@ -39,8 +39,12 @@ Installation
    # Using conda (recommended)
    conda create -n solweig python=3.10
    conda activate solweig
-   conda install -c conda-forge gdal pytorch
+   # Install dependencies via conda
+   conda install -c conda-forge gdal pytorch timezonefinder matplotlib sip 
+   pip install PyQt5
+   conda install -c conda-forge cudnn #If GPU is available
    pip install solweig-gpu
+
 
 Basic Usage
 ^^^^^^^^^^^
