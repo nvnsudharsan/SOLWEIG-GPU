@@ -10,7 +10,6 @@
 #but WITHOUT ANY WARRANTY; without even the implied warranty of
 #MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #GNU General Public License for more details.
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -25,7 +24,44 @@ from scipy.ndimage import rotate
 
 
 def sun_position(time, location):
-
+    """
+    Calculate solar position (zenith and azimuth) using SPA algorithm.
+    
+    Implements the Solar Position Algorithm (SPA) as described in:
+    Reda, I. and Andreas, A. (2004). Solar position algorithm for solar radiation applications.
+    Solar Energy, 76(5), 577-589.
+    
+    Args:
+        time (dict): Time information with keys:
+            - 'year' (int): Year
+            - 'month' (int): Month (1-12)
+            - 'day' (int): Day of month
+            - 'hour' (int): Hour (0-23)
+            - 'min' (int): Minute (0-59)
+            - 'sec' (int): Second (0-59)
+            - 'UTC' (float): UTC offset in hours (e.g., -5 for EST)
+        
+        location (dict): Geographic location with keys:
+            - 'latitude' (float): Latitude in degrees (-90 to 90)
+            - 'longitude' (float): Longitude in degrees (-180 to 180)
+            - 'altitude' (float): Elevation above sea level in meters
+    
+    Returns:
+        dict: Solar position containing:
+            - 'zenith' (float): Solar zenith angle in degrees (0=directly overhead, 90=horizon)
+            - 'azimuth' (float): Solar azimuth in degrees (0=North, 90=East, 180=South, 270=West)
+    
+    Notes:
+        - Accounts for atmospheric refraction
+        - Accuracy: ~0.0003° for years 2000-6000
+        - All angles in degrees unless otherwise specified
+    
+    Example:
+        >>> time = {'year': 2020, 'month': 7, 'day': 18, 'hour': 12, 'min': 0, 'sec': 0, 'UTC': -5}
+        >>> location = {'latitude': 30.27, 'longitude': -97.74, 'altitude': 0}
+        >>> sun = sun_position(time, location)
+        >>> print(f"Zenith: {sun['zenith']:.2f}°, Azimuth: {sun['azimuth']:.2f}°")
+    """
 
     # 1. Calculate the Julian Day, and Century. Julian Ephemeris day, century
     # and millenium are calculated using a mean delta_t of 33.184 seconds.
@@ -81,6 +117,15 @@ def sun_position(time, location):
 
 
 def julian_calculation(t_input):
+    """
+    Calculate Julian day and related time parameters.
+    
+    Args:
+        t_input (dict): Time dictionary with year, month, day, hour, min, sec, UTC
+    
+    Returns:
+        dict: Julian day, century, ephemeris day/century/millennium
+    """
 
     if not isinstance(t_input, dict):
 
@@ -142,6 +187,15 @@ def julian_calculation(t_input):
 
 
 def earth_heliocentric_position_calculation(julian):
+    """
+    Calculate Earth's heliocentric position (longitude, latitude, radius).
+    
+    Args:
+        julian (dict): Julian day parameters
+    
+    Returns:
+        dict: Earth heliocentric position (longitude, latitude, radius in AU)
+    """
 
     # Tabulated values for the longitude calculation
     # L terms  from the original code.
@@ -458,6 +512,7 @@ def earth_heliocentric_position_calculation(julian):
 
 
 def sun_geocentric_position_calculation(earth_heliocentric_position):
+    """Calculate geocentric sun position from Earth heliocentric position. SPA Step 3."""
 
     sun_geocentric_position = dict()
     sun_geocentric_position['longitude'] = earth_heliocentric_position['longitude'] + 180
@@ -471,6 +526,15 @@ def sun_geocentric_position_calculation(earth_heliocentric_position):
 
 
 def nutation_calculation(julian):
+    """
+    Calculate nutation in longitude and obliquity.
+    
+    Args:
+        julian (dict): Julian parameters
+    
+    Returns:
+        dict: Nutation in longitude and obliquity (degrees)
+    """
 
 
     # All Xi are in degrees.
@@ -656,6 +720,7 @@ def nutation_calculation(julian):
 
 
 def true_obliquity_calculation(julian, nutation):
+    """Calculate true obliquity of the ecliptic. SPA Step 5."""
 
 
     p = np.atleast_2d([2.45, 5.79, 27.87, 7.12, -39.05, -249.67, -51.38, 1999.25, -1.55, -4680.93, 84381.448])
@@ -674,18 +739,21 @@ def true_obliquity_calculation(julian, nutation):
 
 
 def abberation_correction_calculation(earth_heliocentric_position):
+    """Calculate aberration correction. SPA Step 6."""
 
     aberration_correction = -20.4898/(3600*earth_heliocentric_position['radius'])
     return aberration_correction
 
 
 def apparent_sun_longitude_calculation(sun_geocentric_position, nutation, aberration_correction):
+    """Calculate apparent sun longitude. SPA Step 7."""
 
     apparent_sun_longitude = sun_geocentric_position['longitude'] + nutation['longitude'] + aberration_correction
     return apparent_sun_longitude
 
 
 def apparent_stime_at_greenwich_calculation(julian, nutation, true_obliquity):
+    """Calculate apparent sidereal time at Greenwich. SPA Step 8."""
 
     JD = julian['day']
     JC = julian['century']
@@ -703,6 +771,7 @@ def apparent_stime_at_greenwich_calculation(julian, nutation, true_obliquity):
 
 
 def sun_rigth_ascension_calculation(apparent_sun_longitude, true_obliquity, sun_geocentric_position):
+    """Calculate sun right ascension. SPA Step 9."""
 
     argument_numerator = (np.sin(apparent_sun_longitude * np.pi/180) * np.cos(true_obliquity * np.pi/180)) - \
         (np.tan(sun_geocentric_position['latitude'] * np.pi/180) * np.sin(true_obliquity * np.pi/180))
@@ -715,6 +784,7 @@ def sun_rigth_ascension_calculation(apparent_sun_longitude, true_obliquity, sun_
 
 
 def sun_geocentric_declination_calculation(apparent_sun_longitude, true_obliquity, sun_geocentric_position):
+    """Calculate geocentric sun declination. SPA Step 10."""
 
     argument = (np.sin(sun_geocentric_position['latitude'] * np.pi/180) * np.cos(true_obliquity * np.pi/180)) + \
         (np.cos(sun_geocentric_position['latitude'] * np.pi/180) * np.sin(true_obliquity * np.pi/180) *
@@ -725,6 +795,7 @@ def sun_geocentric_declination_calculation(apparent_sun_longitude, true_obliquit
 
 
 def observer_local_hour_calculation(apparent_stime_at_greenwich, location, sun_rigth_ascension):
+    """Calculate observer local hour angle. SPA Step 11."""
 
     observer_local_hour = apparent_stime_at_greenwich + location['longitude'] - sun_rigth_ascension
     # Set the range to [0-360]
@@ -734,6 +805,7 @@ def observer_local_hour_calculation(apparent_stime_at_greenwich, location, sun_r
 
 def topocentric_sun_position_calculate(earth_heliocentric_position, location,
                                        observer_local_hour, sun_rigth_ascension, sun_geocentric_declination):
+    """Calculate topocentric sun position. SPA Step 12."""
 
     # Equatorial horizontal parallax of the sun in degrees
     eq_horizontal_parallax = 8.794 / (3600 * earth_heliocentric_position['radius'])
@@ -769,12 +841,14 @@ def topocentric_sun_position_calculate(earth_heliocentric_position, location,
 
 
 def topocentric_local_hour_calculate(observer_local_hour, topocentric_sun_position):
+    """Calculate topocentric local hour angle. SPA Step 13."""
 
     topocentric_local_hour = observer_local_hour - topocentric_sun_position['rigth_ascension_parallax']
     return topocentric_local_hour
 
 
 def sun_topocentric_zenith_angle_calculate(location, topocentric_sun_position, topocentric_local_hour):
+    """Calculate topocentric zenith and azimuth angles with atmospheric refraction. SPA Step 14."""
 
 
     # Topocentric elevation, without atmospheric refraction
@@ -811,6 +885,17 @@ def sun_topocentric_zenith_angle_calculate(location, topocentric_sun_position, t
 
 
 def set_to_range(var, min_interval, max_interval):
+    """
+    Normalize angle to specified range.
+    
+    Args:
+        var: Angle value
+        min_interval: Minimum value (typically 0)
+        max_interval: Maximum value (typically 360)
+    
+    Returns:
+        Normalized angle in [min_interval, max_interval)
+    """
     var = var - max_interval * np.floor(var/max_interval)
 
     if var < min_interval:
@@ -818,6 +903,27 @@ def set_to_range(var, min_interval, max_interval):
     return var
 
 def Solweig_2015a_metdata_noload(inputdata, location, UTC):
+    """
+    Process meteorological data and calculate solar geometry for each time step.
+    
+    Computes solar position (altitude, azimuth) for all hours in the met data
+    and organizes the data for SOLWEIG calculations.
+    
+    Args:
+        inputdata (np.ndarray): Meteorological data array
+        location (dict): Geographic location (latitude, longitude, altitude)
+        UTC (float): UTC offset in hours
+    
+    Returns:
+        tuple: (Met, altitude, azimuth, zen, jday, I0, CI, Twater, TgK, Tstart, 
+                TgK_wall, Tstart_wall, firstdaytime, timeadd, timestepdec) containing
+                processed meteorological forcing and solar geometry
+    
+    Notes:
+        - Calculates solar position for every time step
+        - Prepares data for SOLWEIG radiation calculations
+        - Handles multiple time steps efficiently
+    """
 
     met = inputdata
     data_len = len(met[:, 0])
