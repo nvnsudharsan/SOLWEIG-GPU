@@ -27,7 +27,7 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 
 ---
 
-For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.readthedocs.io/en/latest/installation.html)
+For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.readthedocs.io/en/latest/index.html)
 
 ## Features
 
@@ -187,7 +187,7 @@ thermal_comfort(
     use_own_met=False,
     own_met_file='/path/to/met.txt',  #Placeholder as use_own_met=False
     start_time='2020-08-13 06:00:00',
-    end_time=  '2020-08-14 05:00:00',
+    end_time=  '2020-08-13 23:00:00',
     data_source_type='ERA5',
     data_folder='/path/to/era5_or_wrfout',
     save_tmrt=False, #True if you want to save TMRT, likewise below
@@ -201,6 +201,7 @@ thermal_comfort(
 ```
 
 - For the ERA-5, the sample data provided is from `2020-08-13 06:00:00 UTC` to `2020-08-13 23:00:00 UTC`. So the simulation will run from `2020-08-13 01:00:00` to `2020-08-13 18:00:00` local time (Austin, TX)
+- Ony when ERA-5 data is used, the model can set the datetime automatically. For example, if the ERA-5 data are from `2020-08-13 00:00:00 UTC` to `2020-08-14 23:00:00 UTC` and the selected simulation date is `2020-08-13` along with start time of `2020-08-13 06:00:00 UTC` and end time of `2020-08-14 05:00:00 UTC`, the model will automatically process the data for the selected datetime provided there are ERA-5 data for those datetimes.
 
 #### Example 3: Own File
 
