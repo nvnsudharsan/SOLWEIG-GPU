@@ -3,8 +3,6 @@ Example Notebooks
 
 Interactive Jupyter notebooks demonstrating SOLWEIG-GPU usage with different data sources.
 
-**Click on each example below to view the full rendered notebook with code, outputs, and plots.**
-
 .. toctree::
    :maxdepth: 1
    :caption: Interactive Examples:
