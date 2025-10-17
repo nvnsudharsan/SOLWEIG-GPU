@@ -20,7 +20,7 @@ SOLWEIG-GPU Documentation
 GPU-accelerated SOLWEIG model for urban thermal comfort simulation.
 
 **SOLWEIG-GPU** is a high-performance implementation of the Solar and Longwave Environmental Irradiance Geometry (SOLWEIG) model, 
-designed for calculating mean radiant temperature (Tmrt) and Universal Thermal Climate Index (UTCI) in complex urban environments.
+designed for calculating Sky View Factor (SVF), mean radiant temperature (Tmrt), Universal Thermal Climate Index (UTCI), shadows, and short and long-wave radiation in urban environments.
 
 Features
 --------
