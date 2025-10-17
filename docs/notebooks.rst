@@ -3,41 +3,24 @@ Example Notebooks
 
 Interactive Jupyter notebooks demonstrating SOLWEIG-GPU usage with different data sources.
 
-.. note::
-   These notebooks are rendered directly in the documentation. You can also download them to run locally.
-
-Example 1: Using Your Own Met File
------------------------------------
-
-This example shows the simplest workflow using custom meteorological data.
+**Click on each example below to view the full rendered notebook with code, outputs, and plots.**
 
 .. toctree::
    :maxdepth: 1
+   :caption: Interactive Examples:
 
-   notebooks/Example_ownmetfile
+   Example 1: Using Your Own Met File <notebooks/Example_ownmetfile>
+   Example 2: Using ERA5 Data <notebooks/Example_ERA5>
+   Example 3: Using WRF Output <notebooks/Example_wrfout>
 
-Example 2: Using ERA5 Data
----------------------------
+Download Notebooks
+------------------
 
-This example demonstrates processing ERA5 reanalysis data from the Climate Data Store.
+Download individual notebooks:
 
-.. toctree::
-   :maxdepth: 1
+* :download:`Own Met File Example <notebooks/Example_ownmetfile.ipynb>`
+* :download:`ERA5 Data Example <notebooks/Example_ERA5.ipynb>`
+* :download:`WRF Output Example <notebooks/Example_wrfout.ipynb>`
 
-   notebooks/Example_ERA5
-
-Example 3: Using WRF Output
-----------------------------
-
-This example shows how to use Weather Research and Forecasting (WRF) model output.
-
-.. toctree::
-   :maxdepth: 1
-
-   notebooks/Example_wrfout
-
-Download All Notebooks
------------------------
-
-You can download all example notebooks from the `GitHub repository examples/ folder <https://github.com/nvnsudharsan/SOLWEIG-GPU/tree/main/examples>`_.
+Or browse all notebooks on `GitHub <https://github.com/nvnsudharsan/SOLWEIG-GPU/tree/main/examples>`_.
 
