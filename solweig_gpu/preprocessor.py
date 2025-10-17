@@ -42,6 +42,15 @@ WRF_PATTERNS = [
 ]
 
 def _match_wrfout(base):
+    """
+    Match WRF output filename against known patterns.
+    
+    Args:
+        base (str): Base filename to match
+    
+    Returns:
+        tuple: (pattern_index, match_object) or (None, None) if no match
+    """
     for i, rx in enumerate(WRF_PATTERNS):
         m = rx.match(base)
         if m:
@@ -275,6 +284,15 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
 
     # ---- Compute exactly like your original (keep same numeric values) ----
     def saturation_vapor_pressure(Tc):
+        """
+        Calculate saturation vapor pressure using Magnus formula.
+        
+        Args:
+            Tc (float or np.ndarray): Temperature in Celsius
+        
+        Returns:
+            float or np.ndarray: Saturation vapor pressure in hPa
+        """
         # Tc in °C → hPa
         return 6.112 * np.exp((17.67 * Tc) / (Tc + 243.5))
 
@@ -407,6 +425,17 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
 
     def calculate_rh(t2, q2, psfc):
+        """
+        Calculate relative humidity from temperature, mixing ratio, and pressure.
+        
+        Args:
+            t2 (np.ndarray): 2-meter temperature in Kelvin
+            q2 (np.ndarray): Water vapor mixing ratio (kg/kg)
+            psfc (np.ndarray): Surface pressure in Pascals
+        
+        Returns:
+            np.ndarray: Relative humidity in percent [0-100]
+        """
         # Compute saturation vapor pressure (in hPa) using temperature converted to Celsius.
         e_s = 6.112 * np.exp((17.67 * (t2 - 273.15)) / ((t2 - 273.15) + 243.5))
         e_s = e_s * 100  # convert hPa to Pa
@@ -535,6 +564,18 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
 # Functions to process the NetCDF file and create metfiles based on a set of raster tiles.
 # =============================================================================
 def _haversine_m(lat1, lon1, lat2, lon2):
+    """
+    Calculate great circle distance between two points on Earth using Haversine formula.
+    
+    Args:
+        lat1 (float): Latitude of first point (degrees)
+        lon1 (float): Longitude of first point (degrees)
+        lat2 (float): Latitude of second point (degrees)
+        lon2 (float): Longitude of second point (degrees)
+    
+    Returns:
+        float: Distance in meters
+    """
     # distance in meters
     R = 6371000.0
     phi1 = math.radians(lat1); phi2 = math.radians(lat2)
@@ -544,11 +585,25 @@ def _haversine_m(lat1, lon1, lat2, lon2):
     return 2*R*math.asin(math.sqrt(a))
 
 def _local_cell_size_m(lon2d, lat2d, cx, cy, tree):
+    """
+    Estimate local grid cell size in meters at a given coordinate.
+    
+    Args:
+        lon2d (np.ndarray): 2D array of longitudes
+        lat2d (np.ndarray): 2D array of latitudes
+        cx (float): Center longitude
+        cy (float): Center latitude
+        tree (cKDTree): KDTree for nearest neighbor lookup
+    
+    Returns:
+        tuple: (cell_width_m, cell_height_m) in meters
+    """
     ny, nx = lat2d.shape
     _, idx = tree.query([cx, cy], k=1)
     i, j = np.unravel_index(idx, (ny, nx))
     ew, ns = [], []
     def dist(i1, j1, i2, j2):
+        """Calculate haversine distance between two grid cells."""
         return _haversine_m(lat2d[i1,j1], lon2d[i1,j1], lat2d[i2,j2], lon2d[i2,j2])
     if j-1 >= 0: ew.append(dist(i,j, i, j-1))
     if j+1 < nx: ew.append(dist(i,j, i, j+1))
@@ -562,6 +617,15 @@ def _local_cell_size_m(lon2d, lat2d, cx, cy, tree):
     return cell_w, cell_h
 
 def _tile_size_m(poly):
+    """
+    Calculate tile size in meters from polygon bounds.
+    
+    Args:
+        poly (Polygon): Shapely polygon representing tile extent
+    
+    Returns:
+        tuple: (width_m, height_m) tile dimensions in meters
+    """
     minx, miny, maxx, maxy = poly.bounds
     cx, cy = (minx+maxx)/2.0, (miny+maxy)/2.0
     w = _haversine_m(cy, minx, cy, maxx) 

@@ -23,6 +23,19 @@ gdal.UseExceptions()
 walllimit = 3.0
 
 def findwalls(dem_array, walllimit):
+    """
+    Identify walls in a Digital Surface Model (DSM) based on height threshold.
+    
+    Walls are detected by comparing each cell to its immediate neighbors.
+    A wall exists where the elevation difference exceeds the threshold.
+    
+    Args:
+        dem_array (np.ndarray): 2D array of elevation values (DSM)
+        walllimit (float): Minimum height difference (m) to be considered a wall
+    
+    Returns:
+        np.ndarray: 2D array of wall heights. Zero where no wall exists.
+    """
     col, row = dem_array.shape
     walls = np.zeros((col, row))
     domain = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
@@ -43,6 +56,17 @@ def findwalls(dem_array, walllimit):
     return walls
 
 def cart2pol(x, y, units='deg'):
+    """
+    Convert Cartesian coordinates to polar coordinates.
+    
+    Args:
+        x (np.ndarray or float): X coordinate(s)
+        y (np.ndarray or float): Y coordinate(s)
+        units (str): Output angle units ('deg' or 'rad'). Default: 'deg'
+    
+    Returns:
+        tuple: (theta, radius) where theta is angle and radius is distance
+    """
     radius = np.sqrt(x**2 + y**2)
     theta = np.arctan2(y, x)
     if units in ['deg', 'degs']:
@@ -50,6 +74,18 @@ def cart2pol(x, y, units='deg'):
     return theta, radius
 
 def get_ders(dsm, scale):
+    """
+    Calculate slope derivatives (aspect and gradient) from DSM.
+    
+    Args:
+        dsm (np.ndarray): Digital Surface Model array
+        scale (float): Pixel size in meters
+    
+    Returns:
+        tuple: (aspect, gradient) where:
+            - aspect: slope orientation in radians
+            - gradient: slope magnitude
+    """
     dx = 1 / scale
     fy, fx = np.gradient(dsm, dx, dx)
     asp, grad = cart2pol(fy, fx, 'rad')
@@ -59,6 +95,20 @@ def get_ders(dsm, scale):
     return grad, asp
 
 def filter1Goodwin_as_aspect_v3(walls, scale, a):
+    """
+    Calculate wall aspect (orientation) using directional filtering.
+    
+    This function determines the orientation of walls by rotating a directional
+    filter and finding the direction with maximum wall presence.
+    
+    Args:
+        walls (np.ndarray): Binary array indicating wall locations
+        scale (float): Pixel size in meters
+        a (np.ndarray): Aspect array from DSM derivatives
+    
+    Returns:
+        np.ndarray: Wall aspect in degrees [0-360], where 0=North, 90=East, 180=South, 270=West
+    """
     row, col = a.shape
     filtersize = int(np.floor((scale + 1e-10) * 9))
     if filtersize <= 2:
@@ -114,6 +164,17 @@ def filter1Goodwin_as_aspect_v3(walls, scale, a):
     return y
 
 def process_file_parallel(args):
+    """
+    Process a single DEM tile to calculate walls and aspect (parallel worker function).
+    
+    This function is designed to be called by parallel processing workers.
+    
+    Args:
+        args (tuple): (filename, dem_folder_path, wall_output_path, aspect_output_path)
+    
+    Returns:
+        str: Filename of processed tile
+    """
     filename, dem_folder_path, wall_output_path, aspect_output_path = args
     dem_path = os.path.join(dem_folder_path, filename)
 
@@ -154,6 +215,23 @@ def process_file_parallel(args):
         return filename
 
 def run_parallel_processing(dem_folder_path, wall_output_path, aspect_output_path):
+    """
+    Process all DEM tiles in parallel to calculate walls and aspects.
+    
+    This is the main entry point for wall and aspect calculation. It uses
+    multiprocessing to process multiple tiles simultaneously for efficiency.
+    
+    Args:
+        dem_folder_path (str): Path to folder containing DEM tile GeoTIFFs
+        wall_output_path (str): Output path for wall height rasters
+        aspect_output_path (str): Output path for wall aspect rasters
+    
+    Notes:
+        - Uses all available CPU cores minus one
+        - Progress bar shows processing status
+        - Creates output directories if they don't exist
+        - Skips tiles that cannot be opened or have invalid data
+    """
     os.makedirs(wall_output_path, exist_ok=True)
     os.makedirs(aspect_output_path, exist_ok=True)
 

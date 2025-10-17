@@ -28,6 +28,16 @@ import time
 gdal.UseExceptions()
 
 def ensure_tensor(x, device=None):
+    """
+    Convert input to PyTorch tensor on specified device.
+    
+    Args:
+        x: Input data (can be numpy array, list, or torch tensor)
+        device (torch.device, optional): Target device. Auto-detects GPU if available.
+    
+    Returns:
+        torch.Tensor: Input converted to tensor on specified device
+    """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if not isinstance(x, torch.Tensor):
@@ -35,6 +45,33 @@ def ensure_tensor(x, device=None):
     return x
 
 def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
+    """
+    Calculate shadow patterns from buildings and vegetation using GPU-accelerated ray tracing.
+    
+    This function performs GPU-accelerated shadow calculations by tracing sun rays
+    across the Digital Surface Model (DSM) accounting for buildings and vegetation.
+    
+    Args:
+        amaxvalue (torch.Tensor): Maximum elevation value in the domain
+        a (torch.Tensor): Digital Surface Model (DSM) array
+        vegdem (torch.Tensor): Vegetation canopy DSM
+        vegdem2 (torch.Tensor): Vegetation trunk zone DSM
+        bush (torch.Tensor): Bush/shrub layer DSM
+        azimuth (float): Solar azimuth angle (degrees, 0=North, clockwise)
+        altitude (float): Solar altitude angle (degrees above horizon)
+        scale (float): Grid resolution in pixels per meter
+    
+    Returns:
+        tuple: (sh, vegsh, vbshvegsh) where:
+            - sh: Shadow map (0=shadow, 1=sunlit)
+            - vegsh: Vegetation shadow influence
+            - vbshvegsh: Combined vegetation and building shadow
+    
+    Notes:
+        - Automatically uses GPU if available, otherwise CPU
+        - Implements anisotropic shadow casting
+        - Accounts for vegetation transmittance
+    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     degrees = torch.pi / 180.
     if azimuth == 0.0:
@@ -162,6 +199,20 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     return sh, vegsh, vbshvegsh
 
 def annulus_weight(altitude, aziinterval, device=None):
+    """
+    Calculate annulus weights for sky view factor computation.
+    
+    Computes weights for different altitude bands used in SVF calculation
+    based on the solid angle subtended by each annular ring.
+    
+    Args:
+        altitude (float or torch.Tensor): Solar altitude angle (degrees)
+        aziinterval (int): Azimuthal interval for discretization
+        device (torch.device, optional): PyTorch device. Auto-detects if None.
+    
+    Returns:
+        torch.Tensor: Array of annulus weights
+    """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
@@ -176,6 +227,26 @@ def annulus_weight(altitude, aziinterval, device=None):
     return weight
 
 def create_patches(patch_option):
+    """
+    Create patch configuration for sky hemisphere discretization.
+    
+    Generates the angular resolution and patch geometry for sky view factor
+    calculations by dividing the sky hemisphere into discrete patches.
+    
+    Args:
+        patch_option (int): Number of patches (144 or 2304)
+            - 144: Coarser resolution (faster)
+            - 2304: Finer resolution (more accurate)
+    
+    Returns:
+        dict: Configuration containing:
+            - 'azimuthinterval': Number of azimuth bins
+            - 'altitudeinterval': Number of altitude bins
+            - 'patchnorm': Normalization factor
+    
+    Raises:
+        ValueError: If patch_option is not 144 or 2304
+    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     deg2rad = torch.pi / 180
     skyvaultalt = torch.tensor([], device=device)
@@ -213,6 +284,35 @@ def create_patches(patch_option):
 
 
 def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
+    """
+    Calculate Sky View Factor (SVF) using GPU-accelerated hemisphere sampling.
+    
+    SVF represents the portion of visible sky from each point, accounting for
+    obstructions from buildings and vegetation. Directional SVFs are also computed
+    for cardinal directions (N, E, S, W).
+    
+    Args:
+        patch_option (int): Sky discretization option (144 or 2304 patches)
+        amaxvalue (torch.Tensor): Maximum elevation in domain
+        a (torch.Tensor): Digital Surface Model
+        vegdem (torch.Tensor): Vegetation canopy DSM
+        vegdem2 (torch.Tensor): Vegetation trunk zone DSM
+        bush (torch.Tensor): Bush layer DSM
+        scale (float): Grid resolution (pixels per meter)
+    
+    Returns:
+        tuple: (svf, svfE, svfS, svfW, svfN, svfveg, svfEveg, svfSveg, svfWveg, svfNveg, 
+                svfaveg, svfEaveg, svfSaveg, svfWaveg, svfNaveg) where:
+            - svf: Total sky view factor [0-1]
+            - svfE/S/W/N: Directional SVFs for East/South/West/North
+            - svf*veg: Vegetation-obstructed SVFs
+            - svf*aveg: Vegetation-adjusted SVFs
+    
+    Notes:
+        - Uses GPU if available for fast computation
+        - Higher patch_option gives more accurate but slower results
+        - Directional SVFs useful for anisotropic radiation modeling
+    """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = a.device
     rows = a.shape[0]

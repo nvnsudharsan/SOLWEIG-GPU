@@ -1,4 +1,4 @@
-># Developer Guide
+# Developer Guide
 
 This guide is intended for developers who want to understand the architecture of SOLWEIG-GPU and contribute to its development.
 

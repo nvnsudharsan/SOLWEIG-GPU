@@ -1,4 +1,4 @@
-># Examples
+# Examples
 
 This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.
 
@@ -25,7 +25,8 @@ thermal_comfort(
     data_folder='/path/to/wrfout',
 )
 ```
-See the [Jupyter notebook](../examples/Example_wrfout.ipynb)
+**See the interactive** [Jupyter notebook](notebooks/Example_wrfout.ipynb)
+
 ## Example 2: Using ERA5 Data
 
 This example demonstrates how to use ERA5 reanalysis data for the simulation.
@@ -49,7 +50,7 @@ thermal_comfort(
     data_folder='/path/to/era5',
 )
 ```
-See the [Jupyter notebook](../examples/Example_ERA5.ipynb) 
+**See the interactive** [Jupyter notebook](notebooks/Example_ERA5.ipynb) 
 ## You can download ERA5 as below
 ```python
 import cdsapi
@@ -108,5 +109,5 @@ thermal_comfort(
     own_met_file='/path/to/met.txt',
 )
 ```
-See the [Jupyter notebook](../examples/Example_ownmetfile.ipynb)
+**See the interactive** [Jupyter notebook](notebooks/Example_ownmetfile.ipynb)
 
