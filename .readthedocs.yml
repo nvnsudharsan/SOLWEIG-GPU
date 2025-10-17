@@ -9,9 +9,10 @@ sphinx:
   fail_on_warning: false
 
 # Optionally build your docs in additional formats such as PDF and ePub
-formats:
-  - pdf
-  - epub
+# Disabled due to Unicode characters in notebooks and SVG badges
+# formats:
+#   - pdf
+#   - epub
 
 # Build settings
 build:
