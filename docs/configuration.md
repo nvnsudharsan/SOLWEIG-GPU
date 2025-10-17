@@ -122,7 +122,7 @@ use_own_met = False
 data_source_type = 'wrfout'
 data_folder = '/path/to/wrf_data'
 start_time = '2020-08-13 06:00:00'  # UTC
-end_time = '2020-08-13 23:00:00'    # UTC
+end_time = '2020-08-14 05:00:00'    # UTC
 ```
 
 **ERA-5:**
@@ -133,6 +133,43 @@ data_source_type = 'ERA5'
 data_folder = '/path/to/era5_data'
 start_time = '2020-08-13 06:00:00'  # UTC
 end_time = '2020-08-13 23:00:00'    # UTC
+```
+To download ERA5 data, follow the steps below or alternatively you can donwload it directly from [CDS]()
+```python
+import cdsapi
+
+dataset = "reanalysis-era5-single-levels"
+request = {
+    "product_type": ["reanalysis"],
+    "variable": [
+        "10m_u_component_of_wind",
+        "10m_v_component_of_wind",
+        "2m_dewpoint_temperature",
+        "2m_temperature",
+        "surface_pressure",
+        "surface_solar_radiation_downwards",
+        "surface_thermal_radiation_downwards"
+    ],
+    "year": ["2000"], # change to the desired year
+    "month": ["08"], # change to the desired month
+    "day": ["13", "14"], # change to the desired date
+    "time": [
+        "00:00", "01:00", "02:00",
+        "03:00", "04:00", "05:00",
+        "06:00", "07:00", "08:00",
+        "09:00", "10:00", "11:00",
+        "12:00", "13:00", "14:00",
+        "15:00", "16:00", "17:00",
+        "18:00", "19:00", "20:00",
+        "21:00", "22:00", "23:00"
+    ],
+    "data_format": "netcdf",
+    "download_format": "unarchived",
+    "area": [31, -98, 29, -97] #change according to your location
+}
+
+client = cdsapi.Client()
+client.retrieve(dataset, request).download()
 ```
 
 !!! Important Notes:
