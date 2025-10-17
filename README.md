@@ -201,7 +201,7 @@ thermal_comfort(
 ```
 
 - For the ERA-5, the sample data provided is from `2020-08-13 06:00:00 UTC` to `2020-08-13 23:00:00 UTC`. So the simulation will run from `2020-08-13 01:00:00` to `2020-08-13 18:00:00` local time (Austin, TX)
-- Ony when ERA-5 data is used, the model can set the datetime automatically. For example, if the ERA-5 data are from `2020-08-13 00:00:00 UTC` to `2020-08-14 23:00:00 UTC` and the selected simulation date is `2020-08-13` along with start time of `2020-08-13 06:00:00 UTC` and end time of `2020-08-14 05:00:00 UTC`, the model will automatically detect the selected datetimes and process the data.
+- Ony when ERA-5 data is used, the model can set the datetime automatically. For example, if the ERA-5 data are from `2020-08-13 00:00:00 UTC` to `2020-08-14 23:00:00 UTC` and the selected simulation date is `2020-08-13` along with start time of `2020-08-13 06:00:00 UTC` and end time of `2020-08-14 05:00:00 UTC`, the model will automatically process the data for the selected datetime provided there are ERA-5 data for those datetimes.
 
 #### Example 3: Own File
 
