@@ -40,27 +40,7 @@ Place these in your `base_path` directory:
 
 ### Met Data Format
 
-Create a text file with hourly data:
-
-```
-yyyy id it imin Ta RH G D I radD W P
-2020 213 14 0 25.3 45 650 150 500 0.85 3.2 101.3
-2020 213 15 0 26.1 43 700 180 520 0.82 3.5 101.3
-```
-
-Where:
-- `yyyy` = year
-- `id` = day of year
-- `it` = hour
-- `imin` = minute
-- `Ta` = air temperature (°C)
-- `RH` = relative humidity (%)
-- `G` = global radiation (W/m²)
-- `D` = diffuse radiation (W/m²)
-- `I` = direct radiation (W/m²)
-- `radD` = diffuse ratio
-- `W` = wind speed (m/s)
-- `P` = pressure (kPa)
+Create a text file with hourly data: Using [UMEP MetProcessor](https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html)
 
 ## Example 2: Using ERA5 Data
 
@@ -75,10 +55,12 @@ thermal_comfort(
     use_own_met=False,
     data_source_type='ERA5',
     data_folder='/path/to/era5/files',
-    start_time='2020-08-13 00:00:00',
+    start_time='2020-08-13 06:00:00',
     end_time='2020-08-13 23:00:00'
 )
 ```
+When using ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
+`start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
 
 ## Example 3: Using WRF Output
 
@@ -91,10 +73,12 @@ thermal_comfort(
     use_own_met=False,
     data_source_type='wrfout',
     data_folder='/path/to/wrfout/files',
-    start_time='2020-08-13 00:00:00',
-    end_time='2020-08-13 23:00:00'
+    start_time='2020-08-13 06:00:00',
+    end_time='2020-08-14 05:00:00'
 )
 ```
+When using wrfout, the `start_time` and `end_time` should be the first and last time stamps in the wrfout dataset. The package won't compare the selected `start_time` and `end_time` to the wrfout file timestamps and automatically fetch the corresponding data. 
+`start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
 
 ## Command-Line Usage
 
@@ -113,7 +97,7 @@ thermal_comfort \
     --date 2020-08-13 \
     --data_source ERA5 \
     --data_folder /path/to/era5 \
-    --start_time "2020-08-13 00:00:00" \
+    --start_time "2020-08-13 06:00:00" \
     --end_time "2020-08-13 23:00:00"
 ```
 
