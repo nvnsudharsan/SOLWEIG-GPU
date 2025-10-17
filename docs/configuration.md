@@ -113,7 +113,7 @@ When `use_own_met=True`, you must provide the path to your custom meteorological
 !!! Note:
     It is recomended to create the meteorological file with the UMEP Met Processor tool: <https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html>
     
-### Using ERA5 or WRF Data
+### Using ERA5 or WRF Data (Using the sample data provided)
 
 **WRF:**
 
@@ -131,8 +131,8 @@ end_time = '2020-08-13 23:00:00'    # UTC
 use_own_met = False
 data_source_type = 'ERA5'
 data_folder = '/path/to/era5_data'
-start_time = '2020-08-13 00:00:00'  # UTC
-end_time = '2020-08-14 23:00:00'    # UTC
+start_time = '2020-08-13 06:00:00'  # UTC
+end_time = '2020-08-13 23:00:00'    # UTC
 ```
 
 !!! Important Notes:
