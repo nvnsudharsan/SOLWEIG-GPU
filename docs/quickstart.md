@@ -4,11 +4,13 @@ This guide will get you running SOLWEIG-GPU in minutes.
 
 ## Basic Workflow
 
-1. Prepare input rasters
+1. Prepare input rasters 
 2. Prepare meteorological data
 3. Run simulation
 4. Analyze outputs
 
+## Sample Data
+Sample data is available in [zenodo](https://zenodo.org/records/17048978)
 ## Example 1: Using Your Own Met Data
 
 The simplest way to run SOLWEIG-GPU:
