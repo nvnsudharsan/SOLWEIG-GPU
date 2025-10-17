@@ -51,6 +51,10 @@ thermal_comfort(
 )
 ```
 **See the interactive** [Jupyter notebook](notebooks/Example_ERA5.ipynb) 
+## How to install CDS API
+
+ECMWF Climate Data Store(CDS) API key is required to download ERA-5 data programatically. To set-up API, please follow: <https://cds.climate.copernicus.eu/how-to-api> . Alternatively, the data can be directed downloaded from CDS: <https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview>
+
 ## You can download ERA5 as below
 ```python
 import cdsapi
