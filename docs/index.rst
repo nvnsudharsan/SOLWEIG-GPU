@@ -77,17 +77,17 @@ Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference:
-
-   api
-
-.. toctree::
-   :maxdepth: 2
    :caption: User Guide:
 
    input_data
    configuration
    outputs
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference:
+
+   api
 
 .. toctree::
    :maxdepth: 2
