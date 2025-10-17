@@ -1,3 +1,15 @@
+#SOLWEIG-GPU: GPU-accelerated SOLWEIG model for urban thermal comfort simulation
+#Copyright (C) 2022–2025 Harsh Kamath and Naveen Sudharsan
+
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#GNU General Public License for more details.
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -16,6 +28,16 @@ from .shadow import create_patches
 gdal.UseExceptions()
 
 def ensure_tensor(x, device=None):
+    """
+    Convert input to PyTorch tensor on specified device.
+    
+    Args:
+        x: Input data (numpy array, list, or tensor)
+        device (torch.device, optional): Target device
+    
+    Returns:
+        torch.Tensor: Input as tensor on device
+    """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if not isinstance(x, torch.Tensor):
@@ -23,6 +45,20 @@ def ensure_tensor(x, device=None):
     return x
 
 def daylen(DOY, XLAT):
+    """
+    Calculate day length and solar declination for given day and latitude.
+    
+    Args:
+        DOY (torch.Tensor): Day of year (1-365)
+        XLAT (torch.Tensor): Latitude in degrees
+    
+    Returns:
+        tuple: (DAYL, DEC, SNDN, SNUP) where:
+            - DAYL: Day length in hours
+            - DEC: Solar declination in degrees
+            - SNDN: Time of solar noon in hours
+            - SNUP: Time of sunrise in hours
+    """
     RAD = torch.pi / 180.0
 
     DEC = -23.45 * torch.cos(2.0 * torch.pi * (DOY + 10.0) / 365.0)
@@ -38,6 +74,37 @@ def daylen(DOY, XLAT):
 
 def sunonsurface_2018a(azimuthA, scale, buildings, shadow, sunwall, first, second, aspect, walls, Tg, Tgwall, Ta,
                        emis_grid, ewall, alb_grid, SBC, albedo_b, Twater, lc_grid, landcover):
+    """
+    Calculate solar radiation on surfaces with different orientations.
+    
+    Determines radiation on walls and ground surfaces accounting for
+    building geometry, shadows, and surface properties.
+    
+    Args:
+        azimuthA (float): Solar azimuth angle (degrees)
+        scale (float): Grid scale (pixels per meter)
+        buildings (torch.Tensor): Building mask array
+        shadow (torch.Tensor): Shadow map
+        sunwall (torch.Tensor): Sunlit wall mask
+        first (torch.Tensor): First surface type
+        second (torch.Tensor): Second surface type
+        aspect (torch.Tensor): Wall aspect angles
+        walls (torch.Tensor): Wall heights
+        Tg (torch.Tensor): Ground temperature
+        Tgwall (torch.Tensor): Wall temperature
+        Ta (float): Air temperature
+        emis_grid (torch.Tensor): Ground emissivity
+        ewall (float): Wall emissivity
+        alb_grid (torch.Tensor): Ground albedo
+        SBC (float): Stefan-Boltzmann constant
+        albedo_b (float): Building albedo
+        Twater (float): Water temperature
+        lc_grid (torch.Tensor): Land cover grid
+        landcover (np.ndarray): Land cover classification
+    
+    Returns:
+        tuple: Radiation components for different surfaces
+    """
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -223,6 +290,34 @@ def sunonsurface_2018a(azimuthA, scale, buildings, shadow, sunwall, first, secon
 
 def gvf_2018a(wallsun, walls, buildings, scale, shadow, first, second, dirwalls, Tg, Tgwall, Ta, emis_grid, ewall,
               alb_grid, SBC, albedo_b, rows, cols, Twater, lc_grid, landcover):
+    """
+    Calculate ground view factors for radiation exchange between surfaces.
+    
+    Computes how much ground surfaces "see" walls and other surfaces,
+    accounting for shadows and multiple reflections.
+    
+    Args:
+        wallsun (torch.Tensor): Sunlit wall indicator
+        walls (torch.Tensor): Wall heights
+        buildings (torch.Tensor): Building mask
+        scale (float): Grid scale
+        shadow (torch.Tensor): Shadow map
+        first/second (torch.Tensor): Surface classification
+        dirwalls (torch.Tensor): Wall directions
+        Tg/Tgwall/Ta (torch.Tensor): Temperatures (ground/wall/air)
+        emis_grid (torch.Tensor): Ground emissivity
+        ewall (float): Wall emissivity  
+        alb_grid (torch.Tensor): Ground albedo
+        SBC (float): Stefan-Boltzmann constant
+        albedo_b (float): Building albedo
+        rows/cols (int): Grid dimensions
+        Twater (float): Water temperature
+        lc_grid (torch.Tensor): Land cover grid
+        landcover (np.ndarray): Land cover data
+    
+    Returns:
+        tuple: View factors and albedo components for different directions
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     azimuthA = torch.arange(5, 359, 20, device=device, dtype=torch.float32)  # Search directions for Ground View Factors (GVF)
@@ -307,6 +402,17 @@ def gvf_2018a(wallsun, walls, buildings, scale, shadow, first, second, dirwalls,
     )
 
 def cylindric_wedge(zen, svfalfa, rows, cols):
+    """
+    Calculate form factors for cylindrical geometry (human body model).
+    
+    Args:
+        zen (torch.Tensor): Solar zenith angle
+        svfalfa (torch.Tensor): SVF alpha component
+        rows, cols (int): Grid dimensions
+    
+    Returns:
+        tuple: (Fside, Fup, Fcyl) - Form factors for cylinder sides, top, and total
+    """
     np.seterr(divide='ignore', invalid='ignore')
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -343,6 +449,21 @@ def cylindric_wedge(zen, svfalfa, rows, cols):
     return F_sh
 
 def TsWaveDelay_2015a(gvfLup, firstdaytime, timeadd, timestepdec, Tgmap1):
+    """
+    Calculate surface temperature wave delay.
+    
+    Models thermal inertia and temperature wave propagation in surfaces.
+    
+    Args:
+        gvfLup: Ground view factor for upward longwave
+        firstdaytime: First time step flag
+        timeadd: Time addition parameter
+        timestepdec: Time step decimal
+        Tgmap1: Previous ground temperature map
+    
+    Returns:
+        torch.Tensor: Temperature with wave delay applied
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # gvfLup = torch.tensor(gvfLup, device=device)
@@ -367,6 +488,14 @@ def TsWaveDelay_2015a(gvfLup, firstdaytime, timeadd, timestepdec, Tgmap1):
     return Lup, timeadd, Tgmap1
 
 def Kup_veg_2015a(radI, radD, radG, altitude, svfbuveg, albedo_b, F_sh, gvfalb, gvfalbE, gvfalbS, gvfalbW, gvfalbN, gvfalbnosh, gvfalbnoshE, gvfalbnoshS, gvfalbnoshW, gvfalbnoshN):
+    """
+    Calculate upward shortwave radiation with vegetation effects.
+    
+    Accounts for multiple reflections between ground, walls, and vegetation.
+    
+    Returns:
+        tuple: Upward shortwave components for different directions
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     albedo_b = torch.tensor(albedo_b, device=device).clone().detach()
@@ -379,6 +508,7 @@ def Kup_veg_2015a(radI, radD, radG, altitude, svfbuveg, albedo_b, F_sh, gvfalb, 
     return Kup, KupE, KupS, KupW, KupN
 
 def Kvikt_veg(svf, svfveg, vikttot):
+    """Calculate shortwave weight factor accounting for vegetation."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     viktwall = (vikttot - (63.227 * svf ** 6 - 161.51 * svf ** 5 + 156.91 * svf ** 4 - 70.424 * svf ** 3 + 16.773 * svf ** 2 - 0.4863 * svf)) / vikttot
@@ -392,6 +522,19 @@ def Kvikt_veg(svf, svfveg, vikttot):
 
 
 def shaded_or_sunlit(solar_altitude, solar_azimuth, patch_altitude, patch_azimuth, asvf):
+    """
+    Determine if sky patches are shaded or sunlit.
+    
+    Args:
+        solar_altitude (float): Solar altitude angle
+        solar_azimuth (float): Solar azimuth angle
+        patch_altitude (torch.Tensor): Patch altitude angles
+        patch_azimuth (torch.Tensor): Patch azimuth angles
+        asvf (torch.Tensor): Anisotropic sky view factor
+    
+    Returns:
+        torch.Tensor: Binary mask (1=sunlit, 0=shaded)
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Patch azimuth in relation to sun azimuth
@@ -421,6 +564,35 @@ def shaded_or_sunlit(solar_altitude, solar_azimuth, patch_altitude, patch_azimut
 def Kside_veg_v2022a(radI, radD, radG, shadow, svfS, svfW, svfN, svfE, svfEveg, svfSveg, svfWveg, svfNveg,
                      azimuth, altitude, psi, t, albedo, F_sh, KupE, KupS, KupW, KupN, cyl, lv, anisotropic_diffuse,
                      diffsh, rows, cols, asvf, shmat, vegshmat, vbshvegshmat):
+    """
+    Calculate shortwave radiation on vertical surfaces (walls) with vegetation effects.
+    
+    Computes direct, diffuse, and reflected shortwave radiation on walls in the
+    four cardinal directions, accounting for vegetation shading and ground reflections.
+    
+    Args:
+        radI, radD, radG (float): Direct, diffuse, and global radiation (W/m²)
+        shadow (torch.Tensor): Shadow map
+        svfS, svfW, svfN, svfE (torch.Tensor): Directional sky view factors
+        svf*veg (torch.Tensor): Vegetation-obstructed SVFs
+        azimuth, altitude (float): Solar angles (degrees)
+        psi (torch.Tensor): Tilt angles
+        t (float): Transmissivity factor
+        albedo (torch.Tensor): Surface albedo
+        F_sh (torch.Tensor): Form factor
+        KupE, KupS, KupW, KupN (torch.Tensor): Upward shortwave per direction
+        cyl (torch.Tensor): Cylindrical geometry factor
+        lv (float): Leaf area index factor
+        anisotropic_diffuse (bool): Use anisotropic diffuse model
+        diffsh (torch.Tensor): Diffuse shadowing
+        rows, cols (int): Grid dimensions
+        asvf (torch.Tensor): Anisotropic SVF
+        shmat, vegshmat, vbshvegshmat (torch.Tensor): Shadow matrices
+    
+    Returns:
+        tuple: (Keast, Ksouth, Kwest, Knorth, KsideI, KsideD, Kside) - 
+               Shortwave radiation components for each direction
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     vikttot = 4.4897
@@ -641,6 +813,15 @@ def Kside_veg_v2022a(radI, radD, radG, shadow, svfS, svfW, svfN, svfE, svfEveg, 
 
 
 def sun_distance(jday):
+    """
+    Calculate Earth-Sun distance correction factor for given day.
+    
+    Args:
+        jday (torch.Tensor): Julian day of year
+    
+    Returns:
+        torch.Tensor: Distance correction factor (dimensionless)
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     b = 2. * torch.pi * jday / 365.
@@ -648,6 +829,21 @@ def sun_distance(jday):
     return D
 
 def clearnessindex_2013b(zen, jday, Ta, RH, radG, location, P):
+    """
+    Calculate atmospheric clearness index.
+    
+    Args:
+        zen (torch.Tensor): Solar zenith angle (radians)
+        jday (torch.Tensor): Julian day
+        Ta (float): Air temperature (°C)
+        RH (float): Relative humidity (%)
+        radG (float): Global radiation (W/m²)
+        location (dict): Geographic location
+        P (float): Atmospheric pressure (kPa)
+    
+    Returns:
+        torch.Tensor: Clearness index (dimensionless, 0-1)
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     if P == -999.0:
@@ -710,6 +906,23 @@ def clearnessindex_2013b(zen, jday, Ta, RH, radG, location, P):
     return I0, CI, Kt, I0et, CIuncorr
 
 def diffusefraction(radG, altitude, Kt, Ta, RH):
+    """
+    Calculate fraction of diffuse radiation from global radiation.
+    
+    Uses empirical models to partition global radiation into direct and diffuse components.
+    
+    Args:
+        radG (float): Global horizontal radiation (W/m²)
+        altitude (torch.Tensor): Solar altitude (degrees)
+        Kt (torch.Tensor): Clearness index
+        Ta (float): Air temperature (°C)
+        RH (float): Relative humidity (%)
+    
+    Returns:
+        tuple: (radD, radI) where:
+            - radD: Diffuse radiation (W/m²)
+            - radI: Direct beam radiation (W/m²)
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     Ta = ensure_tensor(Ta)
     RH = ensure_tensor(RH)
@@ -741,6 +954,15 @@ def diffusefraction(radG, altitude, Kt, Ta, RH):
     return radI, radD
 
 def shadowingfunction_wallheight_13(a, azimuth, altitude, scale, walls, aspect):
+    """
+    Calculate shadow patterns accounting for wall heights (method 1.3).
+    
+    Determines which surfaces are in shadow cast by nearby walls based on
+    solar angle, wall height, and wall orientation.
+    
+    Returns:
+        tuple: (vegsh, sh, vbshvegsh, wallsh, wallsun, wallshve, facesh, facesun)
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     if not walls.size:
@@ -835,6 +1057,14 @@ def shadowingfunction_wallheight_13(a, azimuth, altitude, scale, walls, aspect):
 
 
 def shadowingfunction_wallheight_23(a, vegdem, vegdem2, azimuth, altitude, scale, amaxvalue, bush, walls, aspect):
+    """
+    Calculate shadow patterns with vegetation and wall heights (method 2.3).
+    
+    Extended shadow calculation including vegetation layers and building walls.
+    
+    Returns:
+        tuple: Shadow components including vegetation effects
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     degrees = torch.tensor(np.pi / 180.0, device=device)
@@ -970,6 +1200,28 @@ def shadowingfunction_wallheight_23(a, vegdem, vegdem2, azimuth, altitude, scale
 
 
 def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
+    """
+    Calculate anisotropic diffuse radiation distribution using Perez model.
+    
+    Implements the Perez all-weather sky model for anisotropic diffuse radiation,
+    accounting for circumsolar brightening and horizon brightening.
+    
+    Args:
+        zen (torch.Tensor): Solar zenith angle (radians)
+        azimuth (torch.Tensor): Solar azimuth (radians)
+        radD (float): Diffuse radiation (W/m²)
+        radI (float): Direct beam radiation (W/m²)
+        jday (torch.Tensor): Julian day
+        patchchoice (int): Patch selection
+        patch_option (int): Sky discretization (144 or 2304)
+    
+    Returns:
+        tuple: Patch-wise diffuse radiation distribution and anisotropic SVF
+    
+    Reference:
+        Perez et al. (1993). All-weather model for sky luminance distribution.
+        Solar Energy, 50(3), 235-245.
+    """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     m_a1 = torch.tensor([1.3525, -1.2219, -1.1000, -0.5484, -0.6000, -1.0156, -1.0000, -1.0500], device=device)
@@ -1084,6 +1336,7 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     return lv, PerezClearness, PerezBrightness
 
 def model1(sky_patches, esky, Ta):
+    """Calculate longwave sky radiation using Model 1 (isotropic)."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     SBC = 5.67051e-8
@@ -1114,6 +1367,7 @@ def model1(sky_patches, esky, Ta):
     return patch_emissivity_normalized, esky_band
 
 def model2(sky_patches, esky, Ta):
+    """Calculate longwave sky radiation using Model 2 (simple anisotropic)."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     deg2rad = torch.tensor(np.pi / 180, device=device)
 
@@ -1135,6 +1389,7 @@ def model2(sky_patches, esky, Ta):
     return patch_emissivity_normalized, esky_band
 
 def model3(sky_patches, esky, Ta):
+    """Calculate longwave sky radiation using Model 3 (advanced anisotropic)."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     deg2rad = torch.tensor(np.pi / 180, device=device)
 
@@ -1163,6 +1418,37 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
                                  Lsky_down, Lsky_side, Lsky, Lup,
                                  Ta, Tgwall, ewall,
                                  rows, cols):
+    """
+    Calculate longwave radiation from discretized sky hemisphere patches.
+    
+    Computes downward and sideward longwave radiation by integrating
+    contributions from individual sky patches, accounting for their
+    position, solid angle, shadow state, and temperature.
+    
+    Args:
+        solar_altitude, solar_azimuth (float): Solar position (degrees)
+        patch_altitude, patch_azimuth (torch.Tensor): Patch positions
+        steradian (torch.Tensor): Solid angle of each patch
+        asvf (torch.Tensor): Anisotropic sky view factor
+        shmat, vegshmat, vbshvegshmat (torch.Tensor): Shadow matrices
+        Lsky_down, Lsky_side, Lsky (torch.Tensor): Sky longwave components
+        Lup (torch.Tensor): Upward longwave from ground
+        Ta (float): Air temperature (°C)
+        Tgwall (torch.Tensor): Wall/ground temperature (K)
+        ewall (float): Wall emissivity
+        rows, cols (int): Grid dimensions
+    
+    Returns:
+        tuple: (Ldown, Lside, Lside_sky, Lside_veg, Lside_sh, Lside_sun, 
+                Lside_ref, Least, Lwest, Lnorth, Lsouth) - Longwave components
+                for downward, sideward (total and directional)
+    
+    Notes:
+        - Integrates over all sky patches using solid angle weighting
+        - Accounts for patch visibility through shadow matrices
+        - Distinguishes between sunlit and shaded patches
+        - Computes directional components (E, S, W, N)
+    """
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -1317,6 +1603,27 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
 
 
 def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbshvegshmat, solar_altitude, solar_azimuth, rows, cols, asvf):
+    """
+    Calculate longwave radiation on cylindrical surface (human body model).
+    
+    Computes longwave radiation received by a standing person from sky,
+    ground, and wall surfaces, accounting for shadows and anisotropic effects.
+    
+    Args:
+        esky (float): Sky emissivity
+        sky_patches (torch.Tensor): Sky hemisphere discretization
+        Ta (float): Air temperature (°C)
+        Tgwall (torch.Tensor): Wall/ground temperature (K)
+        ewall (float): Wall emissivity
+        Lup (torch.Tensor): Upward longwave radiation
+        shmat, vegshmat, vbshvegshmat (torch.Tensor): Shadow matrices
+        solar_altitude, solar_azimuth (float): Solar angles
+        rows, cols (int): Grid dimensions
+        asvf (torch.Tensor): Anisotropic SVF
+    
+    Returns:
+        tuple: (Lsky, Lrefl) - Sky and reflected longwave components
+    """
 
     # Device for GPU computation
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -1405,6 +1712,7 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
     return Ldown, Lside, Least_, Lwest_, Lnorth_, Lsouth_
 
 def Lvikt_veg(svf, svfveg, svfaveg, vikttot):
+    """Calculate longwave radiation weight factors accounting for vegetation."""
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     viktonlywall = (vikttot - (63.227 * svf ** 6 - 161.51 * svf ** 5 + 156.91 * svf ** 4 - 70.424 * svf ** 3 + 16.773 * svf ** 2 - 0.4863 * svf)) / vikttot
@@ -1422,6 +1730,33 @@ def Lvikt_veg(svf, svfveg, svfaveg, vikttot):
 
 
 def Lside_veg_v2022a(svfS, svfW, svfN, svfE, svfEveg, svfSveg, svfWveg, svfNveg, svfEaveg, svfSaveg, svfWaveg, svfNaveg, azimuth, altitude, Ta, Tw, SBC, ewall, Ldown, esky, t, F_sh, CI, LupE, LupS, LupW, LupN, anisotropic_longwave):
+    """
+    Calculate longwave radiation on vertical surfaces (walls) with vegetation effects.
+    
+    Computes longwave radiation received by walls in the four cardinal directions,
+    accounting for sky emission, ground emission, wall-to-wall exchanges, and
+    vegetation obstruction.
+    
+    Args:
+        svfS, svfW, svfN, svfE (torch.Tensor): Directional sky view factors
+        svf*veg (torch.Tensor): Vegetation-obstructed SVFs
+        svf*aveg (torch.Tensor): Vegetation-above SVFs
+        azimuth, altitude (float): Solar angles (degrees)
+        Ta (float): Air temperature (°C)
+        Tw (torch.Tensor): Wall temperature
+        SBC (float): Stefan-Boltzmann constant
+        ewall (float): Wall emissivity
+        Ldown (torch.Tensor): Downward longwave
+        esky (float): Sky emissivity
+        t (float): Time parameter
+        F_sh (torch.Tensor): Shadow factor
+        CI (torch.Tensor): Clearness index
+        LupE, LupS, LupW, LupN (torch.Tensor): Upward longwave per direction
+        anisotropic_longwave (bool): Use anisotropic model
+    
+    Returns:
+        tuple: (Ldown, Lside, Least, Lwest, Lnorth, Lsouth) - Longwave components
+    """
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -1571,6 +1906,65 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
                        amaxvalue, bush, Twater, TgK, Tstart, alb_grid, emis_grid, TgK_wall, Tstart_wall, TmaxLST,
                        TmaxLST_wall, first, second, svfalfa, svfbuveg, firstdaytime, timeadd, timestepdec, Tgmap1,
                        Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N, CI, TgOut1, diffsh, shmat, vegshmat, vbshvegshmat, anisotropic_sky, asvf, patch_option):
+    """
+    Main SOLWEIG 2022a calculation kernel - integrates all radiation and temperature calculations.
+    
+    This is the core GPU-accelerated function that computes:
+    - Shortwave radiation (direct, diffuse, reflected)
+    - Longwave radiation (sky, ground, wall emissions)
+    - Surface energy balance
+    - Ground and wall surface temperatures
+    - Mean radiant temperature (Tmrt)
+    
+    This function is called once per time step and performs the complete
+    radiation budget calculation accounting for 3D urban geometry, vegetation,
+    and surface-atmosphere interactions.
+    
+    Args:
+        i (int): Time step index
+        dsm (torch.Tensor): Digital Surface Model
+        scale (float): Grid resolution (pixels/meter)
+        rows, cols (int): Domain dimensions
+        svf* (torch.Tensor): Sky view factors (multiple directional variants)
+        vegdem, vegdem2, bush (torch.Tensor): Vegetation layers
+        albedo_b, absK, absL, ewall (float): Surface optical/thermal properties
+        Fside, Fup, Fcyl (torch.Tensor): Form factors for different geometries
+        altitude, azimuth, zen (torch.Tensor): Solar geometry
+        jday, dectime, altmax (torch.Tensor): Temporal parameters
+        usevegdem, onlyglobal (bool): Model configuration flags
+        buildings (torch.Tensor): Building footprint mask
+        location (dict): Geographic coordinates
+        psi (torch.Tensor): Tilt angles
+        landcover, lc_grid: Land cover classification
+        dirwalls, walls, cyl (torch.Tensor): Wall geometry
+        elvis (np.ndarray): Elevation data
+        Ta, RH, P (float): Meteorological conditions (air temp, humidity, pressure)
+        radG, radD, radI (float): Incoming radiation components (global, diffuse, direct)
+        amaxvalue (float): Maximum domain elevation
+        Twater (float): Water surface temperature
+        TgK, Tstart, TgK_wall, Tstart_wall (torch.Tensor): Temperature states
+        TmaxLST, TmaxLST_wall (torch.Tensor): Maximum temperatures
+        alb_grid, emis_grid (torch.Tensor): Spatial albedo and emissivity
+        first, second (torch.Tensor): Surface type classifications
+        svfalfa, svfbuveg (torch.Tensor): Vegetation view factors
+        firstdaytime, timeadd, timestepdec (float): Temporal parameters
+        Tgmap1, Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N (torch.Tensor): Previous temperature maps
+        CI, TgOut1 (torch.Tensor): Clearness index and output temperature
+        diffsh, shmat, vegshmat, vbshvegshmat (torch.Tensor): Shadow matrices
+        anisotropic_sky (bool): Use anisotropic sky model
+        asvf (torch.Tensor): Anisotropic SVF
+        patch_option (int): Sky discretization option
+    
+    Returns:
+        tuple: (KsideI, TgOut1, TgOut, radIout, radDout, Lside, Lsky_patch, CI_Tg, CI_TgG, 
+                KsideD, dRad, Kside) - Comprehensive radiation and temperature outputs
+    
+    Notes:
+        - GPU-accelerated for performance
+        - Most computationally intensive function in SOLWEIG
+        - Implements surface energy balance with iteration
+        - Accounts for multiple reflections and anisotropic effects
+    """
 
     t = 0.
 

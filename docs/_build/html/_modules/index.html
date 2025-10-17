@@ -1,0 +1,389 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overview: module code &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=4afb903a"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            SOLWEIG-GPU
+              <img src="../_static/logo.jpg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#using-conda-recommended">Using Conda (Recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#using-pip-with-system-gdal">Using pip with system GDAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#development-installation">Development Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#gpu-setup">GPU Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#cuda-requirements">CUDA Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#cpu-only-mode">CPU-Only Mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#gdal-import-error">GDAL Import Error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#pytorch-gpu-not-detected">PyTorch GPU Not Detected</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#basic-workflow">Basic Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#example-1-using-your-own-met-data">Example 1: Using Your Own Met Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#required-input-files">Required Input Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#met-data-format">Met Data Format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#example-3-using-wrf-output">Example 3: Using WRF Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#command-line-usage">Command-Line Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#configuration-options">Configuration Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#tile-size">Tile Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#output-options">Output Options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#output-files">Output Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.solweig_gpu">Main Entry Point</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig_gpu.thermal_comfort"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.preprocessor">Data Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.extract_datetime_strict"><code class="docutils literal notranslate"><span class="pre">extract_datetime_strict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.check_rasters"><code class="docutils literal notranslate"><span class="pre">check_rasters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.create_tiles"><code class="docutils literal notranslate"><span class="pre">create_tiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.process_era5_data"><code class="docutils literal notranslate"><span class="pre">process_era5_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.process_wrfout_data"><code class="docutils literal notranslate"><span class="pre">process_wrfout_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.process_metfiles"><code class="docutils literal notranslate"><span class="pre">process_metfiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.create_met_files"><code class="docutils literal notranslate"><span class="pre">create_met_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.preprocessor.ppr"><code class="docutils literal notranslate"><span class="pre">ppr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.solweig">Radiation Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.daylen"><code class="docutils literal notranslate"><span class="pre">daylen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.sunonsurface_2018a"><code class="docutils literal notranslate"><span class="pre">sunonsurface_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.gvf_2018a"><code class="docutils literal notranslate"><span class="pre">gvf_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.cylindric_wedge"><code class="docutils literal notranslate"><span class="pre">cylindric_wedge()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.TsWaveDelay_2015a"><code class="docutils literal notranslate"><span class="pre">TsWaveDelay_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Kup_veg_2015a"><code class="docutils literal notranslate"><span class="pre">Kup_veg_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Kvikt_veg"><code class="docutils literal notranslate"><span class="pre">Kvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.shaded_or_sunlit"><code class="docutils literal notranslate"><span class="pre">shaded_or_sunlit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Kside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Kside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.sun_distance"><code class="docutils literal notranslate"><span class="pre">sun_distance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.clearnessindex_2013b"><code class="docutils literal notranslate"><span class="pre">clearnessindex_2013b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.diffusefraction"><code class="docutils literal notranslate"><span class="pre">diffusefraction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_13"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_13()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_23"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_23()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Perez_v3"><code class="docutils literal notranslate"><span class="pre">Perez_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.model1"><code class="docutils literal notranslate"><span class="pre">model1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.model2"><code class="docutils literal notranslate"><span class="pre">model2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.model3"><code class="docutils literal notranslate"><span class="pre">model3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.define_patch_characteristics"><code class="docutils literal notranslate"><span class="pre">define_patch_characteristics()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Lcyl_v2022a"><code class="docutils literal notranslate"><span class="pre">Lcyl_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Lvikt_veg"><code class="docutils literal notranslate"><span class="pre">Lvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Lside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Lside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.solweig.Solweig_2022a_calc"><code class="docutils literal notranslate"><span class="pre">Solweig_2022a_calc()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.sun_position">Solar Position Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.sun_position"><code class="docutils literal notranslate"><span class="pre">sun_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.julian_calculation"><code class="docutils literal notranslate"><span class="pre">julian_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.earth_heliocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">earth_heliocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.sun_geocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.nutation_calculation"><code class="docutils literal notranslate"><span class="pre">nutation_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.true_obliquity_calculation"><code class="docutils literal notranslate"><span class="pre">true_obliquity_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.abberation_correction_calculation"><code class="docutils literal notranslate"><span class="pre">abberation_correction_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.apparent_sun_longitude_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_sun_longitude_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.apparent_stime_at_greenwich_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_stime_at_greenwich_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.sun_rigth_ascension_calculation"><code class="docutils literal notranslate"><span class="pre">sun_rigth_ascension_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.sun_geocentric_declination_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_declination_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.observer_local_hour_calculation"><code class="docutils literal notranslate"><span class="pre">observer_local_hour_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.topocentric_sun_position_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_sun_position_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.topocentric_local_hour_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_local_hour_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.sun_topocentric_zenith_angle_calculate"><code class="docutils literal notranslate"><span class="pre">sun_topocentric_zenith_angle_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.set_to_range"><code class="docutils literal notranslate"><span class="pre">set_to_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.sun_position.Solweig_2015a_metdata_noload"><code class="docutils literal notranslate"><span class="pre">Solweig_2015a_metdata_noload()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.shadow">Shadow and Sky View Factor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.shadow.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.shadow.shadow"><code class="docutils literal notranslate"><span class="pre">shadow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.shadow.annulus_weight"><code class="docutils literal notranslate"><span class="pre">annulus_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.shadow.create_patches"><code class="docutils literal notranslate"><span class="pre">create_patches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.shadow.svf_calculator"><code class="docutils literal notranslate"><span class="pre">svf_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.calculate_utci">UTCI Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.calculate_utci.utci_polynomial"><code class="docutils literal notranslate"><span class="pre">utci_polynomial()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.calculate_utci.utci_calculator"><code class="docutils literal notranslate"><span class="pre">utci_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.utci_process">UTCI Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.utci_process.load_raster_to_tensor"><code class="docutils literal notranslate"><span class="pre">load_raster_to_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.utci_process.extract_key"><code class="docutils literal notranslate"><span class="pre">extract_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.utci_process.get_matching_files"><code class="docutils literal notranslate"><span class="pre">get_matching_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.utci_process.map_files_by_key"><code class="docutils literal notranslate"><span class="pre">map_files_by_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.utci_process.extract_number_from_filename"><code class="docutils literal notranslate"><span class="pre">extract_number_from_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.utci_process.compute_utci"><code class="docutils literal notranslate"><span class="pre">compute_utci()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.walls_aspect">Wall Geometry</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.walls_aspect.findwalls"><code class="docutils literal notranslate"><span class="pre">findwalls()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.walls_aspect.cart2pol"><code class="docutils literal notranslate"><span class="pre">cart2pol()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.walls_aspect.get_ders"><code class="docutils literal notranslate"><span class="pre">get_ders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.walls_aspect.filter1Goodwin_as_aspect_v3"><code class="docutils literal notranslate"><span class="pre">filter1Goodwin_as_aspect_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.walls_aspect.process_file_parallel"><code class="docutils literal notranslate"><span class="pre">process_file_parallel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.walls_aspect.run_parallel_processing"><code class="docutils literal notranslate"><span class="pre">run_parallel_processing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.cli">Command-Line Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.cli.str2bool"><code class="docutils literal notranslate"><span class="pre">str2bool()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-solweig_gpu.Tgmaps_v1">Surface Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api.html#solweig_gpu.Tgmaps_v1.Tgmaps_v1"><code class="docutils literal notranslate"><span class="pre">Tgmaps_v1()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../input_data.html">Input Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../input_data.html#geospatial-rasters">Geospatial Rasters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../input_data.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../input_data.html#required-rasters">Required Rasters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../input_data.html#building-dsm">Building DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../input_data.html#digital-elevation-model-dem">Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../input_data.html#tree-dsm">Tree DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../input_data.html#land-cover-optional">Land Cover (Optional)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../input_data.html#meteorological-forcing-data">Meteorological Forcing Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../input_data.html#option-1-custom-text-file-umep-format">Option 1: Custom Text File (UMEP Format)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../input_data.html#option-2-era5-reanalysis-data">Option 2: ERA5 Reanalysis Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../input_data.html#option-3-wrf-output-files">Option 3: WRF Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../input_data.html#data-preparation-tips">Data Preparation Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../input_data.html#coordinate-reference-system">Coordinate Reference System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../input_data.html#temporal-resolution">Temporal Resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../input_data.html#sample-data">Sample Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../configuration.html#basic-configuration">Basic Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#required-parameters">Required Parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../configuration.html#base-path"><code class="docutils literal notranslate"><span class="pre">base_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../configuration.html#selected-date-str"><code class="docutils literal notranslate"><span class="pre">selected_date_str</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#raster-filenames">Raster Filenames</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../configuration.html#tiling-configuration">Tiling Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#tile-size"><code class="docutils literal notranslate"><span class="pre">tile_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#overlap"><code class="docutils literal notranslate"><span class="pre">overlap</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../configuration.html#meteorological-data-configuration">Meteorological Data Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#using-custom-meteorological-file">Using Custom Meteorological File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#using-era5-or-wrf-data">Using ERA5 or WRF Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../configuration.html#output-configuration">Output Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configuration.html#complete-configuration-example">Complete Configuration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configuration.html#performance-optimization">Performance Optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#gpu-vs-cpu">GPU vs CPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../configuration.html#memory-management">Memory Management</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../outputs.html">Outputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../outputs.html#output-structure">Output Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../outputs.html#output-files">Output Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#universal-thermal-climate-index-utci">Universal Thermal Climate Index (UTCI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#mean-radiant-temperature-tmrt">Mean Radiant Temperature (Tmrt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#sky-view-factor-svf">Sky View Factor (SVF)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../outputs.html#downwelling-shortwave">Downwelling Shortwave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../outputs.html#upwelling-shortwave-kup">Upwelling Shortwave (Kup)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../outputs.html#downwelling-longwave-ldown">Downwelling Longwave (Ldown)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../outputs.html#upwelling-longwave-lup">Upwelling Longwave (Lup)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#shadow-maps">Shadow Maps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../outputs.html#multi-band-structure">Multi-Band Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../outputs.html#visualizing-outputs">Visualizing Outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#using-qgis">Using QGIS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#using-python">Using Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#using-arcgis">Using ArcGIS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../outputs.html#merging-tiles">Merging Tiles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#utci-tile-merging-example">UTCI tile merging example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../outputs.html#data-analysis">Data Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#computing-statistics">Computing Statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../outputs.html#extracting-time-series">Extracting Time Series</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../notebooks.html#download-notebooks">Download Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../testing.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../testing.html#full-test-suite">Full Test Suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../testing.html#with-coverage-report">With Coverage Report</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../testing.html#specific-test-modules">Specific Test Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../testing.html#example-testing-a-utility-function">Example: Testing a Utility Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../testing.html#example-testing-with-fixtures">Example: Testing with Fixtures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../testing.html#continuous-integration">Continuous Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../testing.html#manual-testing">Manual Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../testing.html#test-with-sample-data">Test with Sample Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../testing.html#verify-outputs">Verify Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../testing.html#benchmark-tests">Benchmark Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer_guide.html">Developer Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide.html#architecture-overview">Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide.html#module-interactions">Module Interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer_guide.html#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Overview: module code</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>All modules for which code is available</h1>
+<ul><li><a href="solweig_gpu/Tgmaps_v1.html">solweig_gpu.Tgmaps_v1</a></li>
+<li><a href="solweig_gpu/calculate_utci.html">solweig_gpu.calculate_utci</a></li>
+<li><a href="solweig_gpu/cli.html">solweig_gpu.cli</a></li>
+<li><a href="solweig_gpu/preprocessor.html">solweig_gpu.preprocessor</a></li>
+<li><a href="solweig_gpu/shadow.html">solweig_gpu.shadow</a></li>
+<li><a href="solweig_gpu/solweig.html">solweig_gpu.solweig</a></li>
+<li><a href="solweig_gpu/solweig_gpu.html">solweig_gpu.solweig_gpu</a></li>
+<li><a href="solweig_gpu/sun_position.html">solweig_gpu.sun_position</a></li>
+<li><a href="solweig_gpu/utci_process.html">solweig_gpu.utci_process</a></li>
+<li><a href="solweig_gpu/walls_aspect.html">solweig_gpu.walls_aspect</a></li>
+</ul>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

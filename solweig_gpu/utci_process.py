@@ -1,3 +1,15 @@
+#SOLWEIG-GPU: GPU-accelerated SOLWEIG model for urban thermal comfort simulation
+#Copyright (C) 2022–2025 Harsh Kamath and Naveen Sudharsan
+
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#GNU General Public License for more details.
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -55,12 +67,33 @@ lastdayleaf = 300
 conifer_bool = False
 
 def load_raster_to_tensor(dem_path):
+    """
+    Load a GeoTIFF raster file into a PyTorch tensor.
+    
+    Args:
+        dem_path (str): Path to GeoTIFF file
+    
+    Returns:
+        tuple: (tensor, dataset) where:
+            - tensor: PyTorch tensor on GPU/CPU with raster data
+            - dataset: GDAL dataset object (for accessing metadata)
+    """
     dataset = gdal.Open(dem_path)
     band = dataset.GetRasterBand(1)
     array = band.ReadAsArray().astype(np.float32)
     return torch.tensor(array, device=device), dataset
 
 def extract_key(filename, is_metfile=False):
+    """
+    Extract numerical key from filename for tile matching.
+    
+    Args:
+        filename (str): Filename to parse
+        is_metfile (bool): True if filename is a metfile, False if raster tile
+    
+    Returns:
+        str: Extracted key (e.g., "0_0" from "Building_DSM_0_0.tif")
+    """
 
     if is_metfile:
         # look for metfile_X_Y_DATE
@@ -75,9 +108,33 @@ def extract_key(filename, is_metfile=False):
 
 # Function to list matching files in a directory
 def get_matching_files(directory, extension):
+    """
+    Get sorted list of files with given extension from directory.
+    
+    Args:
+        directory (str): Directory path to search
+        extension (str): File extension to filter (e.g., '.tif')
+    
+    Returns:
+        list: Sorted list of filenames matching extension
+    """
     return sorted([f for f in os.listdir(directory) if f.endswith(extension)])
 
 def map_files_by_key(directory, extension, is_metfile=False):
+    """
+    Create mapping of tile keys to filenames.
+    
+    Groups files by their tile coordinates (e.g., "0_0", "1000_0") to match
+    corresponding raster tiles with their meteorological files.
+    
+    Args:
+        directory (str): Directory containing files
+        extension (str): File extension to filter
+        is_metfile (bool): True if files are metfiles
+    
+    Returns:
+        dict: Dictionary mapping keys to filenames
+    """
     files = get_matching_files(directory, extension)
     mapping = {}
     for f in files:
@@ -87,12 +144,55 @@ def map_files_by_key(directory, extension, is_metfile=False):
     return mapping
 
 def extract_number_from_filename(filename):
+    """
+    Extract tile number from Building_DSM filename.
+    
+    Args:
+        filename (str): Filename in format "Building_DSM_X_Y.tif"
+    
+    Returns:
+        str: Extracted number portion (e.g., "0_0")
+    """
     number = filename[13:-4] # change according to the naming of building DSM files
     return number
 
 
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, met_file, 
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,save_ldown=False,save_shadow=False):
+    """
+    Compute UTCI and related thermal comfort outputs for a single tile.
+    
+    This is the main computation function that integrates shadow modeling, radiation
+    calculations, and UTCI computation for urban microclimate analysis.
+    
+    Args:
+        building_dsm_path (str): Path to Building DSM raster
+        tree_path (str): Path to tree/vegetation DSM raster
+        dem_path (str): Path to Digital Elevation Model raster
+        walls_path (str): Path to wall height raster
+        aspect_path (str): Path to wall aspect raster  
+        landcover_path (str): Path to land cover raster (can be None)
+        met_file (str): Path to meteorological forcing file
+        output_path (str): Directory for saving output rasters
+        number (str): Tile identifier (e.g., "0_0")
+        selected_date_str (str): Date string (YYYY-MM-DD)
+        save_tmrt (bool): Save mean radiant temperature output
+        save_svf (bool): Save sky view factor output
+        save_kup (bool): Save upward shortwave radiation
+        save_kdown (bool): Save downward shortwave radiation
+        save_lup (bool): Save upward longwave radiation
+        save_ldown (bool): Save downward longwave radiation
+        save_shadow (bool): Save shadow maps
+    
+    Returns:
+        None: Outputs are saved as GeoTIFF files in output_path
+    
+    Notes:
+        - Automatically uses GPU if available
+        - Outputs are multi-band rasters (one band per hour)
+        - UTCI is always computed and saved
+        - Other outputs are optional based on save_* flags
+    """
     a, dataset = load_raster_to_tensor(building_dsm_path)
     temp1, dataset2 = load_raster_to_tensor(tree_path)
     temp2, dataset3 = load_raster_to_tensor(dem_path)

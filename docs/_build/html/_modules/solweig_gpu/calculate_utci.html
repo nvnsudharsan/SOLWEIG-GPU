@@ -1,0 +1,718 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>solweig_gpu.calculate_utci &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=4afb903a"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SOLWEIG-GPU
+              <img src="../../_static/logo.jpg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#using-conda-recommended">Using Conda (Recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#using-pip-with-system-gdal">Using pip with system GDAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#development-installation">Development Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#gpu-setup">GPU Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#cuda-requirements">CUDA Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#cpu-only-mode">CPU-Only Mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#gdal-import-error">GDAL Import Error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#pytorch-gpu-not-detected">PyTorch GPU Not Detected</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#basic-workflow">Basic Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-1-using-your-own-met-data">Example 1: Using Your Own Met Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#required-input-files">Required Input Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#met-data-format">Met Data Format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-3-using-wrf-output">Example 3: Using WRF Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#command-line-usage">Command-Line Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#configuration-options">Configuration Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#tile-size">Tile Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#output-options">Output Options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#output-files">Output Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.solweig_gpu">Main Entry Point</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig_gpu.thermal_comfort"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.preprocessor">Data Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.extract_datetime_strict"><code class="docutils literal notranslate"><span class="pre">extract_datetime_strict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.check_rasters"><code class="docutils literal notranslate"><span class="pre">check_rasters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.create_tiles"><code class="docutils literal notranslate"><span class="pre">create_tiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_era5_data"><code class="docutils literal notranslate"><span class="pre">process_era5_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_wrfout_data"><code class="docutils literal notranslate"><span class="pre">process_wrfout_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_metfiles"><code class="docutils literal notranslate"><span class="pre">process_metfiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.create_met_files"><code class="docutils literal notranslate"><span class="pre">create_met_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.ppr"><code class="docutils literal notranslate"><span class="pre">ppr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.solweig">Radiation Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.daylen"><code class="docutils literal notranslate"><span class="pre">daylen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.sunonsurface_2018a"><code class="docutils literal notranslate"><span class="pre">sunonsurface_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.gvf_2018a"><code class="docutils literal notranslate"><span class="pre">gvf_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.cylindric_wedge"><code class="docutils literal notranslate"><span class="pre">cylindric_wedge()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.TsWaveDelay_2015a"><code class="docutils literal notranslate"><span class="pre">TsWaveDelay_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kup_veg_2015a"><code class="docutils literal notranslate"><span class="pre">Kup_veg_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kvikt_veg"><code class="docutils literal notranslate"><span class="pre">Kvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shaded_or_sunlit"><code class="docutils literal notranslate"><span class="pre">shaded_or_sunlit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Kside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.sun_distance"><code class="docutils literal notranslate"><span class="pre">sun_distance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.clearnessindex_2013b"><code class="docutils literal notranslate"><span class="pre">clearnessindex_2013b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.diffusefraction"><code class="docutils literal notranslate"><span class="pre">diffusefraction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_13"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_13()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_23"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_23()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Perez_v3"><code class="docutils literal notranslate"><span class="pre">Perez_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model1"><code class="docutils literal notranslate"><span class="pre">model1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model2"><code class="docutils literal notranslate"><span class="pre">model2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model3"><code class="docutils literal notranslate"><span class="pre">model3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.define_patch_characteristics"><code class="docutils literal notranslate"><span class="pre">define_patch_characteristics()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lcyl_v2022a"><code class="docutils literal notranslate"><span class="pre">Lcyl_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lvikt_veg"><code class="docutils literal notranslate"><span class="pre">Lvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Lside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Solweig_2022a_calc"><code class="docutils literal notranslate"><span class="pre">Solweig_2022a_calc()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.sun_position">Solar Position Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_position"><code class="docutils literal notranslate"><span class="pre">sun_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.julian_calculation"><code class="docutils literal notranslate"><span class="pre">julian_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.earth_heliocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">earth_heliocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_geocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.nutation_calculation"><code class="docutils literal notranslate"><span class="pre">nutation_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.true_obliquity_calculation"><code class="docutils literal notranslate"><span class="pre">true_obliquity_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.abberation_correction_calculation"><code class="docutils literal notranslate"><span class="pre">abberation_correction_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.apparent_sun_longitude_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_sun_longitude_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.apparent_stime_at_greenwich_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_stime_at_greenwich_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_rigth_ascension_calculation"><code class="docutils literal notranslate"><span class="pre">sun_rigth_ascension_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_geocentric_declination_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_declination_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.observer_local_hour_calculation"><code class="docutils literal notranslate"><span class="pre">observer_local_hour_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.topocentric_sun_position_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_sun_position_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.topocentric_local_hour_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_local_hour_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_topocentric_zenith_angle_calculate"><code class="docutils literal notranslate"><span class="pre">sun_topocentric_zenith_angle_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.set_to_range"><code class="docutils literal notranslate"><span class="pre">set_to_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.Solweig_2015a_metdata_noload"><code class="docutils literal notranslate"><span class="pre">Solweig_2015a_metdata_noload()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.shadow">Shadow and Sky View Factor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.shadow"><code class="docutils literal notranslate"><span class="pre">shadow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.annulus_weight"><code class="docutils literal notranslate"><span class="pre">annulus_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.create_patches"><code class="docutils literal notranslate"><span class="pre">create_patches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.svf_calculator"><code class="docutils literal notranslate"><span class="pre">svf_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.calculate_utci">UTCI Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.calculate_utci.utci_polynomial"><code class="docutils literal notranslate"><span class="pre">utci_polynomial()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.calculate_utci.utci_calculator"><code class="docutils literal notranslate"><span class="pre">utci_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.utci_process">UTCI Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.load_raster_to_tensor"><code class="docutils literal notranslate"><span class="pre">load_raster_to_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.extract_key"><code class="docutils literal notranslate"><span class="pre">extract_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.get_matching_files"><code class="docutils literal notranslate"><span class="pre">get_matching_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.map_files_by_key"><code class="docutils literal notranslate"><span class="pre">map_files_by_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.extract_number_from_filename"><code class="docutils literal notranslate"><span class="pre">extract_number_from_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.compute_utci"><code class="docutils literal notranslate"><span class="pre">compute_utci()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.walls_aspect">Wall Geometry</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.findwalls"><code class="docutils literal notranslate"><span class="pre">findwalls()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.cart2pol"><code class="docutils literal notranslate"><span class="pre">cart2pol()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.get_ders"><code class="docutils literal notranslate"><span class="pre">get_ders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.filter1Goodwin_as_aspect_v3"><code class="docutils literal notranslate"><span class="pre">filter1Goodwin_as_aspect_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.process_file_parallel"><code class="docutils literal notranslate"><span class="pre">process_file_parallel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.run_parallel_processing"><code class="docutils literal notranslate"><span class="pre">run_parallel_processing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.cli">Command-Line Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.cli.str2bool"><code class="docutils literal notranslate"><span class="pre">str2bool()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.Tgmaps_v1">Surface Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.Tgmaps_v1.Tgmaps_v1"><code class="docutils literal notranslate"><span class="pre">Tgmaps_v1()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../input_data.html">Input Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#geospatial-rasters">Geospatial Rasters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#required-rasters">Required Rasters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#building-dsm">Building DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#digital-elevation-model-dem">Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#tree-dsm">Tree DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#land-cover-optional">Land Cover (Optional)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#meteorological-forcing-data">Meteorological Forcing Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-1-custom-text-file-umep-format">Option 1: Custom Text File (UMEP Format)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-2-era5-reanalysis-data">Option 2: ERA5 Reanalysis Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-3-wrf-output-files">Option 3: WRF Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#data-preparation-tips">Data Preparation Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#coordinate-reference-system">Coordinate Reference System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#temporal-resolution">Temporal Resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#sample-data">Sample Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#basic-configuration">Basic Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#required-parameters">Required Parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../configuration.html#base-path"><code class="docutils literal notranslate"><span class="pre">base_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../configuration.html#selected-date-str"><code class="docutils literal notranslate"><span class="pre">selected_date_str</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#raster-filenames">Raster Filenames</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#tiling-configuration">Tiling Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#tile-size"><code class="docutils literal notranslate"><span class="pre">tile_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#overlap"><code class="docutils literal notranslate"><span class="pre">overlap</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#meteorological-data-configuration">Meteorological Data Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#using-custom-meteorological-file">Using Custom Meteorological File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#using-era5-or-wrf-data">Using ERA5 or WRF Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#output-configuration">Output Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#complete-configuration-example">Complete Configuration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#performance-optimization">Performance Optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#gpu-vs-cpu">GPU vs CPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#memory-management">Memory Management</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../outputs.html">Outputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#output-structure">Output Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#output-files">Output Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#universal-thermal-climate-index-utci">Universal Thermal Climate Index (UTCI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#mean-radiant-temperature-tmrt">Mean Radiant Temperature (Tmrt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#sky-view-factor-svf">Sky View Factor (SVF)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#downwelling-shortwave">Downwelling Shortwave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#upwelling-shortwave-kup">Upwelling Shortwave (Kup)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#downwelling-longwave-ldown">Downwelling Longwave (Ldown)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#upwelling-longwave-lup">Upwelling Longwave (Lup)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#shadow-maps">Shadow Maps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#multi-band-structure">Multi-Band Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#visualizing-outputs">Visualizing Outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-qgis">Using QGIS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-python">Using Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-arcgis">Using ArcGIS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#merging-tiles">Merging Tiles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#utci-tile-merging-example">UTCI tile merging example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#data-analysis">Data Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#computing-statistics">Computing Statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#extracting-time-series">Extracting Time Series</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../notebooks.html#download-notebooks">Download Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#full-test-suite">Full Test Suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#with-coverage-report">With Coverage Report</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#specific-test-modules">Specific Test Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#example-testing-a-utility-function">Example: Testing a Utility Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#example-testing-with-fixtures">Example: Testing with Fixtures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#continuous-integration">Continuous Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#manual-testing">Manual Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#test-with-sample-data">Test with Sample Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#verify-outputs">Verify Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#benchmark-tests">Benchmark Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_guide.html">Developer Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#architecture-overview">Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#module-interactions">Module Interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">solweig_gpu.calculate_utci</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for solweig_gpu.calculate_utci</h1><div class="highlight"><pre>
+<span></span><span class="c1">#SOLWEIG-GPU: GPU-accelerated SOLWEIG model for urban thermal comfort simulation</span>
+<span class="c1">#Copyright (C) 2022–2025 Harsh Kamath and Naveen Sudharsan</span>
+
+<span class="c1">#This program is free software: you can redistribute it and/or modify</span>
+<span class="c1">#it under the terms of the GNU General Public License as published by</span>
+<span class="c1">#the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1">#(at your option) any later version.</span>
+
+<span class="c1">#This program is distributed in the hope that it will be useful,</span>
+<span class="c1">#but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1">#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c1">#GNU General Public License for more details.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="c1"># Function to computed UTCI using 6th order polynomial approximation. </span>
+<span class="c1"># Inputs:</span>
+<span class="c1">#    - Mean radiant temperature</span>
+<span class="c1">#    - Air temperature</span>
+<span class="c1">#    - Wind speed</span>
+<span class="c1">#    - Air vapor pressure</span>
+
+
+<div class="viewcode-block" id="utci_polynomial">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.calculate_utci.utci_polynomial">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">utci_polynomial</span><span class="p">(</span><span class="n">D_Tmrt</span><span class="p">,</span> <span class="n">Ta</span><span class="p">,</span> <span class="n">va</span><span class="p">,</span> <span class="n">Pa</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate UTCI using 6th order polynomial approximation.</span>
+<span class="sd">    </span>
+<span class="sd">    This function implements the UTCI polynomial approximation formula</span>
+<span class="sd">    as defined in the UTCI documentation.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        D_Tmrt (torch.Tensor): Difference between mean radiant temperature and air temperature (K or °C)</span>
+<span class="sd">        Ta (torch.Tensor): Air temperature (°C)</span>
+<span class="sd">        va (torch.Tensor): Wind speed (m/s)</span>
+<span class="sd">        Pa (torch.Tensor): Vapor pressure (kPa)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor: UTCI approximation value (°C)</span>
+<span class="sd">    </span>
+<span class="sd">    References:</span>
+<span class="sd">        Bröde P, Fiala D, Błażejczyk K, et al. (2012). </span>
+<span class="sd">        Deriving the operational procedure for the Universal Thermal Climate Index (UTCI).</span>
+<span class="sd">        Int J Biometeorol 56:481-494.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">UTCI_approx</span> <span class="o">=</span> <span class="n">Ta</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">6.07562052E-01</span><span class="p">)</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.27712343E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.06470249E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.54271372E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.24651735E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">7.32602852E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.35959073E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.25836520E+00</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.80326035E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.16844454E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.53347087E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.72983704E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">va</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.55090145E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">5</span> <span class="o">*</span> <span class="n">va</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.51269505E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.08350271E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.21670675E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.94544667E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.14099531E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.58137256E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.57263143E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.22697524E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.16117031E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.27762753E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">9.66891875E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.52785852E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.56306672E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.74202546E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.91491269E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.98374029E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.83945314E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.73754510E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.60781159E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.77830287E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.43079673E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">5</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.00518269E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.92859837E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.45433048E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.77925774E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.69699377E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.69992415E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.99204314E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.47417178E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.07596466E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.49242932E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.35191328E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.21531254E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.99410301E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.89489258E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.15300114E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">5</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">7.55043090E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.65095215E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.52166564E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.46688878E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.42674348E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.54547250E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.24110970E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">8.75874982E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.50743064E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.56236307E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.33895614E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.49709824E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">6.51711721E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.94960053E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.00361113E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.21206673E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.18203660E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">7.51269482E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">9.79063848E-11</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.25006734E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.81584736E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.52197671E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.36514630E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.35908359E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.17032620E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.30369025E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.13908461E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">9.22652254E-12</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.08220384E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.24730961E-11</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.17139133E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">6.62154879E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.03863260E-13</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.95087203E-12</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.73602469E-12</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.12733497E+00</span><span class="p">)</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.12788561E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.96701861E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">9.99690870E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">9.51738512E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.66426341E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">5</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.48050612E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.30552823E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.64119440E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.16670694E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">9.52692432E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.29223622E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.00845667E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.00601257E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.81748644E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.25813502E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.79330391E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.34994441E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.29735808E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.29064870E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.28558686E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">5</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.69476348E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.62325322E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.14279680E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.59835559E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.77136523E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.64203390E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.87405181E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">9.13863872E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.15916806E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.59217476E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.28696511E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.10542454E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.24382300E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.38584400E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.20609296E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.32469180E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.87381964E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.80925239E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">8.75492040E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.77862930E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.06004592E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.14325367E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.53016723E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.72857035E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.95079398E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.59413173E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">7.04388046E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.89309167E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.79768731E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">7.96079978E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.62897058E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.94367674E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.18566247E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.34678041E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.15606447E-10</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">5</span> <span class="o">*</span> <span class="n">Pa</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.80626406E+00</span><span class="p">)</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.48712484E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.99428410E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">9.54009191E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.93090978E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.08806365E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.16952364E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.95271903E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.90710882E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.10787756E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.98445738E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.30109073E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.17856590E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.27043871E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.04620472E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">5.14507424E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.32510997E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.99281156E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.14663943E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.66016305E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.63789586E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.01199003E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.06823306E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.61341136E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.29748967E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.04788893E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.42070836E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.16257971E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">7.68023384E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.47446896E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.59937910E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.36497725E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.68737969E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.67489271E-08</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.23926897E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">4</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.53874123E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.21201190E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.55126038E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.63917279E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">4.53433455E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.32943862E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.45389826E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.17508610E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.66724702E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.33217140E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">2.26921615E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.80261982E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.45314314E-09</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">7.96355448E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.53458034E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.31223658E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.02122035E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.77403547E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.73825715E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.09087898E-07</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">3</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">6.14155345E-01</span><span class="p">)</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.16755931E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.33374846E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">3.55375387E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">5.13027851E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.02449757E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">1.48526421E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">4.11469183E-05</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">6.80434415E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">9.77675906E-06</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">8.82773108E-02</span><span class="p">)</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="o">-</span><span class="mf">3.01859306E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Ta</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.04452989E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">va</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">2.47090539E-04</span><span class="p">)</span> <span class="o">*</span> <span class="n">D_Tmrt</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> \
+    <span class="p">(</span><span class="mf">1.48348065E-03</span><span class="p">)</span> <span class="o">*</span> <span class="n">Pa</span><span class="o">**</span><span class="mi">6</span>
+
+    <span class="k">return</span> <span class="n">UTCI_approx</span></div>
+
+
+<div class="viewcode-block" id="utci_calculator">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.calculate_utci.utci_calculator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">utci_calculator</span><span class="p">(</span><span class="n">Ta</span><span class="p">,</span> <span class="n">RH</span><span class="p">,</span> <span class="n">Tmrt</span><span class="p">,</span> <span class="n">va10m</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Universal Thermal Climate Index (UTCI) for given meteorological conditions.</span>
+<span class="sd">    </span>
+<span class="sd">    UTCI is an international standard for assessing thermal comfort in outdoor environments.</span>
+<span class="sd">    It combines air temperature, mean radiant temperature, wind speed, and humidity into</span>
+<span class="sd">    a single index value that represents the &quot;feels like&quot; temperature.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        Ta (torch.Tensor): Air temperature (°C). Can be scalar or multi-dimensional array.</span>
+<span class="sd">        RH (torch.Tensor): Relative humidity (%). Range: 0-100.</span>
+<span class="sd">        Tmrt (torch.Tensor): Mean radiant temperature (°C). Accounts for solar and thermal radiation.</span>
+<span class="sd">        va10m (torch.Tensor): Wind speed at 10m height (m/s).</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor: UTCI value (°C). Same shape as input tensors.</span>
+<span class="sd">                     Returns -999 for invalid input values (Ta, RH, va10m, or Tmrt &lt;= -999).</span>
+<span class="sd">    </span>
+<span class="sd">    Notes:</span>
+<span class="sd">        - UTCI interpretation:</span>
+<span class="sd">          * &lt; 9°C: Strong cold stress</span>
+<span class="sd">          * 9-26°C: Comfortable</span>
+<span class="sd">          * 26-32°C: Moderate heat stress</span>
+<span class="sd">          * &gt; 32°C: Strong heat stress</span>
+<span class="sd">        - All inputs must be torch tensors of the same shape</span>
+<span class="sd">        - Invalid/missing data should be marked as -999</span>
+<span class="sd">    </span>
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; ta = torch.tensor([25.0])</span>
+<span class="sd">        &gt;&gt;&gt; rh = torch.tensor([50.0])</span>
+<span class="sd">        &gt;&gt;&gt; tmrt = torch.tensor([30.0])</span>
+<span class="sd">        &gt;&gt;&gt; wind = torch.tensor([1.0])</span>
+<span class="sd">        &gt;&gt;&gt; utci = utci_calculator(ta, rh, tmrt, wind)</span>
+<span class="sd">        &gt;&gt;&gt; print(f&quot;UTCI: {utci.item():.1f}°C&quot;)</span>
+<span class="sd">    </span>
+<span class="sd">    References:</span>
+<span class="sd">        Bröde P, Fiala D, Błażejczyk K, et al. (2012).</span>
+<span class="sd">        Deriving the operational procedure for the Universal Thermal Climate Index (UTCI).</span>
+<span class="sd">        Int J Biometeorol 56:481-494.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Ta = torch.tensor(Ta, dtype=torch.float32)</span>
+    <span class="c1"># RH = torch.tensor(RH, dtype=torch.float32)</span>
+    <span class="c1"># Tmrt = torch.tensor(Tmrt, dtype=torch.float32)</span>
+    <span class="c1"># va10m = torch.tensor(va10m, dtype=torch.float32)</span>
+
+    <span class="n">invalid_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">Ta</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">999</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">RH</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">999</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">va10m</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">999</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">Tmrt</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="mi">999</span><span class="p">)</span>
+    <span class="n">valid_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">invalid_mask</span>
+
+    <span class="n">tk</span> <span class="o">=</span> <span class="n">Ta</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span> <span class="o">+</span> <span class="mf">273.15</span>  <span class="c1"># air temp in K</span>
+
+    <span class="c1"># saturation vapour pressure (es)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="o">-</span><span class="mf">2.8365744E3</span><span class="p">,</span> <span class="o">-</span><span class="mf">6.028076559E3</span><span class="p">,</span> <span class="mf">1.954263612E1</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.737830188E-2</span><span class="p">,</span>
+                      <span class="mf">1.6261698E-5</span><span class="p">,</span> <span class="mf">7.0229056E-10</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.8680009E-13</span><span class="p">,</span> <span class="mf">2.7150305</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="n">es</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tk</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
+        <span class="n">es</span> <span class="o">=</span> <span class="n">es</span> <span class="o">+</span> <span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">tk</span> <span class="o">**</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">3.</span><span class="p">)</span>
+
+    <span class="n">es</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">es</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.01</span>
+
+    <span class="n">ehPa</span> <span class="o">=</span> <span class="n">es</span> <span class="o">*</span> <span class="n">RH</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span> <span class="o">/</span> <span class="mf">100.</span>
+
+    <span class="n">D_Tmrt</span> <span class="o">=</span> <span class="n">Tmrt</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span> <span class="o">-</span> <span class="n">Ta</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+    <span class="n">Pa</span> <span class="o">=</span> <span class="n">ehPa</span> <span class="o">/</span> <span class="mf">10.0</span>  <span class="c1"># use vapour pressure in kPa</span>
+    <span class="n">va</span> <span class="o">=</span> <span class="n">va10m</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+    <span class="c1"># Calculate 6th order polynomial as approximation</span>
+    <span class="n">UTCI_approx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Ta</span><span class="p">,</span> <span class="o">-</span><span class="mi">999</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">UTCI_approx</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">utci_polynomial</span><span class="p">(</span><span class="n">D_Tmrt</span><span class="p">,</span> <span class="n">Ta</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">],</span> <span class="n">va</span><span class="p">,</span> <span class="n">Pa</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">UTCI_approx</span></div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

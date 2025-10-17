@@ -1,0 +1,968 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>solweig_gpu.utci_process &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=4afb903a"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SOLWEIG-GPU
+              <img src="../../_static/logo.jpg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#using-conda-recommended">Using Conda (Recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#using-pip-with-system-gdal">Using pip with system GDAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#development-installation">Development Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#gpu-setup">GPU Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#cuda-requirements">CUDA Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#cpu-only-mode">CPU-Only Mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#gdal-import-error">GDAL Import Error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#pytorch-gpu-not-detected">PyTorch GPU Not Detected</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#basic-workflow">Basic Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-1-using-your-own-met-data">Example 1: Using Your Own Met Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#required-input-files">Required Input Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#met-data-format">Met Data Format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-3-using-wrf-output">Example 3: Using WRF Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#command-line-usage">Command-Line Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#configuration-options">Configuration Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#tile-size">Tile Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#output-options">Output Options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#output-files">Output Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.solweig_gpu">Main Entry Point</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig_gpu.thermal_comfort"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.preprocessor">Data Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.extract_datetime_strict"><code class="docutils literal notranslate"><span class="pre">extract_datetime_strict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.check_rasters"><code class="docutils literal notranslate"><span class="pre">check_rasters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.create_tiles"><code class="docutils literal notranslate"><span class="pre">create_tiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_era5_data"><code class="docutils literal notranslate"><span class="pre">process_era5_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_wrfout_data"><code class="docutils literal notranslate"><span class="pre">process_wrfout_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_metfiles"><code class="docutils literal notranslate"><span class="pre">process_metfiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.create_met_files"><code class="docutils literal notranslate"><span class="pre">create_met_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.ppr"><code class="docutils literal notranslate"><span class="pre">ppr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.solweig">Radiation Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.daylen"><code class="docutils literal notranslate"><span class="pre">daylen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.sunonsurface_2018a"><code class="docutils literal notranslate"><span class="pre">sunonsurface_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.gvf_2018a"><code class="docutils literal notranslate"><span class="pre">gvf_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.cylindric_wedge"><code class="docutils literal notranslate"><span class="pre">cylindric_wedge()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.TsWaveDelay_2015a"><code class="docutils literal notranslate"><span class="pre">TsWaveDelay_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kup_veg_2015a"><code class="docutils literal notranslate"><span class="pre">Kup_veg_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kvikt_veg"><code class="docutils literal notranslate"><span class="pre">Kvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shaded_or_sunlit"><code class="docutils literal notranslate"><span class="pre">shaded_or_sunlit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Kside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.sun_distance"><code class="docutils literal notranslate"><span class="pre">sun_distance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.clearnessindex_2013b"><code class="docutils literal notranslate"><span class="pre">clearnessindex_2013b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.diffusefraction"><code class="docutils literal notranslate"><span class="pre">diffusefraction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_13"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_13()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_23"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_23()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Perez_v3"><code class="docutils literal notranslate"><span class="pre">Perez_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model1"><code class="docutils literal notranslate"><span class="pre">model1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model2"><code class="docutils literal notranslate"><span class="pre">model2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model3"><code class="docutils literal notranslate"><span class="pre">model3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.define_patch_characteristics"><code class="docutils literal notranslate"><span class="pre">define_patch_characteristics()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lcyl_v2022a"><code class="docutils literal notranslate"><span class="pre">Lcyl_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lvikt_veg"><code class="docutils literal notranslate"><span class="pre">Lvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Lside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Solweig_2022a_calc"><code class="docutils literal notranslate"><span class="pre">Solweig_2022a_calc()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.sun_position">Solar Position Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_position"><code class="docutils literal notranslate"><span class="pre">sun_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.julian_calculation"><code class="docutils literal notranslate"><span class="pre">julian_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.earth_heliocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">earth_heliocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_geocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.nutation_calculation"><code class="docutils literal notranslate"><span class="pre">nutation_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.true_obliquity_calculation"><code class="docutils literal notranslate"><span class="pre">true_obliquity_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.abberation_correction_calculation"><code class="docutils literal notranslate"><span class="pre">abberation_correction_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.apparent_sun_longitude_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_sun_longitude_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.apparent_stime_at_greenwich_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_stime_at_greenwich_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_rigth_ascension_calculation"><code class="docutils literal notranslate"><span class="pre">sun_rigth_ascension_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_geocentric_declination_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_declination_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.observer_local_hour_calculation"><code class="docutils literal notranslate"><span class="pre">observer_local_hour_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.topocentric_sun_position_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_sun_position_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.topocentric_local_hour_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_local_hour_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_topocentric_zenith_angle_calculate"><code class="docutils literal notranslate"><span class="pre">sun_topocentric_zenith_angle_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.set_to_range"><code class="docutils literal notranslate"><span class="pre">set_to_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.Solweig_2015a_metdata_noload"><code class="docutils literal notranslate"><span class="pre">Solweig_2015a_metdata_noload()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.shadow">Shadow and Sky View Factor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.shadow"><code class="docutils literal notranslate"><span class="pre">shadow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.annulus_weight"><code class="docutils literal notranslate"><span class="pre">annulus_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.create_patches"><code class="docutils literal notranslate"><span class="pre">create_patches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.svf_calculator"><code class="docutils literal notranslate"><span class="pre">svf_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.calculate_utci">UTCI Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.calculate_utci.utci_polynomial"><code class="docutils literal notranslate"><span class="pre">utci_polynomial()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.calculate_utci.utci_calculator"><code class="docutils literal notranslate"><span class="pre">utci_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.utci_process">UTCI Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.load_raster_to_tensor"><code class="docutils literal notranslate"><span class="pre">load_raster_to_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.extract_key"><code class="docutils literal notranslate"><span class="pre">extract_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.get_matching_files"><code class="docutils literal notranslate"><span class="pre">get_matching_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.map_files_by_key"><code class="docutils literal notranslate"><span class="pre">map_files_by_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.extract_number_from_filename"><code class="docutils literal notranslate"><span class="pre">extract_number_from_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.compute_utci"><code class="docutils literal notranslate"><span class="pre">compute_utci()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.walls_aspect">Wall Geometry</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.findwalls"><code class="docutils literal notranslate"><span class="pre">findwalls()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.cart2pol"><code class="docutils literal notranslate"><span class="pre">cart2pol()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.get_ders"><code class="docutils literal notranslate"><span class="pre">get_ders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.filter1Goodwin_as_aspect_v3"><code class="docutils literal notranslate"><span class="pre">filter1Goodwin_as_aspect_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.process_file_parallel"><code class="docutils literal notranslate"><span class="pre">process_file_parallel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.run_parallel_processing"><code class="docutils literal notranslate"><span class="pre">run_parallel_processing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.cli">Command-Line Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.cli.str2bool"><code class="docutils literal notranslate"><span class="pre">str2bool()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.Tgmaps_v1">Surface Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.Tgmaps_v1.Tgmaps_v1"><code class="docutils literal notranslate"><span class="pre">Tgmaps_v1()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../input_data.html">Input Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#geospatial-rasters">Geospatial Rasters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#required-rasters">Required Rasters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#building-dsm">Building DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#digital-elevation-model-dem">Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#tree-dsm">Tree DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#land-cover-optional">Land Cover (Optional)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#meteorological-forcing-data">Meteorological Forcing Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-1-custom-text-file-umep-format">Option 1: Custom Text File (UMEP Format)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-2-era5-reanalysis-data">Option 2: ERA5 Reanalysis Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-3-wrf-output-files">Option 3: WRF Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#data-preparation-tips">Data Preparation Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#coordinate-reference-system">Coordinate Reference System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#temporal-resolution">Temporal Resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#sample-data">Sample Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#basic-configuration">Basic Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#required-parameters">Required Parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../configuration.html#base-path"><code class="docutils literal notranslate"><span class="pre">base_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../configuration.html#selected-date-str"><code class="docutils literal notranslate"><span class="pre">selected_date_str</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#raster-filenames">Raster Filenames</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#tiling-configuration">Tiling Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#tile-size"><code class="docutils literal notranslate"><span class="pre">tile_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#overlap"><code class="docutils literal notranslate"><span class="pre">overlap</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#meteorological-data-configuration">Meteorological Data Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#using-custom-meteorological-file">Using Custom Meteorological File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#using-era5-or-wrf-data">Using ERA5 or WRF Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#output-configuration">Output Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#complete-configuration-example">Complete Configuration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#performance-optimization">Performance Optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#gpu-vs-cpu">GPU vs CPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#memory-management">Memory Management</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../outputs.html">Outputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#output-structure">Output Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#output-files">Output Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#universal-thermal-climate-index-utci">Universal Thermal Climate Index (UTCI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#mean-radiant-temperature-tmrt">Mean Radiant Temperature (Tmrt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#sky-view-factor-svf">Sky View Factor (SVF)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#downwelling-shortwave">Downwelling Shortwave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#upwelling-shortwave-kup">Upwelling Shortwave (Kup)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#downwelling-longwave-ldown">Downwelling Longwave (Ldown)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#upwelling-longwave-lup">Upwelling Longwave (Lup)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#shadow-maps">Shadow Maps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#multi-band-structure">Multi-Band Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#visualizing-outputs">Visualizing Outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-qgis">Using QGIS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-python">Using Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-arcgis">Using ArcGIS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#merging-tiles">Merging Tiles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#utci-tile-merging-example">UTCI tile merging example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#data-analysis">Data Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#computing-statistics">Computing Statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#extracting-time-series">Extracting Time Series</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../notebooks.html#download-notebooks">Download Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#full-test-suite">Full Test Suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#with-coverage-report">With Coverage Report</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#specific-test-modules">Specific Test Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#example-testing-a-utility-function">Example: Testing a Utility Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#example-testing-with-fixtures">Example: Testing with Fixtures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#continuous-integration">Continuous Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#manual-testing">Manual Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#test-with-sample-data">Test with Sample Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#verify-outputs">Verify Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#benchmark-tests">Benchmark Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_guide.html">Developer Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#architecture-overview">Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#module-interactions">Module Interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">solweig_gpu.utci_process</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for solweig_gpu.utci_process</h1><div class="highlight"><pre>
+<span></span><span class="c1">#SOLWEIG-GPU: GPU-accelerated SOLWEIG model for urban thermal comfort simulation</span>
+<span class="c1">#Copyright (C) 2022–2025 Harsh Kamath and Naveen Sudharsan</span>
+
+<span class="c1">#This program is free software: you can redistribute it and/or modify</span>
+<span class="c1">#it under the terms of the GNU General Public License as published by</span>
+<span class="c1">#the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1">#(at your option) any later version.</span>
+
+<span class="c1">#This program is distributed in the hope that it will be useful,</span>
+<span class="c1">#but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1">#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c1">#GNU General Public License for more details.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">radians</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span><span class="p">,</span> <span class="n">osr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">calendar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.ndimage.interpolation</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">rotate</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">timezonefinder</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimezoneFinder</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytz</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.Tgmaps_v1</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tgmaps_v1</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.sun_position</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solweig_2015a_metdata_noload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.shadow</span><span class="w"> </span><span class="kn">import</span> <span class="n">svf_calculator</span><span class="p">,</span> <span class="n">create_patches</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.solweig</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solweig_2022a_calc</span><span class="p">,</span> <span class="n">clearnessindex_2013b</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.calculate_utci</span><span class="w"> </span><span class="kn">import</span> <span class="n">utci_calculator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="c1"># from .preprocessor import ppr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.walls_aspect</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_parallel_processing</span>
+<span class="n">gdal</span><span class="o">.</span><span class="n">UseExceptions</span><span class="p">()</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+
+<span class="n">script_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+<span class="n">landcover_classes_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">script_dir</span><span class="p">,</span> <span class="s1">&#39;landcoverclasses_2016a.txt&#39;</span><span class="p">)</span>
+
+<span class="c1"># Wall and ground emissivity and albedo</span>
+<span class="n">albedo_b</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">albedo_g</span> <span class="o">=</span> <span class="mf">0.15</span>
+<span class="n">ewall</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">eground</span> <span class="o">=</span> <span class="mf">0.95</span>
+<span class="n">absK</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">absL</span> <span class="o">=</span> <span class="mf">0.95</span>
+
+<span class="c1"># Standing position</span>
+<span class="n">Fside</span> <span class="o">=</span> <span class="mf">0.22</span>
+<span class="n">Fup</span> <span class="o">=</span> <span class="mf">0.06</span>
+<span class="n">Fcyl</span> <span class="o">=</span> <span class="mf">0.28</span>
+
+<span class="n">cyl</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">elvis</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">usevegdem</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">onlyglobal</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">firstdayleaf</span> <span class="o">=</span> <span class="mi">97</span>
+<span class="n">lastdayleaf</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="n">conifer_bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="load_raster_to_tensor">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.utci_process.load_raster_to_tensor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_raster_to_tensor</span><span class="p">(</span><span class="n">dem_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a GeoTIFF raster file into a PyTorch tensor.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        dem_path (str): Path to GeoTIFF file</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: (tensor, dataset) where:</span>
+<span class="sd">            - tensor: PyTorch tensor on GPU/CPU with raster data</span>
+<span class="sd">            - dataset: GDAL dataset object (for accessing metadata)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">dem_path</span><span class="p">)</span>
+    <span class="n">band</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">ReadAsArray</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> <span class="n">dataset</span></div>
+
+
+<div class="viewcode-block" id="extract_key">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.utci_process.extract_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_key</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">is_metfile</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract numerical key from filename for tile matching.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        filename (str): Filename to parse</span>
+<span class="sd">        is_metfile (bool): True if filename is a metfile, False if raster tile</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Extracted key (e.g., &quot;0_0&quot; from &quot;Building_DSM_0_0.tif&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">is_metfile</span><span class="p">:</span>
+        <span class="c1"># look for metfile_X_Y_DATE</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;metfile_(\d+)_(\d+)_\d</span><span class="si">{4}</span><span class="s1">-\d</span><span class="si">{2}</span><span class="s1">-\d</span><span class="si">{2}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># look for ..._X_Y.tif</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_(\d+)_(\d+)&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># Function to list matching files in a directory</span>
+<div class="viewcode-block" id="get_matching_files">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.utci_process.get_matching_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_matching_files</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">extension</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get sorted list of files with given extension from directory.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        directory (str): Directory path to search</span>
+<span class="sd">        extension (str): File extension to filter (e.g., &#39;.tif&#39;)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        list: Sorted list of filenames matching extension</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">extension</span><span class="p">)])</span></div>
+
+
+<div class="viewcode-block" id="map_files_by_key">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.utci_process.map_files_by_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">map_files_by_key</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">extension</span><span class="p">,</span> <span class="n">is_metfile</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create mapping of tile keys to filenames.</span>
+<span class="sd">    </span>
+<span class="sd">    Groups files by their tile coordinates (e.g., &quot;0_0&quot;, &quot;1000_0&quot;) to match</span>
+<span class="sd">    corresponding raster tiles with their meteorological files.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        directory (str): Directory containing files</span>
+<span class="sd">        extension (str): File extension to filter</span>
+<span class="sd">        is_metfile (bool): True if files are metfiles</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionary mapping keys to filenames</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">get_matching_files</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">extension</span><span class="p">)</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">extract_key</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">is_metfile</span><span class="o">=</span><span class="n">is_metfile</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mapping</span></div>
+
+
+<div class="viewcode-block" id="extract_number_from_filename">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.utci_process.extract_number_from_filename">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_number_from_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract tile number from Building_DSM filename.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        filename (str): Filename in format &quot;Building_DSM_X_Y.tif&quot;</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Extracted number portion (e.g., &quot;0_0&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">number</span> <span class="o">=</span> <span class="n">filename</span><span class="p">[</span><span class="mi">13</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="c1"># change according to the naming of building DSM files</span>
+    <span class="k">return</span> <span class="n">number</span></div>
+
+
+
+<div class="viewcode-block" id="compute_utci">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.utci_process.compute_utci">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_utci</span><span class="p">(</span><span class="n">building_dsm_path</span><span class="p">,</span> <span class="n">tree_path</span><span class="p">,</span> <span class="n">dem_path</span><span class="p">,</span> <span class="n">walls_path</span><span class="p">,</span> <span class="n">aspect_path</span><span class="p">,</span> <span class="n">landcover_path</span><span class="p">,</span> <span class="n">met_file</span><span class="p">,</span> 
+                <span class="n">output_path</span><span class="p">,</span><span class="n">number</span><span class="p">,</span><span class="n">selected_date_str</span><span class="p">,</span><span class="n">save_tmrt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">save_svf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">save_kup</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">save_kdown</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">save_lup</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">save_ldown</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">save_shadow</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute UTCI and related thermal comfort outputs for a single tile.</span>
+<span class="sd">    </span>
+<span class="sd">    This is the main computation function that integrates shadow modeling, radiation</span>
+<span class="sd">    calculations, and UTCI computation for urban microclimate analysis.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        building_dsm_path (str): Path to Building DSM raster</span>
+<span class="sd">        tree_path (str): Path to tree/vegetation DSM raster</span>
+<span class="sd">        dem_path (str): Path to Digital Elevation Model raster</span>
+<span class="sd">        walls_path (str): Path to wall height raster</span>
+<span class="sd">        aspect_path (str): Path to wall aspect raster  </span>
+<span class="sd">        landcover_path (str): Path to land cover raster (can be None)</span>
+<span class="sd">        met_file (str): Path to meteorological forcing file</span>
+<span class="sd">        output_path (str): Directory for saving output rasters</span>
+<span class="sd">        number (str): Tile identifier (e.g., &quot;0_0&quot;)</span>
+<span class="sd">        selected_date_str (str): Date string (YYYY-MM-DD)</span>
+<span class="sd">        save_tmrt (bool): Save mean radiant temperature output</span>
+<span class="sd">        save_svf (bool): Save sky view factor output</span>
+<span class="sd">        save_kup (bool): Save upward shortwave radiation</span>
+<span class="sd">        save_kdown (bool): Save downward shortwave radiation</span>
+<span class="sd">        save_lup (bool): Save upward longwave radiation</span>
+<span class="sd">        save_ldown (bool): Save downward longwave radiation</span>
+<span class="sd">        save_shadow (bool): Save shadow maps</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        None: Outputs are saved as GeoTIFF files in output_path</span>
+<span class="sd">    </span>
+<span class="sd">    Notes:</span>
+<span class="sd">        - Automatically uses GPU if available</span>
+<span class="sd">        - Outputs are multi-band rasters (one band per hour)</span>
+<span class="sd">        - UTCI is always computed and saved</span>
+<span class="sd">        - Other outputs are optional based on save_* flags</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_raster_to_tensor</span><span class="p">(</span><span class="n">building_dsm_path</span><span class="p">)</span>
+    <span class="n">temp1</span><span class="p">,</span> <span class="n">dataset2</span> <span class="o">=</span> <span class="n">load_raster_to_tensor</span><span class="p">(</span><span class="n">tree_path</span><span class="p">)</span>
+    <span class="n">temp2</span><span class="p">,</span> <span class="n">dataset3</span> <span class="o">=</span> <span class="n">load_raster_to_tensor</span><span class="p">(</span><span class="n">dem_path</span><span class="p">)</span>
+    <span class="n">walls</span><span class="p">,</span> <span class="n">dataset4</span> <span class="o">=</span> <span class="n">load_raster_to_tensor</span><span class="p">(</span><span class="n">walls_path</span><span class="p">)</span>
+    <span class="n">dirwalls</span><span class="p">,</span> <span class="n">dataset5</span> <span class="o">=</span> <span class="n">load_raster_to_tensor</span><span class="p">(</span><span class="n">aspect_path</span><span class="p">)</span>
+ 
+    <span class="c1"># Added</span>
+    <span class="n">landcover</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">landcover_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">landcover</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">lcgrid_torch</span><span class="p">,</span> <span class="n">dataset6</span> <span class="o">=</span> <span class="n">load_raster_to_tensor</span><span class="p">(</span><span class="n">landcover_path</span><span class="p">)</span>
+        <span class="n">lcgrid_np</span> <span class="o">=</span> <span class="n">lcgrid_torch</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="c1">#lcgrid_np = lcgrid_np.astype(int)</span>
+        
+        <span class="n">mask_invalid</span> <span class="o">=</span> <span class="p">(</span><span class="n">lcgrid_np</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">lcgrid_np</span> <span class="o">&gt;</span> <span class="mi">7</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mask_invalid</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: land-cover grid contains values outside 1-7. &quot;</span>
+                <span class="s2">&quot;Invalid cells are set to 6 (bare soil). &quot;</span><span class="p">)</span>
+            <span class="n">lcgrid_np</span><span class="p">[</span><span class="n">mask_invalid</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span>
+        
+        <span class="n">mask_vegetation</span> <span class="o">=</span> <span class="p">(</span><span class="n">lcgrid_np</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">lcgrid_np</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mask_vegetation</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Attention!&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;The land cover grid includes values (deciduous and/or conifer) not appropriate for the SOLWEIG-formatted land cover grid (should not include 3 or 4). &quot;</span>
+                  <span class="s2">&quot;Land cover under the vegetation is required. &quot;</span>
+                  <span class="s2">&quot;Setting the invalid landcover types to grass.&quot;</span><span class="p">)</span>
+            <span class="n">lcgrid_np</span><span class="p">[</span><span class="n">mask_vegetation</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">landcover_classes_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>                            <span class="c1"># skip header line</span>
+        <span class="n">lc_class</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">),</span> <span class="mi">6</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ln</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+            <span class="n">lc_class</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ln</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]]</span>  <span class="c1"># cols 1-6</span>
+    <span class="c1"># Added</span>
+    
+    <span class="n">base_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">selected_date_str</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">geotransform</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">geotransform</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">projection_wkt</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">()</span>
+    <span class="n">old_cs</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+    <span class="n">old_cs</span><span class="o">.</span><span class="n">ImportFromWkt</span><span class="p">(</span><span class="n">projection_wkt</span><span class="p">)</span> 
+    <span class="n">old_cs</span><span class="o">.</span><span class="n">SetAxisMappingStrategy</span><span class="p">(</span><span class="n">osr</span><span class="o">.</span><span class="n">OAMS_TRADITIONAL_GIS_ORDER</span><span class="p">)</span>
+    <span class="n">wgs84_wkt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;GEOGCS[&quot;WGS 84&quot;,</span>
+<span class="s2">        DATUM[&quot;WGS_1984&quot;,</span>
+<span class="s2">            SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,</span>
+<span class="s2">                AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],</span>
+<span class="s2">            AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],</span>
+<span class="s2">        PRIMEM[&quot;Greenwich&quot;,0,</span>
+<span class="s2">            AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],</span>
+<span class="s2">        UNIT[&quot;degree&quot;,0.01745329251994328,</span>
+<span class="s2">            AUTHORITY[&quot;EPSG&quot;,&quot;9122&quot;]],</span>
+<span class="s2">        AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]&quot;&quot;&quot;</span>
+    <span class="n">new_cs</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+    <span class="n">new_cs</span><span class="o">.</span><span class="n">ImportFromWkt</span><span class="p">(</span><span class="n">wgs84_wkt</span><span class="p">)</span>
+    <span class="n">new_cs</span><span class="o">.</span><span class="n">SetAxisMappingStrategy</span><span class="p">(</span><span class="n">osr</span><span class="o">.</span><span class="n">OAMS_TRADITIONAL_GIS_ORDER</span><span class="p">)</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">CoordinateTransformation</span><span class="p">(</span><span class="n">old_cs</span><span class="p">,</span> <span class="n">new_cs</span><span class="p">)</span>
+    <span class="n">widthx</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterXSize</span>
+    <span class="n">heightx</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">RasterYSize</span>
+    <span class="n">geotransform</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">()</span>
+    <span class="c1">#minx = geotransform[0]</span>
+    <span class="c1">#miny = geotransform[3] + widthx * geotransform[4] + heightx * geotransform[5]</span>
+    <span class="c1">#lonlat = transform.TransformPoint(minx, miny)</span>
+    <span class="c1">#gdalver = float(gdal.__version__[0])</span>
+    <span class="c1">#if gdalver == 3.:</span>
+    <span class="c1">#    lon = lonlat[1]  # changed to gdal 3</span>
+    <span class="c1">#    lat = lonlat[0]  # changed to gdal 3</span>
+    <span class="c1">#else:</span>
+    <span class="c1">#    lon = lonlat[0]  # changed to gdal 2</span>
+    <span class="c1">#    lat = lonlat[1]  # changed to gdal 2</span>
+    <span class="n">centre_x</span> <span class="o">=</span> <span class="n">geotransform</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">geotransform</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">widthx</span>  <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">centre_y</span> <span class="o">=</span> <span class="n">geotransform</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">geotransform</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="n">heightx</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">lon</span><span class="p">,</span> <span class="n">lat</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">TransformPoint</span><span class="p">(</span><span class="n">centre_x</span><span class="p">,</span> <span class="n">centre_y</span><span class="p">)[:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">alt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">temp2</span><span class="p">)</span>
+    <span class="n">alt</span> <span class="o">=</span> <span class="n">alt</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">alt</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">alt</span> <span class="o">=</span> <span class="mf">3.</span>
+    <span class="n">location</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;longitude&#39;</span><span class="p">:</span> <span class="n">lon</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">:</span> <span class="n">lat</span><span class="p">,</span> <span class="s1">&#39;altitude&#39;</span><span class="p">:</span> <span class="n">alt</span><span class="p">}</span>
+    <span class="c1"># After computing lat and lon</span>
+    <span class="n">tf</span> <span class="o">=</span> <span class="n">TimezoneFinder</span><span class="p">()</span>
+    <span class="n">timezone_name</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">timezone_at</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="n">lat</span><span class="p">,</span> <span class="n">lng</span><span class="o">=</span><span class="n">lon</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;UTC&quot;</span>
+    <span class="n">local_tz</span> <span class="o">=</span> <span class="n">pytz</span><span class="o">.</span><span class="n">timezone</span><span class="p">(</span><span class="n">timezone_name</span><span class="p">)</span>
+    <span class="c1"># Use a sample date (today or specific) to get current UTC offset</span>
+    <span class="n">local_dt</span> <span class="o">=</span> <span class="n">local_tz</span><span class="o">.</span><span class="n">localize</span><span class="p">(</span><span class="n">base_date</span><span class="p">)</span>
+    <span class="n">utc</span> <span class="o">=</span> <span class="n">local_dt</span><span class="o">.</span><span class="n">utcoffset</span><span class="p">()</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">3600</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[INFO] Timezone: </span><span class="si">{</span><span class="n">timezone_name</span><span class="si">}</span><span class="s2">, UTC offset: </span><span class="si">{</span><span class="n">utc</span><span class="si">}</span><span class="s2"> hours&quot;</span><span class="p">)</span>
+    <span class="n">YYYY</span><span class="p">,</span> <span class="n">altitude</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">zen</span><span class="p">,</span> <span class="n">jday</span><span class="p">,</span> <span class="n">leafon</span><span class="p">,</span> <span class="n">dectime</span><span class="p">,</span> <span class="n">altmax</span> <span class="o">=</span> <span class="n">Solweig_2015a_metdata_noload</span><span class="p">(</span><span class="n">met_file</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">utc</span><span class="p">)</span>
+    <span class="n">temp1</span><span class="p">[</span><span class="n">temp1</span> <span class="o">&lt;</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">vegdem</span> <span class="o">=</span> <span class="n">temp1</span> <span class="o">+</span> <span class="n">temp2</span>
+    <span class="n">vegdem2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">temp1</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">,</span> <span class="n">temp2</span><span class="p">)</span>
+    <span class="n">bush</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">vegdem2</span> <span class="o">*</span> <span class="n">vegdem</span><span class="p">)</span> <span class="o">*</span> <span class="n">vegdem</span>
+    <span class="n">vegdsm</span> <span class="o">=</span> <span class="n">temp1</span> <span class="o">+</span> <span class="n">a</span>
+    <span class="n">vegdsm</span><span class="p">[</span><span class="n">vegdsm</span> <span class="o">==</span> <span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">vegdsm2</span> <span class="o">=</span> <span class="n">temp1</span> <span class="o">*</span> <span class="mf">0.25</span> <span class="o">+</span> <span class="n">a</span>
+    <span class="n">vegdsm2</span><span class="p">[</span><span class="n">vegdsm2</span> <span class="o">==</span> <span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">amaxvalue</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">vegdem</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">buildings</span> <span class="o">=</span> <span class="n">a</span> <span class="o">-</span> <span class="n">temp2</span>
+    <span class="n">buildings</span><span class="p">[</span><span class="n">buildings</span> <span class="o">&lt;</span> <span class="mf">2.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">buildings</span><span class="p">[</span><span class="n">buildings</span> <span class="o">&gt;=</span> <span class="mf">2.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">valid_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">buildings</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">Knight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">Tgmap1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">Tgmap1E</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">Tgmap1S</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">Tgmap1W</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">Tgmap1N</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">TgOut1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    
+    <span class="c1"># Added</span>
+    <span class="k">if</span> <span class="n">landcover</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>                                     
+        <span class="p">(</span><span class="n">TgK_np</span><span class="p">,</span> <span class="n">Tstart_np</span><span class="p">,</span> <span class="n">alb_np</span><span class="p">,</span> <span class="n">emis_np</span><span class="p">,</span> <span class="n">TgK_wall_np</span><span class="p">,</span> <span class="n">Tstart_wall_np</span><span class="p">,</span> <span class="n">TmaxLST_np</span><span class="p">,</span>
+         <span class="n">TmaxLST_wall_np</span><span class="p">)</span> <span class="o">=</span> <span class="n">Tgmaps_v1</span><span class="p">(</span><span class="n">lcgrid_np</span><span class="p">,</span> <span class="n">lc_class</span><span class="p">)</span>
+           
+        <span class="n">TgK</span>           <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">TgK_np</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">Tstart</span>        <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">Tstart_np</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">alb_grid</span>      <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">alb_np</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">emis_grid</span>     <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">emis_np</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">TgK_wall</span>      <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">TgK_wall_np</span><span class="p">)</span>     <span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">Tstart_wall</span>   <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">Tstart_wall_np</span><span class="p">)</span>  <span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">TmaxLST</span>       <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">TmaxLST_np</span> <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">TmaxLST_wall</span>  <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">TmaxLST_wall_np</span><span class="p">)</span> <span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">TgK</span> <span class="o">=</span> <span class="n">Knight</span> <span class="o">+</span> <span class="mf">0.37</span>
+        <span class="n">Tstart</span> <span class="o">=</span> <span class="n">Knight</span> <span class="o">-</span> <span class="mf">3.41</span>
+        <span class="n">alb_grid</span> <span class="o">=</span> <span class="n">Knight</span> <span class="o">+</span> <span class="n">albedo_g</span>
+        <span class="n">emis_grid</span> <span class="o">=</span> <span class="n">Knight</span> <span class="o">+</span> <span class="n">eground</span>
+        <span class="n">TgK_wall</span> <span class="o">=</span> <span class="mf">0.37</span>
+        <span class="n">Tstart_wall</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.41</span>
+        <span class="n">TmaxLST</span> <span class="o">=</span> <span class="mf">15.</span>
+        <span class="n">TmaxLST_wall</span> <span class="o">=</span> <span class="mf">15.</span>
+    <span class="c1"># Added</span>
+    
+    <span class="n">transVeg</span> <span class="o">=</span> <span class="mf">3.</span> <span class="o">/</span> <span class="mf">100.</span>
+    <span class="c1"># landcover = 1 # Modified</span>
+    <span class="k">if</span> <span class="n">landcover</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">lcgrid</span> <span class="o">=</span> <span class="n">lcgrid_torch</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lcgrid</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">anisotropic_sky</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">patch_option</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">DOY</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">hours</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">minu</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">Ta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">11</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">RH</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">radG</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">14</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">radD</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">21</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">radI</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">22</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">12</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">Ws</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">met_file</span><span class="p">[:,</span> <span class="mi">9</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="c1"># Prepare leafon based on vegetation type</span>
+    <span class="k">if</span> <span class="n">conifer_bool</span><span class="p">:</span>
+        <span class="n">leafon</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">DOY</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">leafon</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">DOY</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">firstdayleaf</span> <span class="o">&gt;</span> <span class="n">lastdayleaf</span><span class="p">:</span>
+            <span class="n">leaf_bool</span> <span class="o">=</span> <span class="p">((</span><span class="n">DOY</span> <span class="o">&gt;</span> <span class="n">firstdayleaf</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">DOY</span> <span class="o">&lt;</span> <span class="n">lastdayleaf</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">leaf_bool</span> <span class="o">=</span> <span class="p">((</span><span class="n">DOY</span> <span class="o">&gt;</span> <span class="n">firstdayleaf</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">DOY</span> <span class="o">&lt;</span> <span class="n">lastdayleaf</span><span class="p">))</span>
+        <span class="n">leafon</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">leaf_bool</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">psi</span> <span class="o">=</span> <span class="n">leafon</span> <span class="o">*</span> <span class="n">transVeg</span>
+    <span class="n">psi</span><span class="p">[</span><span class="n">leafon</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">Twater</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="mf">1.1</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="c1">#first = torch.round(torch.tensor(height, device=device))</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">height</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">first</span> <span class="o">==</span> <span class="mf">0.</span><span class="p">:</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">second</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="mf">20.</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Ta</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">timestepdec</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">timestepdec</span> <span class="o">=</span> <span class="n">dectime</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">dectime</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">timeadd</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">firstdaytime</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="c1"># Calculate SVF and related parameters (remains unchanged)</span>
+    <span class="n">svf</span><span class="p">,</span> <span class="n">svfaveg</span><span class="p">,</span> <span class="n">svfE</span><span class="p">,</span> <span class="n">svfEaveg</span><span class="p">,</span> <span class="n">svfEveg</span><span class="p">,</span> <span class="n">svfN</span><span class="p">,</span> <span class="n">svfNaveg</span><span class="p">,</span> <span class="n">svfNveg</span><span class="p">,</span> <span class="n">svfS</span><span class="p">,</span> <span class="n">svfSaveg</span><span class="p">,</span> <span class="n">svfSveg</span><span class="p">,</span> <span class="n">svfveg</span><span class="p">,</span> <span class="n">svfW</span><span class="p">,</span> <span class="n">svfWaveg</span><span class="p">,</span> <span class="n">svfWveg</span><span class="p">,</span> <span class="n">vegshmat</span><span class="p">,</span> <span class="n">vbshvegshmat</span><span class="p">,</span> <span class="n">shmat</span><span class="p">,</span> <span class="n">svftotal</span> <span class="o">=</span> <span class="n">svf_calculator</span><span class="p">(</span><span class="n">patch_option</span><span class="p">,</span> <span class="n">amaxvalue</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">vegdsm</span><span class="p">,</span> <span class="n">vegdsm2</span><span class="p">,</span> <span class="n">bush</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+    <span class="n">svfbuveg</span> <span class="o">=</span> <span class="n">svf</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">svfveg</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">transVeg</span><span class="p">)</span>
+    <span class="n">asvf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">acos</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">svf</span><span class="p">))</span>
+    <span class="n">diffsh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">shmat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">shmat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+        <span class="n">diffsh</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">shmat</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">vegshmat</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">transVeg</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">svf</span> <span class="o">+</span> <span class="n">svfveg</span> <span class="o">-</span> <span class="mf">1.0</span>
+    <span class="n">tmp</span><span class="p">[</span><span class="n">tmp</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">svfalfa</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">asin</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">))</span>
+    <span class="c1"># Prepare lists to store results for all time steps</span>
+    <span class="n">UTCI_all</span>  <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">TMRT_all</span>  <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Kup_all</span>   <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Kdown_all</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Lup_all</span>   <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Ldown_all</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Shadow_all</span><span class="o">=</span> <span class="p">[]</span>
+    <span class="n">CI</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">Ta</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">landcover</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">dectime</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">dectime</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">Ta_</span>      <span class="o">=</span> <span class="n">Ta</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>  <span class="c1"># Added</span>
+                <span class="n">Twater</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Ta_</span><span class="p">[</span><span class="n">jday</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">dectime</span><span class="p">[</span><span class="n">i</span><span class="p">])])</span>  <span class="c1"># Added</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dectime</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">dectime</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">daylines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">dectime</span><span class="p">)</span> <span class="o">==</span> <span class="n">dectime</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">daylines</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">alt</span> <span class="o">=</span> <span class="n">altitude</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">daylines</span><span class="p">]</span>
+                <span class="n">alt2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">alt</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">rise</span> <span class="o">=</span> <span class="n">alt2</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">_</span><span class="p">,</span> <span class="n">CI</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">]</span> <span class="o">=</span> <span class="n">clearnessindex_2013b</span><span class="p">(</span><span class="n">zen</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">rise</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">jday</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">rise</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">Ta</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">rise</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                                                        <span class="n">RH</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">rise</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mf">100.</span><span class="p">,</span> <span class="n">radG</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">rise</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">location</span><span class="p">,</span> <span class="n">P</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">rise</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">CI</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">CI</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">):</span>
+                    <span class="n">CI</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">CI</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="n">Tmrt</span><span class="p">,</span> <span class="n">Kdown</span><span class="p">,</span> <span class="n">Kup</span><span class="p">,</span> <span class="n">Ldown</span><span class="p">,</span> <span class="n">Lup</span><span class="p">,</span> <span class="n">Tg</span><span class="p">,</span> <span class="n">ea</span><span class="p">,</span> <span class="n">esky</span><span class="p">,</span> <span class="n">I0</span><span class="p">,</span> <span class="n">CI</span><span class="p">,</span> <span class="n">shadow</span><span class="p">,</span> <span class="n">firstdaytime</span><span class="p">,</span> <span class="n">timestepdec</span><span class="p">,</span> <span class="n">timeadd</span><span class="p">,</span> \
+        <span class="n">Tgmap1</span><span class="p">,</span> <span class="n">Tgmap1E</span><span class="p">,</span> <span class="n">Tgmap1S</span><span class="p">,</span> <span class="n">Tgmap1W</span><span class="p">,</span> <span class="n">Tgmap1N</span><span class="p">,</span> <span class="n">Keast</span><span class="p">,</span> <span class="n">Ksouth</span><span class="p">,</span> <span class="n">Kwest</span><span class="p">,</span> <span class="n">Knorth</span><span class="p">,</span> <span class="n">Least</span><span class="p">,</span> <span class="n">Lsouth</span><span class="p">,</span> <span class="n">Lwest</span><span class="p">,</span> <span class="n">Lnorth</span><span class="p">,</span> \
+        <span class="n">KsideI</span><span class="p">,</span> <span class="n">TgOut1</span><span class="p">,</span> <span class="n">TgOut</span><span class="p">,</span> <span class="n">radIout</span><span class="p">,</span> <span class="n">radDout</span><span class="p">,</span> <span class="n">Lside</span><span class="p">,</span> <span class="n">Lsky_patch_characteristics</span><span class="p">,</span> <span class="n">CI_Tg</span><span class="p">,</span> <span class="n">CI_TgG</span><span class="p">,</span> <span class="n">KsideD</span><span class="p">,</span> <span class="n">dRad</span><span class="p">,</span> <span class="n">Kside</span> <span class="o">=</span> <span class="n">Solweig_2022a_calc</span><span class="p">(</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">svf</span><span class="p">,</span> <span class="n">svfN</span><span class="p">,</span> <span class="n">svfW</span><span class="p">,</span> <span class="n">svfE</span><span class="p">,</span> <span class="n">svfS</span><span class="p">,</span> <span class="n">svfveg</span><span class="p">,</span> <span class="n">svfNveg</span><span class="p">,</span> <span class="n">svfEveg</span><span class="p">,</span> <span class="n">svfSveg</span><span class="p">,</span> <span class="n">svfWveg</span><span class="p">,</span> <span class="n">svfaveg</span><span class="p">,</span> <span class="n">svfEaveg</span><span class="p">,</span> <span class="n">svfSaveg</span><span class="p">,</span> <span class="n">svfWaveg</span><span class="p">,</span> <span class="n">svfNaveg</span><span class="p">,</span> <span class="n">vegdsm</span><span class="p">,</span> <span class="n">vegdsm2</span><span class="p">,</span> <span class="n">albedo_b</span><span class="p">,</span> <span class="n">absK</span><span class="p">,</span> <span class="n">absL</span><span class="p">,</span> <span class="n">ewall</span><span class="p">,</span> <span class="n">Fside</span><span class="p">,</span> <span class="n">Fup</span><span class="p">,</span> <span class="n">Fcyl</span><span class="p">,</span>
+            <span class="n">altitude</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">azimuth</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">zen</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">jday</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">usevegdem</span><span class="p">,</span> <span class="n">onlyglobal</span><span class="p">,</span> <span class="n">buildings</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">psi</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">landcover</span><span class="p">,</span> <span class="n">lcgrid</span><span class="p">,</span> <span class="n">dectime</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">altmax</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">dirwalls</span><span class="p">,</span> <span class="n">walls</span><span class="p">,</span> <span class="n">cyl</span><span class="p">,</span> <span class="n">elvis</span><span class="p">,</span> <span class="n">Ta</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">RH</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">radG</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">radD</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">radI</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">P</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">amaxvalue</span><span class="p">,</span> <span class="n">bush</span><span class="p">,</span> <span class="n">Twater</span><span class="p">,</span> <span class="n">TgK</span><span class="p">,</span> <span class="n">Tstart</span><span class="p">,</span> <span class="n">alb_grid</span><span class="p">,</span> <span class="n">emis_grid</span><span class="p">,</span> <span class="n">TgK_wall</span><span class="p">,</span> <span class="n">Tstart_wall</span><span class="p">,</span> <span class="n">TmaxLST</span><span class="p">,</span> <span class="n">TmaxLST_wall</span><span class="p">,</span> <span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="n">svfalfa</span><span class="p">,</span> <span class="n">svfbuveg</span><span class="p">,</span> <span class="n">firstdaytime</span><span class="p">,</span> <span class="n">timeadd</span><span class="p">,</span> <span class="n">timestepdec</span><span class="p">,</span> <span class="n">Tgmap1</span><span class="p">,</span> <span class="n">Tgmap1E</span><span class="p">,</span> <span class="n">Tgmap1S</span><span class="p">,</span> <span class="n">Tgmap1W</span><span class="p">,</span> <span class="n">Tgmap1N</span><span class="p">,</span>
+            <span class="n">CI</span><span class="p">,</span> <span class="n">TgOut1</span><span class="p">,</span> <span class="n">diffsh</span><span class="p">,</span> <span class="n">shmat</span><span class="p">,</span> <span class="n">vegshmat</span><span class="p">,</span> <span class="n">vbshvegshmat</span><span class="p">,</span> <span class="n">anisotropic_sky</span><span class="p">,</span> <span class="n">asvf</span><span class="p">,</span> <span class="n">patch_option</span><span class="p">)</span>
+        <span class="c1"># Create matrices for meteorological parameters for the current time step</span>
+        <span class="n">Ta_mat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">+</span> <span class="n">Ta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">RH_mat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">+</span> <span class="n">RH</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">Tmrt_mat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">+</span> <span class="n">Tmrt</span>
+        <span class="n">va10m_mat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">+</span> <span class="n">Ws</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">UTCI_mat</span> <span class="o">=</span> <span class="n">utci_calculator</span><span class="p">(</span><span class="n">Ta_mat</span><span class="p">,</span> <span class="n">RH_mat</span><span class="p">,</span> <span class="n">Tmrt_mat</span><span class="p">,</span> <span class="n">va10m_mat</span><span class="p">)</span>
+        <span class="n">UTCI</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">UTCI_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">UTCI</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">UTCI_mat</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+        <span class="c1"># Append results (converted to CPU numpy arrays) to the lists</span>
+        <span class="n">UTCI_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">UTCI</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">TMRT_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Tmrt</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">Kup_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Kup</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">Kdown_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Kdown</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">Lup_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Lup</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">Ldown_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Ldown</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">Shadow_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shadow</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+    <span class="c1"># Convert the lists to numpy arrays with shape (time_steps, rows, cols)</span>
+    <span class="n">UTCI_all</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">UTCI_all</span><span class="p">)</span>
+    <span class="n">TMRT_all</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">TMRT_all</span><span class="p">)</span>
+    <span class="n">Kup_all</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Kup_all</span><span class="p">)</span>
+    <span class="n">Kdown_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Kdown_all</span><span class="p">)</span>
+    <span class="n">Lup_all</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Lup_all</span><span class="p">)</span>
+    <span class="n">Ldown_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Ldown_all</span><span class="p">)</span>
+    <span class="n">Shadow_all</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Shadow_all</span><span class="p">)</span>
+    <span class="c1"># Write a multi-band GeoTIFF for UTCI (each band corresponds to one time step)</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s1">&#39;GTiff&#39;</span><span class="p">)</span>
+    <span class="n">out_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;UTCI_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+    <span class="n">num_bands</span> <span class="o">=</span> <span class="n">UTCI_all</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">out_dataset</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">num_bands</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+    <span class="n">out_dataset</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+    <span class="n">out_dataset</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands</span><span class="p">):</span>
+        <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">UTCI_all</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+        <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+        <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minu</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">base_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="n">out_band</span><span class="o">.</span><span class="n">SetMetadata</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">})</span>
+    <span class="n">out_dataset</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Optionally, you can similarly write TMRT to a single multi-band file:</span>
+    <span class="k">if</span> <span class="n">save_tmrt</span><span class="p">:</span>
+        <span class="n">out_file_path_op</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;TMRT_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+        <span class="n">num_bands_op</span> <span class="o">=</span> <span class="n">TMRT_all</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path_op</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">num_bands_op</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_op</span><span class="p">):</span>
+            <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">TMRT_all</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+            <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minu</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">base_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">SetMetadata</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">})</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">save_svf</span><span class="p">:</span>
+        <span class="n">out_file_path_op</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;SVF_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+        <span class="n">SVF</span> <span class="o">=</span> <span class="n">svftotal</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">SVF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">SVF</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path_op</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+        <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">SVF</span><span class="p">)</span>
+        <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">save_kup</span><span class="p">:</span>
+        <span class="n">out_file_path_op</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Kup_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+        <span class="n">num_bands_op</span> <span class="o">=</span> <span class="n">Kup_all</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path_op</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">num_bands_op</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_op</span><span class="p">):</span>
+            <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">Kup_all</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+            <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minu</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">base_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">SetMetadata</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">})</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">save_kdown</span><span class="p">:</span>
+        <span class="n">out_file_path_op</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Kdown_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+        <span class="n">num_bands_op</span> <span class="o">=</span> <span class="n">Kdown_all</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path_op</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">num_bands_op</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_op</span><span class="p">):</span>
+            <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">Kdown_all</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+            <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minu</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">base_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">SetMetadata</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">})</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">save_lup</span><span class="p">:</span>
+        <span class="n">out_file_path_op</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Lup_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+        <span class="n">num_bands_op</span> <span class="o">=</span> <span class="n">Lup_all</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path_op</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">num_bands_op</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_op</span><span class="p">):</span>
+            <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">Lup_all</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+            <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minu</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">base_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">SetMetadata</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">})</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">save_ldown</span><span class="p">:</span>
+        <span class="n">out_file_path_op</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Ldown_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+        <span class="n">num_bands_op</span> <span class="o">=</span> <span class="n">Ldown_all</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path_op</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">num_bands_op</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_op</span><span class="p">):</span>
+            <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">Ldown_all</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+            <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minu</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">base_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">SetMetadata</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">})</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">save_shadow</span><span class="p">:</span>
+        <span class="n">out_file_path_op</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Shadow_</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s1">.tif&#39;</span><span class="p">)</span>
+        <span class="n">num_bands_op</span> <span class="o">=</span> <span class="n">Shadow_all</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Create</span><span class="p">(</span><span class="n">out_file_path_op</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">num_bands_op</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">GDT_Float32</span><span class="p">)</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetGeoTransform</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetGeoTransform</span><span class="p">())</span>
+        <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">SetProjection</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">GetProjection</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bands_op</span><span class="p">):</span>
+            <span class="n">out_band</span> <span class="o">=</span> <span class="n">out_dataset_op</span><span class="o">.</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="n">band</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">WriteArray</span><span class="p">(</span><span class="n">Shadow_all</span><span class="p">[</span><span class="n">band</span><span class="p">])</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">FlushCache</span><span class="p">()</span>
+            <span class="n">hour</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">minute</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minu</span><span class="p">[</span><span class="n">band</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">base_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="n">minute</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="n">out_band</span><span class="o">.</span><span class="n">SetMetadata</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">})</span>
+        <span class="n">out_dataset_op</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Clean up datasets</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dataset2</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dataset3</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dataset4</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dataset5</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">time_taken</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time taken to execute tile </span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">time_taken</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span></div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
