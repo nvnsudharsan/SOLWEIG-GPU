@@ -78,7 +78,7 @@ The optimal tile size depends on your GPU memory. Here are some guidelines:
 | 16 GB+ | 2000-3600 | 4.0-12.96 km² |
 
 !!! Tip: "Finding the Right Tile Size"
-    If you encounter out-of-memory errors, reduce the tile size. If processing is slow with plenty of memory available, try increasing it. You may use hit and trial to determine the raster size that works with your GPU.
+    If you encounter out-of-memory errors, reduce the tile size. If processing is slow despite having plenty of memory available, try increasing the memory allocation. You can use a hit-and-trial approach to determine the raster size that works with your GPU.
 
 ### `overlap`
 
@@ -135,8 +135,6 @@ start_time = '2020-08-13 06:00:00'  # UTC
 end_time = '2020-08-13 23:00:00'    # UTC
 ```
 To download ERA5 data, follow the steps below, or alternatively, you can download it directly from [CDS](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview)
-
-[Setup cdsapi](https://cds.climate.copernicus.eu/how-to-api)
 ```python
 import cdsapi
 
@@ -173,6 +171,7 @@ request = {
 client = cdsapi.Client()
 client.retrieve(dataset, request).download()
 ```
+[Setup cdsapi](https://cds.climate.copernicus.eu/how-to-api)
 
 !!! Important Notes:
    1.  When using ERA5 or WRF data, `start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
