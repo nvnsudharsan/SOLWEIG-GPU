@@ -19,8 +19,6 @@ conda activate solweig
 conda install -c conda-forge gdal pytorch timezonefinder matplotlib sip 
 pip install PyQt5
 conda install -c conda-forge cudnn #If GPU is available
-pip install solweig-gpu
-
 
 # Install SOLWEIG-GPU
 pip install solweig-gpu
