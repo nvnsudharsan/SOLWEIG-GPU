@@ -22,6 +22,26 @@ import torch
 
 
 def utci_polynomial(D_Tmrt, Ta, va, Pa):
+    """
+    Calculate UTCI using 6th order polynomial approximation.
+    
+    This function implements the UTCI polynomial approximation formula
+    as defined in the UTCI documentation.
+    
+    Args:
+        D_Tmrt (torch.Tensor): Difference between mean radiant temperature and air temperature (K or °C)
+        Ta (torch.Tensor): Air temperature (°C)
+        va (torch.Tensor): Wind speed (m/s)
+        Pa (torch.Tensor): Vapor pressure (kPa)
+    
+    Returns:
+        torch.Tensor: UTCI approximation value (°C)
+    
+    References:
+        Bröde P, Fiala D, Błażejczyk K, et al. (2012). 
+        Deriving the operational procedure for the Universal Thermal Climate Index (UTCI).
+        Int J Biometeorol 56:481-494.
+    """
     UTCI_approx = Ta + \
     (6.07562052E-01) + \
     (-2.27712343E-02) * Ta + \
@@ -237,6 +257,46 @@ def utci_polynomial(D_Tmrt, Ta, va, Pa):
     return UTCI_approx
 
 def utci_calculator(Ta, RH, Tmrt, va10m):
+    """
+    Calculate Universal Thermal Climate Index (UTCI) for given meteorological conditions.
+    
+    UTCI is an international standard for assessing thermal comfort in outdoor environments.
+    It combines air temperature, mean radiant temperature, wind speed, and humidity into
+    a single index value that represents the "feels like" temperature.
+    
+    Args:
+        Ta (torch.Tensor): Air temperature (°C). Can be scalar or multi-dimensional array.
+        RH (torch.Tensor): Relative humidity (%). Range: 0-100.
+        Tmrt (torch.Tensor): Mean radiant temperature (°C). Accounts for solar and thermal radiation.
+        va10m (torch.Tensor): Wind speed at 10m height (m/s).
+    
+    Returns:
+        torch.Tensor: UTCI value (°C). Same shape as input tensors.
+                     Returns -999 for invalid input values (Ta, RH, va10m, or Tmrt <= -999).
+    
+    Notes:
+        - UTCI interpretation:
+          * < 9°C: Strong cold stress
+          * 9-26°C: Comfortable
+          * 26-32°C: Moderate heat stress
+          * > 32°C: Strong heat stress
+        - All inputs must be torch tensors of the same shape
+        - Invalid/missing data should be marked as -999
+    
+    Examples:
+        >>> import torch
+        >>> ta = torch.tensor([25.0])
+        >>> rh = torch.tensor([50.0])
+        >>> tmrt = torch.tensor([30.0])
+        >>> wind = torch.tensor([1.0])
+        >>> utci = utci_calculator(ta, rh, tmrt, wind)
+        >>> print(f"UTCI: {utci.item():.1f}°C")
+    
+    References:
+        Bröde P, Fiala D, Błażejczyk K, et al. (2012).
+        Deriving the operational procedure for the Universal Thermal Climate Index (UTCI).
+        Int J Biometeorol 56:481-494.
+    """
     # Ta = torch.tensor(Ta, dtype=torch.float32)
     # RH = torch.tensor(RH, dtype=torch.float32)
     # Tmrt = torch.tensor(Tmrt, dtype=torch.float32)

@@ -1,0 +1,824 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>solweig_gpu.shadow &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=4afb903a"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SOLWEIG-GPU
+              <img src="../../_static/logo.jpg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#using-conda-recommended">Using Conda (Recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#using-pip-with-system-gdal">Using pip with system GDAL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#development-installation">Development Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#gpu-setup">GPU Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#cuda-requirements">CUDA Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#cpu-only-mode">CPU-Only Mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#gdal-import-error">GDAL Import Error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../installation.html#pytorch-gpu-not-detected">PyTorch GPU Not Detected</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quick Start Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#basic-workflow">Basic Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-1-using-your-own-met-data">Example 1: Using Your Own Met Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#required-input-files">Required Input Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#met-data-format">Met Data Format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#example-3-using-wrf-output">Example 3: Using WRF Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#command-line-usage">Command-Line Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#configuration-options">Configuration Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#tile-size">Tile Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#output-options">Output Options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#output-files">Output Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.solweig_gpu">Main Entry Point</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig_gpu.thermal_comfort"><code class="docutils literal notranslate"><span class="pre">thermal_comfort()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.preprocessor">Data Preprocessing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.extract_datetime_strict"><code class="docutils literal notranslate"><span class="pre">extract_datetime_strict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.check_rasters"><code class="docutils literal notranslate"><span class="pre">check_rasters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.create_tiles"><code class="docutils literal notranslate"><span class="pre">create_tiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_era5_data"><code class="docutils literal notranslate"><span class="pre">process_era5_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_wrfout_data"><code class="docutils literal notranslate"><span class="pre">process_wrfout_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.process_metfiles"><code class="docutils literal notranslate"><span class="pre">process_metfiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.create_met_files"><code class="docutils literal notranslate"><span class="pre">create_met_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.preprocessor.ppr"><code class="docutils literal notranslate"><span class="pre">ppr()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.solweig">Radiation Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.daylen"><code class="docutils literal notranslate"><span class="pre">daylen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.sunonsurface_2018a"><code class="docutils literal notranslate"><span class="pre">sunonsurface_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.gvf_2018a"><code class="docutils literal notranslate"><span class="pre">gvf_2018a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.cylindric_wedge"><code class="docutils literal notranslate"><span class="pre">cylindric_wedge()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.TsWaveDelay_2015a"><code class="docutils literal notranslate"><span class="pre">TsWaveDelay_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kup_veg_2015a"><code class="docutils literal notranslate"><span class="pre">Kup_veg_2015a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kvikt_veg"><code class="docutils literal notranslate"><span class="pre">Kvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shaded_or_sunlit"><code class="docutils literal notranslate"><span class="pre">shaded_or_sunlit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Kside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Kside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.sun_distance"><code class="docutils literal notranslate"><span class="pre">sun_distance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.clearnessindex_2013b"><code class="docutils literal notranslate"><span class="pre">clearnessindex_2013b()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.diffusefraction"><code class="docutils literal notranslate"><span class="pre">diffusefraction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_13"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_13()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.shadowingfunction_wallheight_23"><code class="docutils literal notranslate"><span class="pre">shadowingfunction_wallheight_23()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Perez_v3"><code class="docutils literal notranslate"><span class="pre">Perez_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model1"><code class="docutils literal notranslate"><span class="pre">model1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model2"><code class="docutils literal notranslate"><span class="pre">model2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.model3"><code class="docutils literal notranslate"><span class="pre">model3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.define_patch_characteristics"><code class="docutils literal notranslate"><span class="pre">define_patch_characteristics()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lcyl_v2022a"><code class="docutils literal notranslate"><span class="pre">Lcyl_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lvikt_veg"><code class="docutils literal notranslate"><span class="pre">Lvikt_veg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Lside_veg_v2022a"><code class="docutils literal notranslate"><span class="pre">Lside_veg_v2022a()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.solweig.Solweig_2022a_calc"><code class="docutils literal notranslate"><span class="pre">Solweig_2022a_calc()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.sun_position">Solar Position Algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_position"><code class="docutils literal notranslate"><span class="pre">sun_position()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.julian_calculation"><code class="docutils literal notranslate"><span class="pre">julian_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.earth_heliocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">earth_heliocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_geocentric_position_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_position_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.nutation_calculation"><code class="docutils literal notranslate"><span class="pre">nutation_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.true_obliquity_calculation"><code class="docutils literal notranslate"><span class="pre">true_obliquity_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.abberation_correction_calculation"><code class="docutils literal notranslate"><span class="pre">abberation_correction_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.apparent_sun_longitude_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_sun_longitude_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.apparent_stime_at_greenwich_calculation"><code class="docutils literal notranslate"><span class="pre">apparent_stime_at_greenwich_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_rigth_ascension_calculation"><code class="docutils literal notranslate"><span class="pre">sun_rigth_ascension_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_geocentric_declination_calculation"><code class="docutils literal notranslate"><span class="pre">sun_geocentric_declination_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.observer_local_hour_calculation"><code class="docutils literal notranslate"><span class="pre">observer_local_hour_calculation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.topocentric_sun_position_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_sun_position_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.topocentric_local_hour_calculate"><code class="docutils literal notranslate"><span class="pre">topocentric_local_hour_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.sun_topocentric_zenith_angle_calculate"><code class="docutils literal notranslate"><span class="pre">sun_topocentric_zenith_angle_calculate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.set_to_range"><code class="docutils literal notranslate"><span class="pre">set_to_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.sun_position.Solweig_2015a_metdata_noload"><code class="docutils literal notranslate"><span class="pre">Solweig_2015a_metdata_noload()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.shadow">Shadow and Sky View Factor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.ensure_tensor"><code class="docutils literal notranslate"><span class="pre">ensure_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.shadow"><code class="docutils literal notranslate"><span class="pre">shadow()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.annulus_weight"><code class="docutils literal notranslate"><span class="pre">annulus_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.create_patches"><code class="docutils literal notranslate"><span class="pre">create_patches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.shadow.svf_calculator"><code class="docutils literal notranslate"><span class="pre">svf_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.calculate_utci">UTCI Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.calculate_utci.utci_polynomial"><code class="docutils literal notranslate"><span class="pre">utci_polynomial()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.calculate_utci.utci_calculator"><code class="docutils literal notranslate"><span class="pre">utci_calculator()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.utci_process">UTCI Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.load_raster_to_tensor"><code class="docutils literal notranslate"><span class="pre">load_raster_to_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.extract_key"><code class="docutils literal notranslate"><span class="pre">extract_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.get_matching_files"><code class="docutils literal notranslate"><span class="pre">get_matching_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.map_files_by_key"><code class="docutils literal notranslate"><span class="pre">map_files_by_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.extract_number_from_filename"><code class="docutils literal notranslate"><span class="pre">extract_number_from_filename()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.utci_process.compute_utci"><code class="docutils literal notranslate"><span class="pre">compute_utci()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.walls_aspect">Wall Geometry</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.findwalls"><code class="docutils literal notranslate"><span class="pre">findwalls()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.cart2pol"><code class="docutils literal notranslate"><span class="pre">cart2pol()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.get_ders"><code class="docutils literal notranslate"><span class="pre">get_ders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.filter1Goodwin_as_aspect_v3"><code class="docutils literal notranslate"><span class="pre">filter1Goodwin_as_aspect_v3()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.process_file_parallel"><code class="docutils literal notranslate"><span class="pre">process_file_parallel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.walls_aspect.run_parallel_processing"><code class="docutils literal notranslate"><span class="pre">run_parallel_processing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.cli">Command-Line Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.cli.str2bool"><code class="docutils literal notranslate"><span class="pre">str2bool()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../api.html#module-solweig_gpu.Tgmaps_v1">Surface Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api.html#solweig_gpu.Tgmaps_v1.Tgmaps_v1"><code class="docutils literal notranslate"><span class="pre">Tgmaps_v1()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../input_data.html">Input Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#geospatial-rasters">Geospatial Rasters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#required-rasters">Required Rasters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#building-dsm">Building DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#digital-elevation-model-dem">Digital Elevation Model (DEM)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#tree-dsm">Tree DSM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../input_data.html#land-cover-optional">Land Cover (Optional)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#meteorological-forcing-data">Meteorological Forcing Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-1-custom-text-file-umep-format">Option 1: Custom Text File (UMEP Format)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-2-era5-reanalysis-data">Option 2: ERA5 Reanalysis Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#option-3-wrf-output-files">Option 3: WRF Output Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#data-preparation-tips">Data Preparation Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#coordinate-reference-system">Coordinate Reference System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../input_data.html#temporal-resolution">Temporal Resolution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_data.html#sample-data">Sample Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#basic-configuration">Basic Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#required-parameters">Required Parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../configuration.html#base-path"><code class="docutils literal notranslate"><span class="pre">base_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../configuration.html#selected-date-str"><code class="docutils literal notranslate"><span class="pre">selected_date_str</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#raster-filenames">Raster Filenames</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#tiling-configuration">Tiling Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#tile-size"><code class="docutils literal notranslate"><span class="pre">tile_size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#overlap"><code class="docutils literal notranslate"><span class="pre">overlap</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#meteorological-data-configuration">Meteorological Data Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#using-custom-meteorological-file">Using Custom Meteorological File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#using-era5-or-wrf-data">Using ERA5 or WRF Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#output-configuration">Output Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#complete-configuration-example">Complete Configuration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../configuration.html#performance-optimization">Performance Optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#gpu-vs-cpu">GPU vs CPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../configuration.html#memory-management">Memory Management</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../outputs.html">Outputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#output-structure">Output Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#output-files">Output Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#universal-thermal-climate-index-utci">Universal Thermal Climate Index (UTCI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#mean-radiant-temperature-tmrt">Mean Radiant Temperature (Tmrt)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#sky-view-factor-svf">Sky View Factor (SVF)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#downwelling-shortwave">Downwelling Shortwave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#upwelling-shortwave-kup">Upwelling Shortwave (Kup)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#downwelling-longwave-ldown">Downwelling Longwave (Ldown)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../outputs.html#upwelling-longwave-lup">Upwelling Longwave (Lup)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#shadow-maps">Shadow Maps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#multi-band-structure">Multi-Band Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#visualizing-outputs">Visualizing Outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-qgis">Using QGIS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-python">Using Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#using-arcgis">Using ArcGIS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#merging-tiles">Merging Tiles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#utci-tile-merging-example">UTCI tile merging example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../outputs.html#data-analysis">Data Analysis</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#computing-statistics">Computing Statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../outputs.html#extracting-time-series">Extracting Time Series</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../notebooks.html#download-notebooks">Download Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../testing.html">Testing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#full-test-suite">Full Test Suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#with-coverage-report">With Coverage Report</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#specific-test-modules">Specific Test Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#example-testing-a-utility-function">Example: Testing a Utility Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#example-testing-with-fixtures">Example: Testing with Fixtures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#continuous-integration">Continuous Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#manual-testing">Manual Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#test-with-sample-data">Test with Sample Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../testing.html#verify-outputs">Verify Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../testing.html#benchmark-tests">Benchmark Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer_guide.html">Developer Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#architecture-overview">Architecture Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#module-interactions">Module Interactions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../developer_guide.html#contributing-to-solweig-gpu">Contributing to SOLWEIG-GPU</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SOLWEIG-GPU</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">solweig_gpu.shadow</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for solweig_gpu.shadow</h1><div class="highlight"><pre>
+<span></span><span class="c1">#SOLWEIG-GPU: GPU-accelerated SOLWEIG model for urban thermal comfort simulation</span>
+<span class="c1">#Copyright (C) 2022–2025 Harsh Kamath and Naveen Sudharsan</span>
+
+<span class="c1">#This program is free software: you can redistribute it and/or modify</span>
+<span class="c1">#it under the terms of the GNU General Public License as published by</span>
+<span class="c1">#the Free Software Foundation, either version 3 of the License, or</span>
+<span class="c1">#(at your option) any later version.</span>
+
+<span class="c1">#This program is distributed in the hope that it will be useful,</span>
+<span class="c1">#but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1">#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="c1">#GNU General Public License for more details.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">radians</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">osgeo</span><span class="w"> </span><span class="kn">import</span> <span class="n">gdal</span><span class="p">,</span> <span class="n">osr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">calendar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.ndimage.interpolation</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn.functional</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">rotate</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="n">gdal</span><span class="o">.</span><span class="n">UseExceptions</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ensure_tensor">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.shadow.ensure_tensor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ensure_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert input to PyTorch tensor on specified device.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        x: Input data (can be numpy array, list, or torch tensor)</span>
+<span class="sd">        device (torch.device, optional): Target device. Auto-detects GPU if available.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor: Input converted to tensor on specified device</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="shadow">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.shadow.shadow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">shadow</span><span class="p">(</span><span class="n">amaxvalue</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">vegdem</span><span class="p">,</span> <span class="n">vegdem2</span><span class="p">,</span> <span class="n">bush</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">altitude</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate shadow patterns from buildings and vegetation using GPU-accelerated ray tracing.</span>
+<span class="sd">    </span>
+<span class="sd">    This function performs GPU-accelerated shadow calculations by tracing sun rays</span>
+<span class="sd">    across the Digital Surface Model (DSM) accounting for buildings and vegetation.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        amaxvalue (torch.Tensor): Maximum elevation value in the domain</span>
+<span class="sd">        a (torch.Tensor): Digital Surface Model (DSM) array</span>
+<span class="sd">        vegdem (torch.Tensor): Vegetation canopy DSM</span>
+<span class="sd">        vegdem2 (torch.Tensor): Vegetation trunk zone DSM</span>
+<span class="sd">        bush (torch.Tensor): Bush/shrub layer DSM</span>
+<span class="sd">        azimuth (float): Solar azimuth angle (degrees, 0=North, clockwise)</span>
+<span class="sd">        altitude (float): Solar altitude angle (degrees above horizon)</span>
+<span class="sd">        scale (float): Grid resolution in pixels per meter</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: (sh, vegsh, vbshvegsh) where:</span>
+<span class="sd">            - sh: Shadow map (0=shadow, 1=sunlit)</span>
+<span class="sd">            - vegsh: Vegetation shadow influence</span>
+<span class="sd">            - vbshvegsh: Combined vegetation and building shadow</span>
+<span class="sd">    </span>
+<span class="sd">    Notes:</span>
+<span class="sd">        - Automatically uses GPU if available, otherwise CPU</span>
+<span class="sd">        - Implements anisotropic shadow casting</span>
+<span class="sd">        - Accounts for vegetation transmittance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="n">degrees</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.</span>
+    <span class="k">if</span> <span class="n">azimuth</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">azimuth</span> <span class="o">=</span> <span class="mf">1e-12</span>
+    <span class="n">azimuth</span> <span class="o">=</span> <span class="n">ensure_tensor</span><span class="p">(</span><span class="n">azimuth</span><span class="p">)</span>
+    <span class="n">altitutde</span> <span class="o">=</span> <span class="n">ensure_tensor</span><span class="p">(</span><span class="n">altitude</span><span class="p">)</span>
+    <span class="n">azimuth</span> <span class="o">=</span> <span class="n">azimuth</span> <span class="o">*</span> <span class="n">degrees</span> <span class="c1">#torch.tensor(azimuth * degrees, device=a.device)</span>
+    <span class="n">altitude</span> <span class="o">=</span> <span class="n">altitude</span> <span class="o">*</span> <span class="n">degrees</span> <span class="c1">#torch.tensor(altitude * degrees, device=a.device)</span>
+
+    <span class="n">dx</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">sizex</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">sizey</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">device</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">device</span>
+
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">dz</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">tempvegdem</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">tempvegdem2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">vbshvegsh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">tempbush</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">bushplant</span> <span class="o">=</span> <span class="n">bush</span> <span class="o">&gt;</span> <span class="mf">1.</span>
+    <span class="n">vegsh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizex</span><span class="p">,</span> <span class="n">sizey</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span> <span class="o">+</span> <span class="n">bushplant</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+
+    <span class="n">pibyfour</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">4.</span>
+    <span class="n">threetimespibyfour</span> <span class="o">=</span> <span class="mf">3.</span> <span class="o">*</span> <span class="n">pibyfour</span>
+    <span class="n">fivetimespibyfour</span> <span class="o">=</span> <span class="mf">5.</span> <span class="o">*</span> <span class="n">pibyfour</span>
+    <span class="n">seventimespibyfour</span> <span class="o">=</span> <span class="mf">7.</span> <span class="o">*</span> <span class="n">pibyfour</span>
+    <span class="n">sinazimuth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">azimuth</span><span class="p">)</span>
+    <span class="n">cosazimuth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">azimuth</span><span class="p">)</span>
+    <span class="n">tanazimuth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">azimuth</span><span class="p">)</span>
+    <span class="n">signsinazimuth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">sinazimuth</span><span class="p">)</span>
+    <span class="n">signcosazimuth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">cosazimuth</span><span class="p">)</span>
+    <span class="n">dssin</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">sinazimuth</span><span class="p">))</span>
+    <span class="n">dscos</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">cosazimuth</span><span class="p">))</span>
+    <span class="n">tanaltitudebyscale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tan</span><span class="p">(</span><span class="n">altitude</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">amaxvalue</span> <span class="o">&gt;=</span> <span class="n">dz</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">sizex</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">sizey</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pibyfour</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="n">threetimespibyfour</span> <span class="ow">or</span> <span class="n">fivetimespibyfour</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="n">seventimespibyfour</span><span class="p">):</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="n">signsinazimuth</span> <span class="o">*</span> <span class="n">index</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span> <span class="o">*</span> <span class="n">signcosazimuth</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">index</span> <span class="o">/</span> <span class="n">tanazimuth</span><span class="p">))</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">dssin</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="n">signsinazimuth</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">index</span> <span class="o">*</span> <span class="n">tanazimuth</span><span class="p">))</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span> <span class="o">*</span> <span class="n">signcosazimuth</span> <span class="o">*</span> <span class="n">index</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">dscos</span>
+
+        <span class="n">dz</span> <span class="o">=</span> <span class="n">ds</span> <span class="o">*</span> <span class="n">index</span> <span class="o">*</span> <span class="n">tanaltitudebyscale</span>
+
+        <span class="n">tempvegdem</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+        <span class="n">tempvegdem2</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+        <span class="n">temp</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+        <span class="n">absdx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span>
+        <span class="n">absdy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">)</span>
+        <span class="n">xc1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">dx</span> <span class="o">+</span> <span class="n">absdx</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+        <span class="n">xc2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sizex</span> <span class="o">+</span> <span class="p">(</span><span class="n">dx</span> <span class="o">-</span> <span class="n">absdx</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+        <span class="n">yc1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">dy</span> <span class="o">+</span> <span class="n">absdy</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+        <span class="n">yc2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sizey</span> <span class="o">+</span> <span class="p">(</span><span class="n">dy</span> <span class="o">-</span> <span class="n">absdy</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+        <span class="n">xp1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">dx</span> <span class="o">-</span> <span class="n">absdx</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">))</span>
+        <span class="n">xp2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sizex</span> <span class="o">-</span> <span class="p">(</span><span class="n">dx</span> <span class="o">+</span> <span class="n">absdx</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+        <span class="n">yp1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">dy</span> <span class="o">-</span> <span class="n">absdy</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">))</span>
+        <span class="n">yp2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sizey</span> <span class="o">-</span> <span class="p">(</span><span class="n">dy</span> <span class="o">+</span> <span class="n">absdy</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+
+        <span class="n">tempvegdem</span><span class="p">[</span><span class="n">xp1</span><span class="p">:</span><span class="n">xp2</span><span class="p">,</span> <span class="n">yp1</span><span class="p">:</span><span class="n">yp2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vegdem</span><span class="p">[</span><span class="n">xc1</span><span class="p">:</span><span class="n">xc2</span><span class="p">,</span> <span class="n">yc1</span><span class="p">:</span><span class="n">yc2</span><span class="p">]</span> <span class="o">-</span> <span class="n">dz</span>
+        <span class="n">tempvegdem2</span><span class="p">[</span><span class="n">xp1</span><span class="p">:</span><span class="n">xp2</span><span class="p">,</span> <span class="n">yp1</span><span class="p">:</span><span class="n">yp2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vegdem2</span><span class="p">[</span><span class="n">xc1</span><span class="p">:</span><span class="n">xc2</span><span class="p">,</span> <span class="n">yc1</span><span class="p">:</span><span class="n">yc2</span><span class="p">]</span> <span class="o">-</span> <span class="n">dz</span>
+        <span class="n">temp</span><span class="p">[</span><span class="n">xp1</span><span class="p">:</span><span class="n">xp2</span><span class="p">,</span> <span class="n">yp1</span><span class="p">:</span><span class="n">yp2</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">xc1</span><span class="p">:</span><span class="n">xc2</span><span class="p">,</span> <span class="n">yc1</span><span class="p">:</span><span class="n">yc2</span><span class="p">]</span> <span class="o">-</span> <span class="n">dz</span>
+
+        <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
+        <span class="n">sh</span><span class="p">[</span><span class="n">f</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="n">sh</span><span class="p">[</span><span class="n">f</span> <span class="o">&lt;=</span> <span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="n">fabovea</span> <span class="o">=</span> <span class="n">tempvegdem</span> <span class="o">&gt;</span> <span class="n">a</span>
+        <span class="n">gabovea</span> <span class="o">=</span> <span class="n">tempvegdem2</span> <span class="o">&gt;</span> <span class="n">a</span>
+        <span class="n">vegsh2</span> <span class="o">=</span> <span class="n">fabovea</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">-</span> <span class="n">gabovea</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+
+        <span class="n">vegsh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">vegsh</span><span class="p">,</span> <span class="n">vegsh2</span><span class="p">)</span>
+        <span class="n">vegsh</span><span class="p">[(</span><span class="n">vegsh</span> <span class="o">*</span> <span class="n">sh</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="n">vbshvegsh</span> <span class="o">=</span> <span class="n">vegsh</span> <span class="o">+</span> <span class="n">vbshvegsh</span>
+
+        <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">:</span>
+            <span class="n">firstvegdem</span> <span class="o">=</span> <span class="n">tempvegdem</span> <span class="o">-</span> <span class="n">temp</span>
+            <span class="n">firstvegdem</span><span class="p">[</span><span class="n">firstvegdem</span> <span class="o">&lt;=</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1000.</span>
+            <span class="n">vegsh</span><span class="p">[</span><span class="n">firstvegdem</span> <span class="o">&lt;</span> <span class="n">dz</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="n">vegsh</span> <span class="o">=</span> <span class="n">vegsh</span> <span class="o">*</span> <span class="p">(</span><span class="n">vegdem2</span> <span class="o">&gt;</span> <span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+            <span class="n">vbshvegsh</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">bush</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">fabovea</span> <span class="o">*</span> <span class="n">bush</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">:</span>
+            <span class="n">tempbush</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+            <span class="n">tempbush</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">xp1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">xp2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">yp1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">yp2</span><span class="p">)]</span> <span class="o">=</span> <span class="n">bush</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">xc1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">xc2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">yc1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">yc2</span><span class="p">)]</span> <span class="o">-</span> <span class="n">dz</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">tempbush</span><span class="p">)</span>
+            <span class="n">g</span> <span class="o">*=</span> <span class="n">bushplant</span>
+
+        <span class="n">index</span> <span class="o">+=</span> <span class="mf">1.</span>
+
+    <span class="n">sh</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">sh</span>
+    <span class="n">vbshvegsh</span><span class="p">[</span><span class="n">vbshvegsh</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">vbshvegsh</span> <span class="o">=</span> <span class="n">vbshvegsh</span> <span class="o">-</span> <span class="n">vegsh</span>
+
+    <span class="k">if</span> <span class="n">bush</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">g</span> <span class="o">-</span> <span class="n">bush</span>
+        <span class="n">g</span><span class="p">[</span><span class="n">g</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="n">g</span><span class="p">[</span><span class="n">g</span> <span class="o">&lt;</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="n">vegsh</span> <span class="o">=</span> <span class="n">vegsh</span> <span class="o">-</span> <span class="n">bushplant</span> <span class="o">+</span> <span class="n">g</span>
+        <span class="n">vegsh</span><span class="p">[</span><span class="n">vegsh</span> <span class="o">&lt;</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+
+    <span class="n">vegsh</span><span class="p">[</span><span class="n">vegsh</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">vegsh</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">vegsh</span>
+    <span class="n">vbshvegsh</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">vbshvegsh</span>
+
+    <span class="c1"># Changed here</span>
+    <span class="k">del</span> <span class="n">tempvegdem</span><span class="p">,</span> <span class="n">tempvegdem2</span><span class="p">,</span> <span class="n">temp</span><span class="p">,</span> <span class="n">tempbush</span><span class="p">,</span> <span class="n">fabovea</span><span class="p">,</span> <span class="n">gabovea</span><span class="p">,</span> <span class="n">vegsh2</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+    <span class="c1"># Changed here</span>
+    <span class="k">return</span> <span class="n">sh</span><span class="p">,</span> <span class="n">vegsh</span><span class="p">,</span> <span class="n">vbshvegsh</span></div>
+
+
+<div class="viewcode-block" id="annulus_weight">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.shadow.annulus_weight">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">annulus_weight</span><span class="p">(</span><span class="n">altitude</span><span class="p">,</span> <span class="n">aziinterval</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate annulus weights for sky view factor computation.</span>
+<span class="sd">    </span>
+<span class="sd">    Computes weights for different altitude bands used in SVF calculation</span>
+<span class="sd">    based on the solid angle subtended by each annular ring.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        altitude (float or torch.Tensor): Solar altitude angle (degrees)</span>
+<span class="sd">        aziinterval (int): Azimuthal interval for discretization</span>
+<span class="sd">        device (torch.device, optional): PyTorch device. Auto-detects if None.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor: Array of annulus weights</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    
+    <span class="n">n</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">90.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">altitude</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">altitude</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">steprad</span> <span class="o">=</span> <span class="p">(</span><span class="mf">360.0</span> <span class="o">/</span> <span class="n">aziinterval</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span><span class="p">)</span>
+    <span class="n">annulus</span> <span class="o">=</span> <span class="mf">91.0</span> <span class="o">-</span> <span class="n">altitude</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">))</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">annulus</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">))</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">steprad</span> <span class="o">*</span> <span class="n">w</span>
+
+    <span class="k">return</span> <span class="n">weight</span></div>
+
+
+<div class="viewcode-block" id="create_patches">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.shadow.create_patches">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_patches</span><span class="p">(</span><span class="n">patch_option</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create patch configuration for sky hemisphere discretization.</span>
+<span class="sd">    </span>
+<span class="sd">    Generates the angular resolution and patch geometry for sky view factor</span>
+<span class="sd">    calculations by dividing the sky hemisphere into discrete patches.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        patch_option (int): Number of patches (144 or 2304)</span>
+<span class="sd">            - 144: Coarser resolution (faster)</span>
+<span class="sd">            - 2304: Finer resolution (more accurate)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Configuration containing:</span>
+<span class="sd">            - &#39;azimuthinterval&#39;: Number of azimuth bins</span>
+<span class="sd">            - &#39;altitudeinterval&#39;: Number of altitude bins</span>
+<span class="sd">            - &#39;patchnorm&#39;: Normalization factor</span>
+<span class="sd">    </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If patch_option is not 144 or 2304</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="n">deg2rad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+    <span class="n">skyvaultalt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">skyvaultazi</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">patch_option</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">annulino</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">skyvaultaltint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">6</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">66</span><span class="p">,</span> <span class="mi">78</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">azistart</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">patches_in_band</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">patch_option</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">annulino</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">skyvaultaltint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">6</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">66</span><span class="p">,</span> <span class="mi">78</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">azistart</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">patches_in_band</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">31</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">patch_option</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">annulino</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">72</span><span class="p">,</span> <span class="mi">84</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">skyvaultaltint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">6</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">66</span><span class="p">,</span> <span class="mi">78</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">azistart</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">patches_in_band</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">31</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">30</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">28</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">24</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">19</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">13</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">patch_option</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">annulino</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">63</span><span class="p">,</span> <span class="mi">69</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">81</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">skyvaultaltint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">63</span><span class="p">,</span> <span class="mi">69</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">81</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">patches_in_band</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">31</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">31</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">30</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">30</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">28</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">28</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">24</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">24</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">19</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">19</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">13</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">13</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">azistart</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">skyvaultaziint</span> <span class="o">=</span> <span class="mi">360</span> <span class="o">/</span> <span class="n">patches_in_band</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">skyvaultaltint</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">patches_in_band</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
+            <span class="n">skyvaultalt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">skyvaultalt</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">skyvaultaltint</span><span class="p">[</span><span class="n">j</span><span class="p">]],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)))</span>
+            <span class="n">skyvaultazi</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">skyvaultazi</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">k</span> <span class="o">*</span> <span class="n">skyvaultaziint</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">azistart</span><span class="p">[</span><span class="n">j</span><span class="p">]],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">skyvaultalt</span><span class="p">,</span> <span class="n">skyvaultazi</span><span class="p">,</span> <span class="n">annulino</span><span class="p">,</span> <span class="n">skyvaultaltint</span><span class="p">,</span> <span class="n">patches_in_band</span><span class="p">,</span> <span class="n">skyvaultaziint</span><span class="p">,</span> <span class="n">azistart</span></div>
+
+
+
+<div class="viewcode-block" id="svf_calculator">
+<a class="viewcode-back" href="../../api.html#solweig_gpu.shadow.svf_calculator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">svf_calculator</span><span class="p">(</span><span class="n">patch_option</span><span class="p">,</span><span class="n">amaxvalue</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">vegdem</span><span class="p">,</span> <span class="n">vegdem2</span><span class="p">,</span> <span class="n">bush</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Sky View Factor (SVF) using GPU-accelerated hemisphere sampling.</span>
+<span class="sd">    </span>
+<span class="sd">    SVF represents the portion of visible sky from each point, accounting for</span>
+<span class="sd">    obstructions from buildings and vegetation. Directional SVFs are also computed</span>
+<span class="sd">    for cardinal directions (N, E, S, W).</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        patch_option (int): Sky discretization option (144 or 2304 patches)</span>
+<span class="sd">        amaxvalue (torch.Tensor): Maximum elevation in domain</span>
+<span class="sd">        a (torch.Tensor): Digital Surface Model</span>
+<span class="sd">        vegdem (torch.Tensor): Vegetation canopy DSM</span>
+<span class="sd">        vegdem2 (torch.Tensor): Vegetation trunk zone DSM</span>
+<span class="sd">        bush (torch.Tensor): Bush layer DSM</span>
+<span class="sd">        scale (float): Grid resolution (pixels per meter)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: (svf, svfE, svfS, svfW, svfN, svfveg, svfEveg, svfSveg, svfWveg, svfNveg, </span>
+<span class="sd">                svfaveg, svfEaveg, svfSaveg, svfWaveg, svfNaveg) where:</span>
+<span class="sd">            - svf: Total sky view factor [0-1]</span>
+<span class="sd">            - svfE/S/W/N: Directional SVFs for East/South/West/North</span>
+<span class="sd">            - svf*veg: Vegetation-obstructed SVFs</span>
+<span class="sd">            - svf*aveg: Vegetation-adjusted SVFs</span>
+<span class="sd">    </span>
+<span class="sd">    Notes:</span>
+<span class="sd">        - Uses GPU if available for fast computation</span>
+<span class="sd">        - Higher patch_option gives more accurate but slower results</span>
+<span class="sd">        - Directional SVFs useful for anisotropic radiation modeling</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">device</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="n">svf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfE</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfS</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfW</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfN</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfEveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfSveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfWveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfNveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfaveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfEaveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfSaveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfWaveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">svfNaveg</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">skyvaultalt</span><span class="p">,</span> <span class="n">skyvaultazi</span><span class="p">,</span> <span class="n">annulino</span><span class="p">,</span> <span class="n">skyvaultaltint</span><span class="p">,</span> <span class="n">aziinterval</span><span class="p">,</span> <span class="n">skyvaultaziint</span><span class="p">,</span> <span class="n">azistart</span> <span class="o">=</span> <span class="n">create_patches</span><span class="p">(</span><span class="n">patch_option</span><span class="p">)</span>
+    <span class="n">skyvaultaziint</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">360</span> <span class="o">/</span> <span class="n">patches</span> <span class="k">for</span> <span class="n">patches</span> <span class="ow">in</span> <span class="n">aziinterval</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">iazimuth</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">aziinterval</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">shmat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">aziinterval</span><span class="p">)),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">vegshmat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">aziinterval</span><span class="p">)),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">vbshvegshmat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">aziinterval</span><span class="p">)),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">skyvaultaltint</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mi">360</span> <span class="o">/</span> <span class="n">skyvaultaziint</span><span class="p">[</span><span class="n">j</span><span class="p">])):</span>
+            <span class="n">iazimuth</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="n">skyvaultaziint</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">azistart</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">iazimuth</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">360.</span><span class="p">:</span>
+                <span class="n">iazimuth</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">iazimuth</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="p">]</span> <span class="o">-</span> <span class="mf">360.</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">aziintervalaniso</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">aziinterval</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">skyvaultaltint</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aziinterval</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">int</span><span class="p">()):</span>
+            <span class="n">altitude</span> <span class="o">=</span> <span class="n">skyvaultaltint</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">azimuth</span> <span class="o">=</span> <span class="n">iazimuth</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="p">]</span>
+            <span class="n">sh</span><span class="p">,</span> <span class="n">vegsh</span><span class="p">,</span> <span class="n">vbshvegsh</span> <span class="o">=</span> <span class="n">shadow</span><span class="p">(</span><span class="n">amaxvalue</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">vegdem</span><span class="p">,</span> <span class="n">vegdem2</span><span class="p">,</span> <span class="n">bush</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">altitude</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+
+            <span class="n">vegshmat</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">vegsh</span>
+            <span class="n">vbshvegshmat</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">vbshvegsh</span>
+            <span class="n">shmat</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sh</span>
+
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">annulino</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">annulino</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">weight</span> <span class="o">=</span> <span class="n">annulus_weight</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">aziinterval</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">device</span><span class="p">)</span> <span class="o">*</span> <span class="n">sh</span>
+                <span class="n">svf</span> <span class="o">=</span> <span class="n">svf</span> <span class="o">+</span> <span class="n">weight</span>
+                <span class="n">weight</span> <span class="o">=</span> <span class="n">annulus_weight</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">aziintervalaniso</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">device</span><span class="p">)</span> <span class="o">*</span> <span class="n">sh</span>
+                <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">180</span><span class="p">:</span>
+                    <span class="n">svfE</span> <span class="o">=</span> <span class="n">svfE</span> <span class="o">+</span> <span class="n">weight</span>
+                <span class="k">if</span> <span class="mi">90</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">270</span><span class="p">:</span>
+                    <span class="n">svfS</span> <span class="o">=</span> <span class="n">svfS</span> <span class="o">+</span> <span class="n">weight</span>
+                <span class="k">if</span> <span class="mi">180</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">360</span><span class="p">:</span>
+                    <span class="n">svfW</span> <span class="o">=</span> <span class="n">svfW</span> <span class="o">+</span> <span class="n">weight</span>
+                <span class="k">if</span> <span class="mi">270</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">90</span><span class="p">:</span>
+                    <span class="n">svfN</span> <span class="o">=</span> <span class="n">svfN</span> <span class="o">+</span> <span class="n">weight</span>
+
+                <span class="n">weight</span> <span class="o">=</span> <span class="n">annulus_weight</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">aziinterval</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">device</span><span class="p">)</span>
+                <span class="n">svfveg</span> <span class="o">=</span> <span class="n">svfveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vegsh</span>
+                <span class="n">svfaveg</span> <span class="o">=</span> <span class="n">svfaveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vbshvegsh</span>
+                <span class="n">weight</span> <span class="o">=</span> <span class="n">annulus_weight</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">aziintervalaniso</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">device</span><span class="p">)</span>
+                <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">180</span><span class="p">:</span>
+                    <span class="n">svfEveg</span> <span class="o">=</span> <span class="n">svfEveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vegsh</span>
+                    <span class="n">svfEaveg</span> <span class="o">=</span> <span class="n">svfEaveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vbshvegsh</span>
+                <span class="k">if</span> <span class="mi">90</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">270</span><span class="p">:</span>
+                    <span class="n">svfSveg</span> <span class="o">=</span> <span class="n">svfSveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vegsh</span>
+                    <span class="n">svfSaveg</span> <span class="o">=</span> <span class="n">svfSaveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vbshvegsh</span>
+                <span class="k">if</span> <span class="mi">180</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">360</span><span class="p">:</span>
+                    <span class="n">svfWveg</span> <span class="o">=</span> <span class="n">svfWveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vegsh</span>
+                    <span class="n">svfWaveg</span> <span class="o">=</span> <span class="n">svfWaveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vbshvegsh</span>
+                <span class="k">if</span> <span class="mi">270</span> <span class="o">&lt;=</span> <span class="n">azimuth</span> <span class="o">&lt;</span> <span class="mi">90</span><span class="p">:</span>
+                    <span class="n">svfNveg</span> <span class="o">=</span> <span class="n">svfNveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vegsh</span>
+                    <span class="n">svfNaveg</span> <span class="o">=</span> <span class="n">svfNaveg</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">vbshvegsh</span>
+
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">svfS</span> <span class="o">=</span> <span class="n">svfS</span> <span class="o">+</span> <span class="mf">3.0459e-004</span>
+    <span class="n">svfW</span> <span class="o">=</span> <span class="n">svfW</span> <span class="o">+</span> <span class="mf">3.0459e-004</span>
+    <span class="n">svf</span><span class="p">[</span><span class="n">svf</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfE</span><span class="p">[</span><span class="n">svfE</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfS</span><span class="p">[</span><span class="n">svfS</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfW</span><span class="p">[</span><span class="n">svfW</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfN</span><span class="p">[</span><span class="n">svfN</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+    <span class="n">last</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">last</span><span class="p">[</span><span class="n">vegdem2</span> <span class="o">==</span> <span class="mf">0.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.0459e-004</span>
+    <span class="n">svfSveg</span> <span class="o">=</span> <span class="n">svfSveg</span> <span class="o">+</span> <span class="n">last</span>
+    <span class="n">svfWveg</span> <span class="o">=</span> <span class="n">svfWveg</span> <span class="o">+</span> <span class="n">last</span>
+    <span class="n">svfSaveg</span> <span class="o">=</span> <span class="n">svfSaveg</span> <span class="o">+</span> <span class="n">last</span>
+    <span class="n">svfWaveg</span> <span class="o">=</span> <span class="n">svfWaveg</span> <span class="o">+</span> <span class="n">last</span>
+    <span class="n">svfveg</span><span class="p">[</span><span class="n">svfveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfEveg</span><span class="p">[</span><span class="n">svfEveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfSveg</span><span class="p">[</span><span class="n">svfSveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfWveg</span><span class="p">[</span><span class="n">svfWveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfNveg</span><span class="p">[</span><span class="n">svfNveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfaveg</span><span class="p">[</span><span class="n">svfaveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfEaveg</span><span class="p">[</span><span class="n">svfEaveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfSaveg</span><span class="p">[</span><span class="n">svfSaveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfWaveg</span><span class="p">[</span><span class="n">svfWaveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="n">svfNaveg</span><span class="p">[</span><span class="n">svfNaveg</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+
+    <span class="n">trans</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.03</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># Tree transmission hardcoded to 3%</span>
+    <span class="n">SVFtotal</span> <span class="o">=</span> <span class="n">svf</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">svfveg</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">trans</span><span class="p">)</span>
+
+    <span class="k">del</span> <span class="n">sh</span><span class="p">,</span> <span class="n">vegsh</span><span class="p">,</span><span class="n">vbshvegsh</span><span class="p">,</span> <span class="n">last</span><span class="p">,</span> <span class="n">weight</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">empty_cache</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">svf</span><span class="p">,</span> <span class="n">svfaveg</span><span class="p">,</span> <span class="n">svfE</span><span class="p">,</span> <span class="n">svfEaveg</span><span class="p">,</span> <span class="n">svfEveg</span><span class="p">,</span> <span class="n">svfN</span><span class="p">,</span> <span class="n">svfNaveg</span><span class="p">,</span> <span class="n">svfNveg</span><span class="p">,</span> <span class="n">svfS</span><span class="p">,</span> <span class="n">svfSaveg</span><span class="p">,</span> <span class="n">svfSveg</span><span class="p">,</span> <span class="n">svfveg</span><span class="p">,</span> <span class="n">svfW</span><span class="p">,</span> <span class="n">svfWaveg</span><span class="p">,</span> <span class="n">svfWveg</span><span class="p">,</span> <span class="n">vegshmat</span><span class="p">,</span> <span class="n">vbshvegshmat</span><span class="p">,</span> <span class="n">shmat</span><span class="p">,</span> <span class="n">SVFtotal</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022-2025, Harsh Kamath and Naveen Sudharsan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
