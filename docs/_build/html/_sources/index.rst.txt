@@ -13,6 +13,10 @@ SOLWEIG-GPU Documentation
     :target: https://pypi.org/project/solweig-gpu/
     :alt: Python versions
 
+.. image:: https://img.shields.io/github/stars/nvnsudharsan/solweig-gpu?style=social
+    :target: https://github.com/nvnsudharsan/solweig-gpu
+    :alt: GitHub stars
+
 GPU-accelerated SOLWEIG model for urban thermal comfort simulation.
 
 **SOLWEIG-GPU** is a high-performance implementation of the Solar and Longwave Environmental Irradiance Geometry (SOLWEIG) model, 
@@ -39,8 +43,12 @@ Installation
    # Using conda (recommended)
    conda create -n solweig python=3.10
    conda activate solweig
-   conda install -c conda-forge gdal pytorch
+   # Install dependencies via conda
+   conda install -c conda-forge gdal pytorch timezonefinder matplotlib sip 
+   pip install PyQt5
+   conda install -c conda-forge cudnn #If GPU is available
    pip install solweig-gpu
+
 
 Basic Usage
 ^^^^^^^^^^^
@@ -80,6 +88,12 @@ Documentation
    input_data
    configuration
    outputs
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples:
+
+   notebooks
    examples
 
 .. toctree::
