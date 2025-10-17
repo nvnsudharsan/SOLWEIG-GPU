@@ -27,7 +27,7 @@ UMEP journal reference: Lindberg, F., Grimmond, C.S.B., Gabey, A., Huang, B., Ke
 
 ---
 
-For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.readthedocs.io/en/latest/installation.html)
+For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.readthedocs.io/en/latest/index.html)
 
 ## Features
 
