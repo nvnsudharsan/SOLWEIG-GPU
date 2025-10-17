@@ -39,7 +39,7 @@ For contributing or development:
 
 ```bash
 # Clone the repository instead of 'pip install solweig-gpu'
-git clone https://github.com/your-username/SOLWEIG-GPU.git
+git clone https://github.com/nvnsudharsan/SOLWEIG-GPU.git
 cd SOLWEIG-GPU
 
 # Install in editable mode
