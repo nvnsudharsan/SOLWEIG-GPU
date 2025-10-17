@@ -38,7 +38,7 @@ selected_date_str = '2020-08-13'
 ```
 
 !!! Note:
-    This is the date in local time for your study area, not UTC. E.g., If you want to simulate an entire day of 2020-08-13 for Austin,Texas in summer (UTC - 5 hours), the selected_date_str should be '2020-08-13'
+    This is the local time date for your study area, not UTC. E.g., if you want to simulate an entire day of 2020-08-13 for Austin, Texas, in summer (UTC - 5 hours), the selected_date_str should be '2020-08-13'
 
 ### Raster Filenames
 
@@ -111,7 +111,7 @@ own_met_file = '/path/to/your/metfile.txt'
 When `use_own_met=True`, you must provide the path to your custom meteorological file. The `start_time`, `end_time`, `data_source_type`, and `data_folder` parameters are ignored.
 
 !!! Note:
-    It is recomended to create the meteorological file with the UMEP Met Processor tool: <https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html>
+    It is recommended to create the meteorological file with the UMEP Met Processor tool: <https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html>
     
 ### Using ERA5 or WRF Data 
 
@@ -134,7 +134,8 @@ data_folder = '/path/to/era5_data'
 start_time = '2020-08-13 06:00:00'  # UTC
 end_time = '2020-08-13 23:00:00'    # UTC
 ```
-To download ERA5 data, follow the steps below or alternatively you can donwload it directly from [CDS]()
+To download ERA5 data, follow the steps below or alternatively, you can download it directly from [CDS](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview)
+[Setup cdsapi](https://cds.climate.copernicus.eu/how-to-api)
 ```python
 import cdsapi
 
