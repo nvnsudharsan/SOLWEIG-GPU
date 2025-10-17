@@ -134,7 +134,8 @@ data_folder = '/path/to/era5_data'
 start_time = '2020-08-13 06:00:00'  # UTC
 end_time = '2020-08-13 23:00:00'    # UTC
 ```
-To download ERA5 data, follow the steps below or alternatively, you can download it directly from [CDS](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview)
+To download ERA5 data, follow the steps below, or alternatively, you can download it directly from [CDS](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview)
+
 [Setup cdsapi](https://cds.climate.copernicus.eu/how-to-api)
 ```python
 import cdsapi
@@ -175,8 +176,8 @@ client.retrieve(dataset, request).download()
 
 !!! Important Notes:
    1.  When using ERA5 or WRF data, `start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
-   2.  When using wrfout, the `start_time` and `end_time` should be the first and last time stamps in the wrfout dataset. The package won't compare the selecetd `start_time` and `end_time` to the wrfout file timestamps and automatically fetch the corresponding data.
-   3.  When using ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
+   2.  When using wrfout, the `start_time` and `end_time` should be the first and last time stamps in the wrfout dataset. The package won't compare the selected `start_time` and `end_time` to the wrfout file timestamps and automatically fetch the corresponding data.
+   3.  When using the ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
     
 
 ## Output Configuration
@@ -195,7 +196,7 @@ save_shadow = False   # Shadow maps
 
 **Output Descriptions:**
 
- Except for sky view factor, each output is saved as a multi-band GeoTIFF with one time step per band.
+ Except for the sky view factor, each output is saved as a multi-band GeoTIFF with one time step per band.
     
 ## Complete Configuration Example
 
