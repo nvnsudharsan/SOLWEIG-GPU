@@ -1,4 +1,4 @@
-># Examples
+# Examples
 
 This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.
 

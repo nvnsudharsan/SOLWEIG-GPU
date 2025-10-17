@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SOLWEIG-GPU Documentation &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+  <title>Example Notebooks &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -16,9 +16,14 @@
       <script src="_static/documentation_options.js?v=4afb903a"></script>
       <script src="_static/doctools.js?v=9a2dae69"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="notebooks/Example_ownmetfile.html" />
+    <link rel="prev" title="Outputs" href="outputs.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -280,10 +285,29 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example 1: Using WRF Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#example-1-using-your-own-met-file">Example 1: Using Your Own Met File</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2-using-era5-data">Example 2: Using ERA5 Data</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-3-using-wrf-output">Example 3: Using WRF Output</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#download-all-notebooks">Download All Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
 <ul>
@@ -327,9 +351,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">SOLWEIG-GPU Documentation</li>
+      <li class="breadcrumb-item active">Example Notebooks</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/README.md.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/notebooks.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -337,220 +361,44 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="solweig-gpu-documentation">
-<h1>SOLWEIG-GPU Documentation<a class="headerlink" href="#solweig-gpu-documentation" title="Link to this heading"></a></h1>
-<p>This directory contains the Sphinx documentation for SOLWEIG-GPU, which can be built locally or hosted on Read the Docs.</p>
-<section id="building-documentation-locally">
-<h2>Building Documentation Locally<a class="headerlink" href="#building-documentation-locally" title="Link to this heading"></a></h2>
-<section id="prerequisites">
-<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-</pre></div>
+  <section id="example-notebooks">
+<h1>Example Notebooks<a class="headerlink" href="#example-notebooks" title="Link to this heading"></a></h1>
+<p>Interactive Jupyter notebooks demonstrating SOLWEIG-GPU usage with different data sources.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These notebooks are rendered directly in the documentation. You can also download them to run locally.</p>
+</div>
+<section id="example-1-using-your-own-met-file">
+<h2>Example 1: Using Your Own Met File<a class="headerlink" href="#example-1-using-your-own-met-file" title="Link to this heading"></a></h2>
+<p>This example shows the simplest workflow using custom meteorological data.</p>
+<div class="toctree-wrapper compound">
 </div>
 </section>
-<section id="build-html-documentation">
-<h3>Build HTML Documentation<a class="headerlink" href="#build-html-documentation" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
-make<span class="w"> </span>html
-</pre></div>
-</div>
-<p>The generated HTML will be in <code class="docutils literal notranslate"><span class="pre">_build/html/</span></code>. Open <code class="docutils literal notranslate"><span class="pre">_build/html/index.html</span></code> in a browser.</p>
-</section>
-<section id="build-pdf-documentation">
-<h3>Build PDF Documentation<a class="headerlink" href="#build-pdf-documentation" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>latexpdf
-</pre></div>
+<section id="example-2-using-era5-data">
+<h2>Example 2: Using ERA5 Data<a class="headerlink" href="#example-2-using-era5-data" title="Link to this heading"></a></h2>
+<p>This example demonstrates processing ERA5 reanalysis data from the Climate Data Store.</p>
+<div class="toctree-wrapper compound">
 </div>
 </section>
-<section id="clean-build-files">
-<h3>Clean Build Files<a class="headerlink" href="#clean-build-files" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>clean
-</pre></div>
+<section id="example-3-using-wrf-output">
+<h2>Example 3: Using WRF Output<a class="headerlink" href="#example-3-using-wrf-output" title="Link to this heading"></a></h2>
+<p>This example shows how to use Weather Research and Forecasting (WRF) model output.</p>
+<div class="toctree-wrapper compound">
 </div>
 </section>
-</section>
-<section id="documentation-structure">
-<h2>Documentation Structure<a class="headerlink" href="#documentation-structure" title="Link to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>docs/
-├── conf.py              # Sphinx configuration
-├── index.rst            # Main documentation index
-├── api.rst              # Auto-generated API reference
-├── installation.md      # Installation guide
-├── quickstart.md        # Quick start tutorial
-├── testing.md           # Testing guide
-├── requirements.txt     # Sphinx dependencies
-├── Makefile            # Build commands
-└── guide/              # User guides (to be created)
-    ├── input_data.md
-    ├── meteorological_forcing.md
-    └── ...
-</pre></div>
-</div>
-</section>
-<section id="read-the-docs-setup">
-<h2>Read the Docs Setup<a class="headerlink" href="#read-the-docs-setup" title="Link to this heading"></a></h2>
-<section id="connect-repository">
-<h3>1. Connect Repository<a class="headerlink" href="#connect-repository" title="Link to this heading"></a></h3>
-<ol class="arabic simple">
-<li><p>Go to <a class="reference external" href="https://readthedocs.org/">https://readthedocs.org/</a></p></li>
-<li><p>Sign in with GitHub</p></li>
-<li><p>Import your SOLWEIG-GPU repository</p></li>
-<li><p>The <code class="docutils literal notranslate"><span class="pre">.readthedocs.yml</span></code> file will be automatically detected</p></li>
-</ol>
-</section>
-<section id="configuration">
-<h3>2. Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h3>
-<p>The build is configured via <code class="docutils literal notranslate"><span class="pre">.readthedocs.yml</span></code> in the repository root:</p>
-<ul class="simple">
-<li><p>Python 3.11</p></li>
-<li><p>Sphinx builder</p></li>
-<li><p>PDF and ePub output</p></li>
-<li><p>Automatic builds on commits</p></li>
-</ul>
-</section>
-<section id="custom-domain-optional">
-<h3>3. Custom Domain (Optional)<a class="headerlink" href="#custom-domain-optional" title="Link to this heading"></a></h3>
-<p>Set up a custom domain in Read the Docs admin panel:</p>
-<ul class="simple">
-<li><p>Go to Admin → Domains</p></li>
-<li><p>Add your domain (e.g., <a class="reference external" href="http://docs.solweig-gpu.org">docs.solweig-gpu.org</a>)</p></li>
-<li><p>Configure DNS CNAME record</p></li>
-</ul>
-</section>
-<section id="badge">
-<h3>4. Badge<a class="headerlink" href="#badge" title="Link to this heading"></a></h3>
-<p>Add to your <a class="reference external" href="http://README.md">README.md</a>:</p>
-<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span>[<span class="nt">![Documentation Status</span>](<span class="na">https://readthedocs.org/projects/solweig-gpu/badge/?version=latest</span>)](https://solweig-gpu.readthedocs.io/en/latest/?badge=latest)
-</pre></div>
-</div>
-</section>
-</section>
-<section id="documentation-guidelines">
-<h2>Documentation Guidelines<a class="headerlink" href="#documentation-guidelines" title="Link to this heading"></a></h2>
-<section id="docstring-format">
-<h3>Docstring Format<a class="headerlink" href="#docstring-format" title="Link to this heading"></a></h3>
-<p>Use NumPy/Google style docstrings:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">function_name</span><span class="p">(</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Brief description of function.</span>
-<span class="sd">    </span>
-<span class="sd">    Longer description with details about what the function does,</span>
-<span class="sd">    algorithms used, and any important notes.</span>
-<span class="sd">    </span>
-<span class="sd">    Args:</span>
-<span class="sd">        param1 (type): Description of param1</span>
-<span class="sd">        param2 (type): Description of param2</span>
-<span class="sd">    </span>
-<span class="sd">    Returns:</span>
-<span class="sd">        return_type: Description of return value</span>
-<span class="sd">    </span>
-<span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; function_name(1, 2)</span>
-<span class="sd">        3</span>
-<span class="sd">    </span>
-<span class="sd">    Notes:</span>
-<span class="sd">        - Important note 1</span>
-<span class="sd">        - Important note 2</span>
-<span class="sd">    </span>
-<span class="sd">    References:</span>
-<span class="sd">        Author et al. (Year). Title. Journal.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">pass</span>
-</pre></div>
-</div>
-</section>
-<section id="adding-new-pages">
-<h3>Adding New Pages<a class="headerlink" href="#adding-new-pages" title="Link to this heading"></a></h3>
-<ol class="arabic simple">
-<li><p>Create Markdown or RST file in <code class="docutils literal notranslate"><span class="pre">docs/</span></code></p></li>
-<li><p>Add to <code class="docutils literal notranslate"><span class="pre">toctree</span></code> in <code class="docutils literal notranslate"><span class="pre">index.rst</span></code></p></li>
-<li><p>Rebuild documentation</p></li>
-</ol>
-</section>
-<section id="adding-examples">
-<h3>Adding Examples<a class="headerlink" href="#adding-examples" title="Link to this heading"></a></h3>
-<p>Create code examples in docstrings or separate files:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Example:</span>
-<span class="sd">    Basic usage::</span>
-<span class="sd">    </span>
-<span class="sd">        from solweig_gpu import thermal_comfort</span>
-<span class="sd">        </span>
-<span class="sd">        thermal_comfort(</span>
-<span class="sd">            base_path=&#39;/path/to/data&#39;,</span>
-<span class="sd">            selected_date_str=&#39;2020-08-13&#39;</span>
-<span class="sd">        )</span>
-<span class="sd">&quot;&quot;&quot;</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="auto-generated-api-documentation">
-<h2>Auto-Generated API Documentation<a class="headerlink" href="#auto-generated-api-documentation" title="Link to this heading"></a></h2>
-<p>The API documentation is automatically generated from docstrings using Sphinx autodoc.</p>
-<p>To update:</p>
-<ol class="arabic simple">
-<li><p>Write/update docstrings in source code</p></li>
-<li><p>Rebuild documentation: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code></p></li>
-<li><p>API reference will be automatically updated</p></li>
-</ol>
-</section>
-<section id="contributing-to-documentation">
-<h2>Contributing to Documentation<a class="headerlink" href="#contributing-to-documentation" title="Link to this heading"></a></h2>
-<ol class="arabic simple">
-<li><p>Fork the repository</p></li>
-<li><p>Create a feature branch</p></li>
-<li><p>Add/update documentation</p></li>
-<li><p>Build locally to verify</p></li>
-<li><p>Submit pull request</p></li>
-</ol>
-<p>See <a class="reference internal" href="#../CONTRIBUTING.md"><span class="xref myst">CONTRIBUTING.md</span></a> for details.</p>
-</section>
-<section id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
-<section id="import-errors">
-<h3>Import Errors<a class="headerlink" href="#import-errors" title="Link to this heading"></a></h3>
-<p>If Sphinx cannot import modules:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In conf.py, add to autodoc_mock_imports:</span>
-<span class="n">autodoc_mock_imports</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;torch&#39;</span><span class="p">,</span> <span class="s1">&#39;gdal&#39;</span><span class="p">,</span> <span class="s1">&#39;osr&#39;</span><span class="p">,</span> <span class="s1">&#39;ogr&#39;</span><span class="p">,</span> <span class="s1">&#39;netCDF4&#39;</span><span class="p">,</span> <span class="s1">&#39;PyQt5&#39;</span><span class="p">]</span>
-</pre></div>
-</div>
-</section>
-<section id="build-warnings">
-<h3>Build Warnings<a class="headerlink" href="#build-warnings" title="Link to this heading"></a></h3>
-<p>Fix warnings by:</p>
-<ul class="simple">
-<li><p>Checking RST syntax</p></li>
-<li><p>Verifying all references exist</p></li>
-<li><p>Ensuring all modules can be imported</p></li>
-</ul>
-</section>
-<section id="read-the-docs-build-failures">
-<h3>Read the Docs Build Failures<a class="headerlink" href="#read-the-docs-build-failures" title="Link to this heading"></a></h3>
-<p>Check:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">.readthedocs.yml</span></code> syntax</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">docs/requirements.txt</span></code> has all dependencies</p></li>
-<li><p>Python version compatibility</p></li>
-<li><p>Build logs on Read the Docs dashboard</p></li>
-</ul>
-</section>
-</section>
-<section id="resources">
-<h2>Resources<a class="headerlink" href="#resources" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference external" href="https://www.sphinx-doc.org/">Sphinx Documentation</a></p></li>
-<li><p><a class="reference external" href="https://docs.readthedocs.io/">Read the Docs Guide</a></p></li>
-<li><p><a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html">reStructuredText Primer</a></p></li>
-<li><p><a class="reference external" href="https://myst-parser.readthedocs.io/">MyST Parser (Markdown)</a></p></li>
-</ul>
+<section id="download-all-notebooks">
+<h2>Download All Notebooks<a class="headerlink" href="#download-all-notebooks" title="Link to this heading"></a></h2>
+<p>You can download all example notebooks from the <a class="reference external" href="https://github.com/nvnsudharsan/SOLWEIG-GPU/tree/main/examples">GitHub repository examples/ folder</a>.</p>
 </section>
 </section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="outputs.html" class="btn btn-neutral float-left" title="Outputs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebooks/Example_ownmetfile.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 

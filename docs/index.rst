@@ -88,6 +88,12 @@ Documentation
    input_data
    configuration
    outputs
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples:
+
+   notebooks
    examples
 
 .. toctree::

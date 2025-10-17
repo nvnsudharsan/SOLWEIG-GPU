@@ -16,6 +16,9 @@
       <script src="_static/documentation_options.js?v=4afb903a"></script>
       <script src="_static/doctools.js?v=9a2dae69"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -281,10 +284,29 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example 1: Using WRF Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-1-using-your-own-met-file">Example 1: Using Your Own Met File</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-3-using-wrf-output">Example 3: Using WRF Output</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#download-all-notebooks">Download All Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
 <ul>
@@ -346,6 +368,8 @@
 </a>
 <a class="reference external image-reference" href="https://pypi.org/project/solweig-gpu/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/solweig-gpu.svg" />
 </a>
+<a class="reference external image-reference" href="https://github.com/nvnsudharsan/solweig-gpu"><img alt="GitHub stars" src="https://img.shields.io/github/stars/nvnsudharsan/solweig-gpu?style=social" />
+</a>
 <p>GPU-accelerated SOLWEIG model for urban thermal comfort simulation.</p>
 <p><strong>SOLWEIG-GPU</strong> is a high-performance implementation of the Solar and Longwave Environmental Irradiance Geometry (SOLWEIG) model,
 designed for calculating mean radiant temperature (Tmrt) and Universal Thermal Climate Index (UTCI) in complex urban environments.</p>
@@ -367,7 +391,10 @@ designed for calculating mean radiant temperature (Tmrt) and Universal Thermal C
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Using conda (recommended)</span>
 conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>solweig<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
 conda<span class="w"> </span>activate<span class="w"> </span>solweig
-conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gdal<span class="w"> </span>pytorch
+<span class="c1"># Install dependencies via conda</span>
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gdal<span class="w"> </span>pytorch<span class="w"> </span>timezonefinder<span class="w"> </span>matplotlib<span class="w"> </span>sip
+pip<span class="w"> </span>install<span class="w"> </span>PyQt5
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>cudnn<span class="w"> </span><span class="c1">#If GPU is available</span>
 pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
 </pre></div>
 </div>
@@ -462,10 +489,25 @@ pip<span class="w"> </span>install<span class="w"> </span>solweig-gpu
 <li class="toctree-l2"><a class="reference internal" href="outputs.html#data-analysis">Data Analysis</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Example 1: Using WRF Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-1-using-your-own-met-file">Example 1: Using Your Own Met File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-3-using-wrf-output">Example 3: Using WRF Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#download-all-notebooks">Download All Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="toctree-wrapper compound">

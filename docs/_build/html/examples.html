@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Example 1: Using WRF Data &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
+  <title>Examples &mdash; SOLWEIG-GPU 1.2.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -16,11 +16,12 @@
       <script src="_static/documentation_options.js?v=4afb903a"></script>
       <script src="_static/doctools.js?v=9a2dae69"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Testing Guide" href="testing.html" />
-    <link rel="prev" title="Outputs" href="outputs.html" /> 
+    <link rel="prev" title="&lt;no title&gt;" href="notebooks/Example_wrfout.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -193,7 +194,7 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="input_data.html">Input Data</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="input_data.html#geospatial-rasters">Geospatial Rasters</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="input_data.html#requirements">Requirements</a></li>
@@ -282,10 +283,29 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Example 1: Using WRF Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Example Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-1-using-your-own-met-file">Example 1: Using Your Own Met File</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-2-using-era5-data">Example 2: Using ERA5 Data</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#example-3-using-wrf-output">Example 3: Using WRF Output</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#download-all-notebooks">Download All Notebooks</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#example-1-using-wrf-data">Example 1: Using WRF Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2-using-era5-data">Example 2: Using ERA5 Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#you-can-download-era5-as-below">You can download ERA5 as below</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-3-using-a-custom-meteorological-file">Example 3: Using a Custom Meteorological File</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Additional Resources:</span></p>
 <ul>
@@ -329,7 +349,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Example 1: Using WRF Data</li>
+      <li class="breadcrumb-item active">Examples</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/examples.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -339,12 +359,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <blockquote>
-<div><h1 class="rubric" id="examples">Examples</h1>
-</div></blockquote>
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
 <p>This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.</p>
 <section id="example-1-using-wrf-data">
-<h1>Example 1: Using WRF Data<a class="headerlink" href="#example-1-using-wrf-data" title="Link to this heading"></a></h1>
+<h2>Example 1: Using WRF Data<a class="headerlink" href="#example-1-using-wrf-data" title="Link to this heading"></a></h2>
 <p>This example shows how to run a simulation using meteorological data from WRF output files.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">solweig_gpu</span><span class="w"> </span><span class="kn">import</span> <span class="n">thermal_comfort</span>
 
@@ -365,10 +384,10 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>See the <a class="reference download internal" download="" href="_downloads/00ea0597ef7221fc63e86871a0cbac60/Example_wrfout.ipynb"><span class="xref download myst">Jupyter notebook</span></a></p>
+<p>See the <span class="xref myst">Jupyter notebook</span></p>
 </section>
 <section id="example-2-using-era5-data">
-<h1>Example 2: Using ERA5 Data<a class="headerlink" href="#example-2-using-era5-data" title="Link to this heading"></a></h1>
+<h2>Example 2: Using ERA5 Data<a class="headerlink" href="#example-2-using-era5-data" title="Link to this heading"></a></h2>
 <p>This example demonstrates how to use ERA5 reanalysis data for the simulation.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">solweig_gpu</span><span class="w"> </span><span class="kn">import</span> <span class="n">thermal_comfort</span>
 
@@ -389,10 +408,10 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>See the <a class="reference download internal" download="" href="_downloads/a44a550193a469a95a4853475657295c/Example_ERA5.ipynb"><span class="xref download myst">Jupyter notebook</span></a></p>
+<p>See the <span class="xref myst">Jupyter notebook</span></p>
 </section>
 <section id="you-can-download-era5-as-below">
-<h1>You can download ERA5 as below<a class="headerlink" href="#you-can-download-era5-as-below" title="Link to this heading"></a></h1>
+<h2>You can download ERA5 as below<a class="headerlink" href="#you-can-download-era5-as-below" title="Link to this heading"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">cdsapi</span>
 
 <span class="n">dataset</span> <span class="o">=</span> <span class="s2">&quot;reanalysis-era5-single-levels&quot;</span>
@@ -431,7 +450,7 @@
 </div>
 </section>
 <section id="example-3-using-a-custom-meteorological-file">
-<h1>Example 3: Using a Custom Meteorological File<a class="headerlink" href="#example-3-using-a-custom-meteorological-file" title="Link to this heading"></a></h1>
+<h2>Example 3: Using a Custom Meteorological File<a class="headerlink" href="#example-3-using-a-custom-meteorological-file" title="Link to this heading"></a></h2>
 <p>This example shows how to use your own meteorological data in the UMEP text file format.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">solweig_gpu</span><span class="w"> </span><span class="kn">import</span> <span class="n">thermal_comfort</span>
 
@@ -449,14 +468,15 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>See the <a class="reference download internal" download="" href="_downloads/1483dd357bf7e9729514db524b1c03ed/Example_ownmetfile.ipynb"><span class="xref download myst">Jupyter notebook</span></a></p>
+<p>See the <span class="xref myst">Jupyter notebook</span></p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="outputs.html" class="btn btn-neutral float-left" title="Outputs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebooks/Example_wrfout.html" class="btn btn-neutral float-left" title="&lt;no title&gt;" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="testing.html" class="btn btn-neutral float-right" title="Testing Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

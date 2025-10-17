@@ -28,6 +28,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'myst_parser',  # For Markdown support
+    'nbsphinx',  # For Jupyter notebooks
 ]
 
 # Napoleon settings (for NumPy/Google style docstrings)
@@ -147,4 +148,15 @@ source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown',
 }
+
+# nbsphinx configuration
+nbsphinx_execute = 'never'  # Don't execute notebooks during build (faster, safer)
+nbsphinx_allow_errors = True  # Continue build even if notebook has errors
+nbsphinx_prolog = """
+{% set docname = env.doc2path(env.docname, base=None) %}
+
+.. note::
+   This page was generated from a Jupyter notebook. 
+   You can download it here: :download:`{{ docname }}`
+"""
 
