@@ -1,4 +1,4 @@
-# Examples
+# Examples (Using the sample data)
 
 This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.
 
@@ -45,7 +45,7 @@ thermal_comfort(
     overlap=100,
     use_own_met=False,
     start_time='2020-08-13 06:00:00',
-    end_time='2020-08-14 05:00:00',
+    end_time='2020-08-13 23:00:00',
     data_source_type='ERA5',
     data_folder='/path/to/era5',
 )
