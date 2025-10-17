@@ -38,7 +38,7 @@ selected_date_str = '2020-08-13'
 ```
 
 !!! Note:
-    This is the date in local time for your study area, not UTC. E.g., If you want to simulate an entire day of 2020-08-13 for Austin,Texas in summer (UTC - 5 hours), the selected_date_str should be '2020-08-13'
+    This is the local time date for your study area, not UTC. E.g., if you want to simulate an entire day of 2020-08-13 for Austin, Texas, in summer (UTC - 5 hours), the selected_date_str should be '2020-08-13'
 
 ### Raster Filenames
 
@@ -78,7 +78,7 @@ The optimal tile size depends on your GPU memory. Here are some guidelines:
 | 16 GB+ | 2000-3600 | 4.0-12.96 km² |
 
 !!! Tip: "Finding the Right Tile Size"
-    If you encounter out-of-memory errors, reduce the tile size. If processing is slow with plenty of memory available, try increasing it. You may use hit and trial to determine the raster size that works with your GPU.
+    If you encounter out-of-memory errors, reduce the tile size. If processing is slow despite having plenty of memory available, try increasing the memory allocation. You can use a hit-and-trial approach to determine the raster size that works with your GPU.
 
 ### `overlap`
 
@@ -99,9 +99,9 @@ The overlap ensures that shadows cast from buildings in one tile can affect adja
 !!! Warning:
     Overlap must be less than tile_size. The actual processed tile will be `tile_size + overlap` pixels.
 
-## Meteorological Data Configuration
+## Meteorological Data Configuration (Using the sample data provided)
 
-### Using Custom Meteorological File
+### Using Custom Meteorological File 
 
 ```python
 use_own_met = True
@@ -111,9 +111,9 @@ own_met_file = '/path/to/your/metfile.txt'
 When `use_own_met=True`, you must provide the path to your custom meteorological file. The `start_time`, `end_time`, `data_source_type`, and `data_folder` parameters are ignored.
 
 !!! Note:
-    It is recomended to create the meteorological file with the UMEP Met Processor tool: <https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html>
+    It is recommended to create the meteorological file with the UMEP Met Processor tool: <https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html>
     
-### Using ERA5 or WRF Data
+### Using ERA5 or WRF Data 
 
 **WRF:**
 
@@ -122,7 +122,7 @@ use_own_met = False
 data_source_type = 'wrfout'
 data_folder = '/path/to/wrf_data'
 start_time = '2020-08-13 06:00:00'  # UTC
-end_time = '2020-08-13 23:00:00'    # UTC
+end_time = '2020-08-14 05:00:00'    # UTC
 ```
 
 **ERA-5:**
@@ -131,14 +131,52 @@ end_time = '2020-08-13 23:00:00'    # UTC
 use_own_met = False
 data_source_type = 'ERA5'
 data_folder = '/path/to/era5_data'
-start_time = '2020-08-13 00:00:00'  # UTC
-end_time = '2020-08-14 23:00:00'    # UTC
+start_time = '2020-08-13 06:00:00'  # UTC
+end_time = '2020-08-13 23:00:00'    # UTC
 ```
+To download ERA5 data, follow the steps below, or alternatively, you can download it directly from [CDS](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview)
+```python
+import cdsapi
+
+dataset = "reanalysis-era5-single-levels"
+request = {
+    "product_type": ["reanalysis"],
+    "variable": [
+        "10m_u_component_of_wind",
+        "10m_v_component_of_wind",
+        "2m_dewpoint_temperature",
+        "2m_temperature",
+        "surface_pressure",
+        "surface_solar_radiation_downwards",
+        "surface_thermal_radiation_downwards"
+    ],
+    "year": ["2000"], # change to the desired year
+    "month": ["08"], # change to the desired month
+    "day": ["13", "14"], # change to the desired date
+    "time": [
+        "00:00", "01:00", "02:00",
+        "03:00", "04:00", "05:00",
+        "06:00", "07:00", "08:00",
+        "09:00", "10:00", "11:00",
+        "12:00", "13:00", "14:00",
+        "15:00", "16:00", "17:00",
+        "18:00", "19:00", "20:00",
+        "21:00", "22:00", "23:00"
+    ],
+    "data_format": "netcdf",
+    "download_format": "unarchived",
+    "area": [31, -98, 29, -97] #change according to your location
+}
+
+client = cdsapi.Client()
+client.retrieve(dataset, request).download()
+```
+[Setup cdsapi](https://cds.climate.copernicus.eu/how-to-api)
 
 !!! Important Notes:
    1.  When using ERA5 or WRF data, `start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
-   2.  When using wrfout, the `start_time` and `end_time` should be the first and last time stamps in the wrfout dataset. The package won't compare the selecetd `start_time` and `end_time` to the wrfout file timestamps and automatically fetch the corresponding data.
-   3.  When using ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
+   2.  When using wrfout, the `start_time` and `end_time` should be the first and last time stamps in the wrfout dataset. The package won't compare the selected `start_time` and `end_time` to the wrfout file timestamps and automatically fetch the corresponding data.
+   3.  When using the ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
     
 
 ## Output Configuration
@@ -157,7 +195,7 @@ save_shadow = False   # Shadow maps
 
 **Output Descriptions:**
 
- Except for sky view factor, each output is saved as a multi-band GeoTIFF with one time step per band.
+ Except for the sky view factor, each output is saved as a multi-band GeoTIFF with one time step per band.
     
 ## Complete Configuration Example
 

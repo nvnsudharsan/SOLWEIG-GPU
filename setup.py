@@ -18,7 +18,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="solweig-gpu",
-    version="1.2.15",
+    version="1.2.18",
     description="GPU-accelerated SOLWEIG model for urban thermal comfort simulation",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -47,7 +47,7 @@ setup(
     ],
     license="GPL-3.0-only",
     classifiers=[
-        "License :: OSI Approved :: GNU General Public License v3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Programming Language :: Python :: 3",
         "Operating System :: POSIX :: Linux",
         "Intended Audience :: Science/Research",
