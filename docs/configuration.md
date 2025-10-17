@@ -99,9 +99,9 @@ The overlap ensures that shadows cast from buildings in one tile can affect adja
 !!! Warning:
     Overlap must be less than tile_size. The actual processed tile will be `tile_size + overlap` pixels.
 
-## Meteorological Data Configuration
+## Meteorological Data Configuration (Using the sample data provided)
 
-### Using Custom Meteorological File
+### Using Custom Meteorological File 
 
 ```python
 use_own_met = True
@@ -113,7 +113,7 @@ When `use_own_met=True`, you must provide the path to your custom meteorological
 !!! Note:
     It is recomended to create the meteorological file with the UMEP Met Processor tool: <https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html>
     
-### Using ERA5 or WRF Data (Using the sample data provided)
+### Using ERA5 or WRF Data 
 
 **WRF:**
 
