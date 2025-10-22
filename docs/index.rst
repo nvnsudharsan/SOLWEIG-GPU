@@ -33,7 +33,7 @@ Features
 * **Multiple Data Sources**: Supports ERA5, WRF, and custom meteorological inputs
 * **Complete 3D Geometry**: Accounts for buildings, vegetation, and terrain
 * **Parallel Processing**: Multi-core CPU processing for wall calculations
-* **High Accuracy**: Implements latest SOLWEIG 2022a algorithms with anisotropic radiation
+* **High Accuracy**: Implements SOLWEIG 2022a (will upgrade to 2025a) algorithms with anisotropic radiation
 
 Quick Start
 -----------
