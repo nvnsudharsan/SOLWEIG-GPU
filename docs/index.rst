@@ -1,4 +1,4 @@
-SOLWEIG-GPU Documentation
+SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework for Urban Digital Twins
 =========================
 
 .. image:: https://readthedocs.org/projects/solweig-gpu/badge/?version=latest
