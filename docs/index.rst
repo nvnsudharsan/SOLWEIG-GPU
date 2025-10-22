@@ -20,6 +20,7 @@ SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework for Urban Digita
 
 **SOLWEIG-GPU** is a high-performance implementation of the Solar and Longwave Environmental Irradiance Geometry (SOLWEIG) model, 
 designed for calculating Sky View Factor (SVF), mean radiant temperature (Tmrt), Universal Thermal Climate Index (UTCI), shadows, and short and long-wave radiation in urban environments. The original SOLWEIG model was developed to calculate TMRT over small geographical areas in cities. At this spatial scale, given the time required for computation, the model can be run on CPUs. However, for city-scale thermal comfort estimation, the model should be accelerated using a GPU. Specifically, the calculation of the SVF (the most time-consuming step), TMRT, and UTCI can be processed on a GPU. Currently, there is a tool that computes SVF on GPU, but it uses Python to read the inputs and write the output rasters, while the SVF calculation on GPU is done by interfacing with a C-language code. Thus, there was a need for a Python-based end-to-end framework to run SOLWEIG on a GPU. Our framework is implemented in PyTorch, which enables automatic selection of the GPU when available.
+
 Features
 --------
 
