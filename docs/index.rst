@@ -17,10 +17,13 @@ SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework for Urban Digita
     :target: https://github.com/nvnsudharsan/solweig-gpu
     :alt: GitHub stars
 
-GPU-accelerated SOLWEIG model for urban thermal comfort simulation.
 
 **SOLWEIG-GPU** is a high-performance implementation of the Solar and Longwave Environmental Irradiance Geometry (SOLWEIG) model, 
-designed for calculating Sky View Factor (SVF), mean radiant temperature (Tmrt), Universal Thermal Climate Index (UTCI), shadows, and short and long-wave radiation in urban environments.
+designed for calculating Sky View Factor (SVF), mean radiant temperature (Tmrt), Universal Thermal Climate Index (UTCI), shadows, and short and long-wave radiation in urban environments. 
+
+The original `SOLWEIG model <https://umep-docs.readthedocs.io/en/latest/OtherManuals/SOLWEIG.html>`_ was developed to calculate TMRT over small geographical areas in cities. At this spatial scale, given the time required for computation, the model can be run on CPUs. However, for city-scale thermal comfort estimation, the model should be accelerated using a GPU. Specifically, the calculation of the SVF (the most time-consuming step), TMRT, and UTCI can be processed on a GPU. 
+
+Currently, a tool exists that computes SVF on GPU (`gpusvf <https://link.springer.com/article/10.1007/s00704-021-03692-z>`_). However, it utilizes Python to read the inputs and write the output rasters, whereas the SVF calculation on the GPU is performed by interfacing with a C-language code. Thus, there was a need for a Python-based end-to-end framework to run SOLWEIG on a GPU. Our framework is implemented in PyTorch, which enables automatic selection of the GPU when available.
 
 Features
 --------
@@ -30,7 +33,7 @@ Features
 * **Multiple Data Sources**: Supports ERA5, WRF, and custom meteorological inputs
 * **Complete 3D Geometry**: Accounts for buildings, vegetation, and terrain
 * **Parallel Processing**: Multi-core CPU processing for wall calculations
-* **High Accuracy**: Implements latest SOLWEIG 2022a algorithms with anisotropic radiation
+* **High Accuracy**: Implements SOLWEIG 2022a (will upgrade to 2025a) algorithms with anisotropic radiation
 
 Quick Start
 -----------
