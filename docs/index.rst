@@ -23,7 +23,7 @@ designed for calculating Sky View Factor (SVF), mean radiant temperature (Tmrt),
 
 The original SOLWEIG model was developed to calculate TMRT over small geographical areas in cities. At this spatial scale, given the time required for computation, the model can be run on CPUs. However, for city-scale thermal comfort estimation, the model should be accelerated using a GPU. Specifically, the calculation of the SVF (the most time-consuming step), TMRT, and UTCI can be processed on a GPU. 
 
-Currently, a tool exists that computes SVF on GPU (gpusvf <https://link.springer.com/article/10.1007/s00704-021-03692-z>). However, it utilizes Python to read the inputs and write the output rasters, whereas the SVF calculation on the GPU is performed by interfacing with a C-language code. Thus, there was a need for a Python-based end-to-end framework to run SOLWEIG on a GPU. Our framework is implemented in PyTorch, which enables automatic selection of the GPU when available.
+Currently, a tool exists that computes SVF on GPU (`gpusvf <https://link.springer.com/article/10.1007/s00704-021-03692-z>`_). However, it utilizes Python to read the inputs and write the output rasters, whereas the SVF calculation on the GPU is performed by interfacing with a C-language code. Thus, there was a need for a Python-based end-to-end framework to run SOLWEIG on a GPU. Our framework is implemented in PyTorch, which enables automatic selection of the GPU when available.
 
 Features
 --------
