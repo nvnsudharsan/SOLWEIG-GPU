@@ -51,6 +51,8 @@ Installation
    pip install PyQt5
    conda install -c conda-forge cudnn #If GPU is available
    pip install solweig-gpu
+   # if you have older versions installed
+   pip install --upgrade solweig-gpu
 
 
 Basic Usage
