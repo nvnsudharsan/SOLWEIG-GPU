@@ -85,6 +85,8 @@ conda activate solweig
 conda install -c conda-forge gdal cudnn pytorch timezonefinder matplotlib sip #cudnn is required only if you are using nvidia GPU
 pip install PyQt5
 pip install solweig-gpu
+#if you have older versions installed
+pip install --upgrade solweig-gpu
 
 ```
 ## Testing
