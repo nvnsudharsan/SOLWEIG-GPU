@@ -22,6 +22,9 @@ conda install -c conda-forge cudnn #If GPU is available
 
 # Install SOLWEIG-GPU
 pip install solweig-gpu
+
+# If you have installed an older version
+pip install --upgrade solweig-gpu
 ```
 
 ## Using pip with system GDAL
