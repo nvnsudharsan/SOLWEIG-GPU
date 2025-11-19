@@ -66,13 +66,7 @@ Figure 1 shows the workflow of SOLWEIG-GPU, and a detailed description of functi
 
 # Usage 
 
-SOLWEIG-GPU can be run using Python code, CLI, or GUI, depending on the code adaptation. We explain how to run SOLWEIG-GPU in Python below. Examples for running the model using all three methods are provided in the repository. 
-
-![A single line Python code to call the function `thermal_comfort`.](figures/figure2.png)
-
-In the example shown in Figure 2, *selected_ date_str* is the day of the simulation, landcover raster is used if *landcover_filename* is provided (else set to **None**), tile_size is set to 3600 meaning the tiles will be 3600 x 3600 pixels, *overlap* is set to 100 meaning there will be 100 pixels that overlap between the tiles for shadow transfer between the tiles, meteorological data created using UMEP is used (*thus use_own_met* = **True**), *use_own_file* is the path to the UMEP meteorological forcing, and lastly only UTCI rasteres are saved (default). The rest of the inputs shown in Figure 2 are optional if using *use_own_met* = **True**. However, if gridded datasets are to be used, *use_own_met* = **False**. Additionally, the source of the gridded files must be mentioned (*ERA5* or *wrfout*), and the folder path where gridded data is stored should be provided in *data_folder*. The *start_time* and *end_time* are the first and last hour (in UTC) of meteorological data in the gridded datasets. UTC to local time conversion is done within the program.
-
-Further details on input datasets: <https://solweig-gpu.readthedocs.io/en/latest/input_data.html>
+SOLWEIG-GPU can be run using Python code, CLI, or GUI, depending on the code adaptation. Deatils on model usage can be found in the SOLWEIG GPU documentation (<https://solweig-gpu.readthedocs.io/en/latest/?badge=latest>)
      
 Documentation on outputs and visiualization: <https://solweig-gpu.readthedocs.io/en/latest/outputs.html>
 
