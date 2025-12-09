@@ -79,6 +79,8 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 
 ## Installation
 
+We recommend using conda environment 
+
 ```bash
 conda create -n solweig python=3.10
 conda activate solweig
