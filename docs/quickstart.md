@@ -97,8 +97,8 @@ thermal_comfort \
     --date 2020-08-13 \
     --data_source ERA5 \
     --data_folder /path/to/era5 \
-    --start_time "2020-08-13 06:00:00" \
-    --end_time "2020-08-13 23:00:00"
+    --start "2020-08-13 06:00:00" \
+    --end "2020-08-13 23:00:00"
 ```
 
 ## Configuration Options
