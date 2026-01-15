@@ -55,8 +55,8 @@ thermal_comfort(
     use_own_met=False,
     data_source_type='ERA5',
     data_folder='/path/to/era5/files',
-    start_time='2020-08-13 06:00:00',
-    end_time='2020-08-13 23:00:00'
+    start_time='2020-08-13 00:00:00',
+    end_time='2020-08-14 23:00:00'
 )
 ```
 When using ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
@@ -88,17 +88,20 @@ thermal_comfort \
     --base_path /path/to/data \
     --date 2020-08-13 \
     --tile_size 1000 \
-    --use_own_met \
-    --met_file met_data.txt
+    --use_own_met True \
+    --own_metfile /path/to/ownmet.txt
 
 # Using ERA5
 thermal_comfort \
     --base_path /path/to/data \
     --date 2020-08-13 \
+    --tile_size 1000 \
+    --overlap 100 \
+    --use_own_met False \
     --data_source ERA5 \
     --data_folder /path/to/era5 \
-    --start_time "2020-08-13 06:00:00" \
-    --end_time "2020-08-13 23:00:00"
+    --start "2020-08-13 00:00:00" \
+    --end "2020-08-14 23:00:00"
 ```
 
 ## Configuration Options
