@@ -88,17 +88,20 @@ thermal_comfort \
     --base_path /path/to/data \
     --date 2020-08-13 \
     --tile_size 1000 \
-    --use_own_met \
-    --met_file met_data.txt
+    --use_own_met True \
+    --own_metfile /path/to/ownmet.txt
 
 # Using ERA5
 thermal_comfort \
     --base_path /path/to/data \
     --date 2020-08-13 \
+    --tile_size 1000 \
+    --overlap 100 \
+    --use_own_met False \
     --data_source ERA5 \
     --data_folder /path/to/era5 \
-    --start "2020-08-13 06:00:00" \
-    --end "2020-08-13 23:00:00"
+    --start "2020-08-13 00:00:00" \
+    --end "2020-08-14 23:00:00"
 ```
 
 ## Configuration Options
