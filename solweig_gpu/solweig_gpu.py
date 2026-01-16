@@ -73,7 +73,7 @@ def thermal_comfort(
         None: Outputs are saved to `{base_path}/Outputs/` directory
     
     Output Structure:
-        - {base_path}/pre_processing_outputs/ - All preprocessing files
+        - {base_path}/processed_inputs/ - All preprocessing files
           - Building_DSM/ - Preprocessing tiles
           - DEM/ - Preprocessing tiles
           - Trees/ - Preprocessing tiles
@@ -120,7 +120,7 @@ def thermal_comfort(
     import numpy as np
     import torch
     # Create preprocessing outputs directory
-    preprocess_dir = os.path.join(base_path, "pre_processing_outputs")
+    preprocess_dir = os.path.join(base_path, "processed_inputs")
     os.makedirs(preprocess_dir, exist_ok=True)
 
     ppr(
