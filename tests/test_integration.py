@@ -138,7 +138,7 @@ class TestTileBoundaries(unittest.TestCase):
             ds = None
             
             # Create tiles with overlap
-            create_tiles(test_file, tilesize=50, overlap=10, tile_type='test_tile')
+            create_tiles(test_file, tilesize=50, overlap=10, tile_type='test_tile', preprocess_dir=self.base_path)
             
             # Verify tiles were created
             tile_dir = os.path.join(temp_dir, 'test_tile')
@@ -170,7 +170,7 @@ class TestTileBoundaries(unittest.TestCase):
             
             # Invalid overlap (>= tilesize) should raise error
             with self.assertRaises(ValueError):
-                create_tiles(test_file, tilesize=50, overlap=50, tile_type='bad_tile')
+                create_tiles(test_file, tilesize=50, overlap=50, tile_type='bad_tile',preprocess_dir=self.base_path)
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
