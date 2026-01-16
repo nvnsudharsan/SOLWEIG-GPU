@@ -239,7 +239,7 @@ thermal_comfort(
 
 ## Command-Line Interface (CLI)
 
-#### Example using sample ERA5 data
+#### Example using sample ERA5 data on Windows
 
 ```bash
 conda activate solweig
@@ -249,7 +249,7 @@ thermal_comfort --base_path '/path/to/input' ^
                 --dem 'DEM.tif' ^
                 --trees 'Trees.tif' ^
                 --tile_size 1000 ^
-                --landcover  'Landcover2.tif' ^
+                --landcover  'Landcover.tif' ^
                 --overlap 100 ^
                 --use_own_met False ^
                 --data_source_type 'ERA5' ^
