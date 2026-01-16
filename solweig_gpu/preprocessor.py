@@ -131,7 +131,7 @@ def check_rasters(files):
 # =============================================================================
 # Function to tile a raster file into smaller chunks.
 # =============================================================================
-def create_tiles(infile, tilesize, overlap, tile_type):
+def create_tiles(infile, tilesize, overlap, tile_type, preprocess_dir):
     """
     Tile a raster file into smaller chunks.
 
@@ -140,6 +140,7 @@ def create_tiles(infile, tilesize, overlap, tile_type):
         tilesize (int): Size of each tile in pixels.
         overlap (int): Number of pixels to overlap between tiles.
         tile_type (str): Label to use for naming output tiles.
+        preprocess_dir (str): Directory to save tiles in the pre_processing_outputs folder.
 
     Raises:
         FileNotFoundError: If the input file is not found.
@@ -156,7 +157,7 @@ def create_tiles(infile, tilesize, overlap, tile_type):
     width = ds.RasterXSize
     height = ds.RasterYSize
 
-    out_folder = os.path.join(os.path.dirname(infile), tile_type)
+    out_folder = os.path.join(preprocess_dir, tile_type)
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
     else:
@@ -189,7 +190,7 @@ def create_tiles(infile, tilesize, overlap, tile_type):
         
 # It processes the data to compute temperature (in °C), surface pressure (in kPa), 
 # relative humidity (in %), wind speed (in m/s), shortwave and longwave radiation (in W/m^2),
-# and writes the results to a new netCDF file. This netCDF files will be used to create the 
+# and writes the results to a new netCDF file. These netCDF files will be used to create the 
 # meteogrological forcing for SOLWEIG. Note that RAIN is set to 0.
 # =============================================================================
 
@@ -632,11 +633,11 @@ def _tile_size_m(poly):
     h = _haversine_m(miny, cx, maxy, cx) 
     return w, h
 
-def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
+def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, preprocess_dir):
     """
     Minimal-edits, curvilinear-safe version of your function.
     """
-    metfiles_folder = os.path.join(base_path, "metfiles")
+    metfiles_folder = os.path.join(preprocess_dir, "metfiles")
     os.makedirs(metfiles_folder, exist_ok=True)
     
     tf = TimezoneFinder()
@@ -848,16 +849,17 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str):
 # Function to process own met file: copies the source met file into new files
 # renaming each copy based on the numeric suffix extracted from .tif files.
 # =============================================================================
-def create_met_files(base_path, source_met_file):
+def create_met_files(base_path, source_met_file, preprocess_dir):
     """
     Copy a given met file to multiple outputs based on the raster tile filenames.
 
     Parameters:
-        base_path (str): Base directory containing "Building_DSM" and where to create "metfiles".
+        base_path (str): Base directory containing input rasters.
         source_met_file (str): Path to user-provided met file.
+        preprocess_dir (str): Directory for preprocessing outputs (pre_processing_outputs).
     """
-    raster_folder = os.path.join(base_path, 'Building_DSM')
-    target_folder = os.path.join(base_path, 'metfiles')
+    raster_folder = os.path.join(preprocess_dir, 'Building_DSM')
+    target_folder = os.path.join(preprocess_dir, 'metfiles')
 
     if not os.path.exists(target_folder):
         os.makedirs(target_folder)
@@ -883,12 +885,12 @@ def create_met_files(base_path, source_met_file):
 # =============================================================================
 def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcover_filename,
          tile_size, overlap, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
-         own_met_file=None):
+         own_met_file=None, preprocess_dir=None):
     """
     Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.
 
     Parameters:
-        base_path (str): Base working directory.
+        base_path (str): Base working directory containing input rasters.
         building_dsm_filename (str): Filename of building DSM raster.
         dem_filename (str): Filename of DEM raster.
         trees_filename (str): Filename of trees raster.
@@ -902,7 +904,12 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         data_source_type (str): Either 'ERA5' or 'wrfout'.
         data_folder (str): Folder containing input NetCDF files.
         own_met_file (str): Path to user-provided met file (used if use_own_met is True).
+        preprocess_dir (str): Directory for preprocessing outputs (pre_processing_outputs folder).
     """
+    if preprocess_dir is None:
+        preprocess_dir = os.path.join(base_path, "processed_inputs")
+    os.makedirs(preprocess_dir, exist_ok=True)
+             
     building_dsm_path = os.path.join(base_path, building_dsm_filename)
     dem_path = os.path.join(base_path, dem_filename)
     trees_path = os.path.join(base_path, trees_filename)
@@ -936,17 +943,17 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")
-        create_tiles(raster, tile_size, overlap, tile_type)
+        create_tiles(raster, tile_size, overlap, tile_type, preprocess_dir)
     
     # For metfiles processing, we use the DEM tiles folder.
-    dem_tiles_folder = os.path.join(os.path.dirname(dem_path), "DEM")
+    dem_tiles_folder = os.path.join(preprocess_dir, "DEM")
     
     # Choose between own met file or processed NetCDF file.
     if use_own_met:
         if own_met_file is None:
             print("Error: Please provide the path to your own met file.")
             exit(1)
-        create_met_files(base_path, own_met_file)
+        create_met_files(base_path, own_met_file, preprocess_dir)
     else:
         # Ensure all additional required parameters are provided.
         if data_folder is None or data_source_type is None or start_time is None or end_time is None:
@@ -954,7 +961,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
             exit(1)
             
         # Define the name (and path) for the processed NetCDF output.
-        processed_nc_file = os.path.join(base_path, "Outfile.nc")
+        processed_nc_file = os.path.join(preprocess_dir, "Outfile.nc")
         
         if data_source_type.lower() == "era5":
             process_era5_data(start_time, end_time, data_folder, output_file=processed_nc_file)
@@ -965,7 +972,8 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
             exit(1)
         
         # Process the generated NetCDF file to create metfiles.
-        process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str)
+        process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str, preprocess_dir)
+
 
 
 
