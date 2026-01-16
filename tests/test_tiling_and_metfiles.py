@@ -80,7 +80,7 @@ class TestTilingAndMetfiles(unittest.TestCase):
                 f.write(f'2000 1 {h} 0 -999 -999 -999 -999 -999 1.0 50 20 100 0 0 -999 -999 -999 -999 -999 -999 -999 -999 -999\n')
         
         # Run copier
-        create_met_files(self.base_path, met_src)
+        create_met_files(self.base_path, met_src, self.base_path)
         met_dir = os.path.join(self.base_path, 'metfiles')
         self.assertTrue(os.path.isdir(met_dir))
         
