@@ -237,7 +237,7 @@ thermal_comfort(
 
 ---
 
-## Command-Line Interface (CLI)
+## Command-Line Interface (CLI) 
 
 #### Example using sample ERA5 data on Windows
 
