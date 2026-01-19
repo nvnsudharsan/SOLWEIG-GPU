@@ -73,6 +73,14 @@ def thermal_comfort(
         None: Outputs are saved to `{base_path}/Outputs/` directory
     
     Output Structure:
+        - {base_path}/processed_inputs/ - All preprocessing files
+          - Building_DSM/ - Preprocessing tiles
+          - DEM/ - Preprocessing tiles
+          - Trees/ - Preprocessing tiles
+          - metfiles/ - Meteorological files
+          - walls/ - Wall height rasters
+          - aspect/ - Wall aspect rasters
+          - Outfile.nc - Processed NetCDF (if using ERA5/WRF)
         - Outputs/{tile_key}/ - One folder per tile
           - UTCI_{date}.tif - Universal Thermal Climate Index (always saved)
           - Tmrt_{date}.tif - Mean radiant temperature (if save_tmrt=True)
@@ -102,7 +110,7 @@ def thermal_comfort(
     
     Raises:
         ValueError: If input rasters have mismatched dimensions, CRS, or pixel sizes
-        FileNotFoundError: If required input files are missing
+        FileNotFoundError: If the required input files are missing
     """
 
     from .preprocessor import ppr
@@ -111,21 +119,25 @@ def thermal_comfort(
     import os
     import numpy as np
     import torch
+    # Create preprocessing outputs directory
+    preprocess_dir = os.path.join(base_path, "processed_inputs")
+    os.makedirs(preprocess_dir, exist_ok=True)
 
     ppr(
         base_path, building_dsm_filename, dem_filename, trees_filename,
         landcover_filename, tile_size, overlap, selected_date_str, use_own_met,
-        start_time, end_time, data_source_type, data_folder, own_met_file
+        start_time, end_time, data_source_type, data_folder, own_met_file,
+         preprocess_dir=preprocess_dir
     )
 
-    base_output_path = os.path.join(base_path, "Outputs")
-    inputMet = os.path.join(base_path, "metfiles")
-    building_dsm_dir = os.path.join(base_path, "Building_DSM")
-    tree_dir = os.path.join(base_path, "Trees")
-    dem_dir = os.path.join(base_path, "DEM")
-    landcover_dir = os.path.join(base_path, "Landcover") if landcover_filename is not None else None
-    walls_dir = os.path.join(base_path, "walls")
-    aspect_dir = os.path.join(base_path, "aspect")
+    base_output_path = os.path.join(base_path, "output_folder")
+    inputMet = os.path.join(preprocess_dir, "metfiles")
+    building_dsm_dir = os.path.join(preprocess_dir, "Building_DSM")
+    tree_dir = os.path.join(preprocess_dir, "Trees")
+    dem_dir = os.path.join(preprocess_dir, "DEM")
+    landcover_dir = os.path.join(preprocess_dir, "Landcover") if landcover_filename is not None else None
+    walls_dir = os.path.join(preprocess_dir, "walls")
+    aspect_dir = os.path.join(preprocess_dir, "aspect")
 
     run_parallel_processing(building_dsm_dir, walls_dir, aspect_dir)
     print("Running Solweig ...")

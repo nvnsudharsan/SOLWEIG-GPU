@@ -40,7 +40,7 @@ class TestTilingAndMetfiles(unittest.TestCase):
         tile_size = 32
         overlap = 8
         # Create tiles for DEM
-        create_tiles(self.dem, tile_size, overlap, 'DEM')
+        create_tiles(self.dem, tile_size, overlap, 'DEM', preprocess_dir=self.base_path)
         out_dir = os.path.join(self.base_path, 'DEM')
         self.assertTrue(os.path.isdir(out_dir))
         # Expect multiple tiles (64x48 raster with 32px tiles = 2x2 grid)
@@ -64,7 +64,7 @@ class TestTilingAndMetfiles(unittest.TestCase):
     def test_create_met_files_from_single_file(self):
         from solweig_gpu.preprocessor import create_tiles, create_met_files
         # Prepare tiles of Building_DSM required by create_met_files naming
-        create_tiles(self.building, tilesize=64, overlap=0, tile_type='Building_DSM')
+        create_tiles(self.building, tilesize=64, overlap=0, tile_type='Building_DSM', preprocess_dir=self.base_path)
         
         # Verify Building_DSM tiles were created
         building_dir = os.path.join(self.base_path, 'Building_DSM')
@@ -80,7 +80,7 @@ class TestTilingAndMetfiles(unittest.TestCase):
                 f.write(f'2000 1 {h} 0 -999 -999 -999 -999 -999 1.0 50 20 100 0 0 -999 -999 -999 -999 -999 -999 -999 -999 -999\n')
         
         # Run copier
-        create_met_files(self.base_path, met_src)
+        create_met_files(self.base_path, met_src, self.base_path)
         met_dir = os.path.join(self.base_path, 'metfiles')
         self.assertTrue(os.path.isdir(met_dir))
         
