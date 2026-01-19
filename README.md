@@ -111,7 +111,7 @@ CI runs tests on Linux and macOS across Python 3.10–3.12.
 
 ## Sample Data
 
-Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  <a href="https://doi.org/10.5281/zenodo.17048978"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17048978.svg" alt="DOI"></a>
+Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  <a href="https://doi.org/10.5281/zenodo.18283037"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18283037.svg" alt="DOI"></a>
 
 ---
 
