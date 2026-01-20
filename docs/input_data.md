@@ -136,7 +136,7 @@ Currently, SOLWEIG-GPU is tested and optimized for **hourly data**. Sub-hourly o
 
 A complete sample dataset is available for download to help you understand the expected data format and structure.
 
-**Download:** [Sample Data on Zenodo](https://doi.org/10.5281/zenodo.17048978)
+**Download:** [Sample Data on Zenodo](https://zenodo.org/records/18283037)
 
 The sample dataset includes:
 
