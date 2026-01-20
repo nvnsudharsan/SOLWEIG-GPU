@@ -17,6 +17,8 @@ from scipy.ndimage import rotate
 import math
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
+import time
+import gc
 gdal.UseExceptions()
 
 # Wall height threshold
@@ -178,6 +180,7 @@ def process_file_parallel(args):
     filename, dem_folder_path, wall_output_path, aspect_output_path = args
     dem_path = os.path.join(dem_folder_path, filename)
 
+    dataset = None
     try:
         dataset = gdal.Open(dem_path)
         if dataset is None:
@@ -189,9 +192,18 @@ def process_file_parallel(args):
 
         if a is None or np.all(np.isnan(a)):
             print(f"Skipping {filename}, invalid DEM.")
+            # Close dataset before returning
+            dataset = None
             return filename
 
-        scale = 1 / dataset.GetGeoTransform()[1]
+        # Extract geotransform and projection before closing dataset
+        geotransform = dataset.GetGeoTransform()
+        projection = dataset.GetProjection()
+        
+        # Close input dataset immediately after reading
+        dataset = None
+        
+        scale = 1 / geotransform[1]
         walls = findwalls(a, walllimit)
         aspects = filter1Goodwin_as_aspect_v3(walls, scale, a)
 
@@ -201,17 +213,59 @@ def process_file_parallel(args):
                      os.path.join(aspect_output_path, out_names[1])]
 
         for out_path, data in zip(out_paths, [walls, aspects]):
-            out_ds = driver.Create(out_path, a.shape[1], a.shape[0], 1, gdal.GDT_Float32)
-            out_ds.SetGeoTransform(dataset.GetGeoTransform())
-            out_ds.SetProjection(dataset.GetProjection())
-            out_ds.GetRasterBand(1).WriteArray(data)
-            out_ds.FlushCache()
-            out_ds = None
+            # Retry logic for Windows file locking issues
+            max_retries = 3
+            retry_delay = 0.1
+            success = False
+            
+            for attempt in range(max_retries):
+                try:
+                    out_ds = driver.Create(out_path, a.shape[1], a.shape[0], 1, gdal.GDT_Float32)
+                    if out_ds is None:
+                        if attempt < max_retries - 1:
+                            time.sleep(retry_delay * (attempt + 1))
+                            continue
+                        print(f"Could not create output file {out_path}")
+                        break
+                        
+                    out_ds.SetGeoTransform(geotransform)
+                    out_ds.SetProjection(projection)
+                    out_band = out_ds.GetRasterBand(1)
+                    out_band.WriteArray(data)
+                    out_band.FlushCache()
+                    out_band = None
+                    
+                    # Explicitly close the dataset
+                    out_ds.FlushCache()
+                    out_ds = None
+                    
+                    # Force GDAL to close the file handle on Windows
+                    gc.collect()
+                    
+                    # Small delay to ensure file handle is released
+                    time.sleep(0.01)
+                    success = True
+                    break
+                    
+                except Exception as e:
+                    # Ensure cleanup before retry
+                    out_ds = None
+                    gc.collect()
+                    
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay * (attempt + 1))
+                        continue
+                    else:
+                        print(f"Error writing {out_path} after {max_retries} attempts: {e}")
+                        break
 
         return filename
 
     except Exception as e:
         print(f"Error processing {filename}: {e}")
+        # Ensure dataset is closed even on error
+        if dataset is not None:
+            dataset = None
         return filename
 
 def run_parallel_processing(dem_folder_path, wall_output_path, aspect_output_path):
@@ -227,7 +281,8 @@ def run_parallel_processing(dem_folder_path, wall_output_path, aspect_output_pat
         aspect_output_path (str): Output path for wall aspect rasters
     
     Notes:
-        - Uses all available CPU cores minus one
+        - Uses multiple CPU cores for parallel processing
+        - On Windows, uses fewer workers (max 8 or half of CPU cores) to avoid file locking issues
         - Progress bar shows processing status
         - Creates output directories if they don't exist
         - Skips tiles that cannot be opened or have invalid data
@@ -238,7 +293,13 @@ def run_parallel_processing(dem_folder_path, wall_output_path, aspect_output_pat
     dem_files = [f for f in os.listdir(dem_folder_path) if f.endswith('.tif') and not f.startswith('.')]
     args_list = [(f, dem_folder_path, wall_output_path, aspect_output_path) for f in dem_files]
 
-    max_workers = min(32, os.cpu_count() or 1)
+    # On Windows, use fewer workers to avoid file locking issues
+    # Reduce max_workers to prevent excessive concurrent file access
+    cpu_count = os.cpu_count() or 1
+    if os.name == 'nt':  # Windows
+        max_workers = min(8, max(1, cpu_count // 2))
+    else:
+        max_workers = min(32, cpu_count)
     print(f"Using {max_workers} parallel workers")
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
