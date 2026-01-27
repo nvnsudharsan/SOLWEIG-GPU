@@ -18,7 +18,7 @@ long_description = (this_directory / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="solweig-gpu",
-    version="1.2.19",
+    version="1.2.20",
     description="GPU-accelerated SOLWEIG model for urban thermal comfort simulation",
     long_description=long_description,
     long_description_content_type='text/markdown',
