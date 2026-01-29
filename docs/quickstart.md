@@ -112,7 +112,7 @@ def main():
     )
 
 if __name__ == "__main__":
-    mp.freeze_support()  # needed for Windows when using multiprocessing (esp. packaged executables)
+    mp.freeze_support() 
     main()
 ```
 
