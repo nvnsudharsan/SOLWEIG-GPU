@@ -235,7 +235,7 @@ thermal_comfort(
 )
 ```
 ### Note for Windows Users: 
-If you run SOLWEIG-GPU on Windows, call thermal_comfort() inside a main() function and use if __name__ == "__main__": (see example below). This avoids multiprocessing issues (e.g., BrokenProcessPool) caused by top-level execution under the Windows “spawn” process start method.
+If you run SOLWEIG-GPU on Windows, call thermal_comfort() inside a main() function and use if __name__ == "__main__": (see example below). This avoids multiprocessing issues (e.g., BrokenProcessPool) on Windows, where the spawn process start method re-imports the main module and can fail when multiprocessing code is executed at the top level.
 ```python
 from solweig_gpu import thermal_comfort
 import multiprocessing as mp
