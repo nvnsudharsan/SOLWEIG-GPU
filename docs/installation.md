@@ -4,7 +4,12 @@
 
 - Python 3.10 or higher
 - CUDA-capable GPU (optional, but recommended for performance)
-- GDAL library
+- GDAL library (libgdal) with matching Python bindings
+
+> **Note:** The GDAL Python bindings (`osgeo`) must be built against the same
+> `libgdal` version available on the system. Installing GDAL via `pip` in
+> environments with older system GDAL (common on HPC / institutional systems)
+> may result in import errors such as `_gdal` or `_gdal_array`.
 
 ## Using Conda (Recommended)
 
@@ -59,6 +64,9 @@ print(solweig_gpu.__version__)
 import torch
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA devices: {torch.cuda.device_count()}")
+
+# Verify GDAL NumPy support
+python -c "from osgeo import gdal_array"
 ```
 
 ## GPU Setup
