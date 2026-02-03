@@ -177,6 +177,27 @@ thermal_comfort(
     ...
 )
 ```
+## GUI Usage
+
+To launch the GUI:
+```bash
+conda activate solweig
+solweig_gpu_gui
+```
+
+![GUI](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/GUI_new.png)
+
+### GUI Workflow
+1. Select the **base path** containing input datasets.
+2. Choose the **Building DSM**, **DEM**, **Tree DSM**, and **Land cover (optional)** raster files.
+3. Set the **tile size** (e.g., 600 or 1200 pixels).
+4. Select a **meteorological source** (`metfile`, `ERA5`, or `wrfout`):
+   - If `metfile`: Provide a `.txt` file.
+   - If `ERA5`: Provide a folder with both instantaneous and accumulated files.
+   - If `wrfout`: Provide a folder with WRF output NetCDF files.
+5. Set the **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
+6. Choose which outputs to generate (e.g., Tmrt, UTCI, radiation fluxes).
+7. Output will be saved in `Outputs/`, with subfolders for each tile.
 
 ## Output Files
 
