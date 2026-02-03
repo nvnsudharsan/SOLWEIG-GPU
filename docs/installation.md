@@ -83,7 +83,7 @@ SOLWEIG-GPU automatically falls back to CPU if no GPU is detected, though perfor
 
 ## Common Issues
 
-```md
+
 ### GDAL Import Error
 
 Errors such as:
