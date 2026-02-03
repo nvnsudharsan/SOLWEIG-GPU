@@ -109,8 +109,9 @@ conda install -c conda-forge gdal
 Avoid pip install gdal unless the wheel matches the system libgdal.
 Prefer conda-forge GDAL or cluster-provided GDAL environment modules.
 
-**Advanced Work Around**
-use system GDAL inside a virtualenv
+**Advanced Work Around:**
+
+Use the system GDAL inside a virtualenv
 ```
 echo "/usr/lib/python3/dist-packages" > \
   $VIRTUAL_ENV/lib/python*/site-packages/system-gdal.pth
