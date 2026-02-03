@@ -83,15 +83,20 @@ SOLWEIG-GPU automatically falls back to CPU if no GPU is detected, though perfor
 
 ## Common Issues
 
+```md
 ### GDAL Import Error
 
-If you get `ModuleNotFoundError: No module named '_gdal'`:
+Errors such as:
 
+- `ModuleNotFoundError: No module named '_gdal'`
+- `ModuleNotFoundError: No module named '_gdal_array'`
+
+usually indicate that the GDAL Python bindings do not match the system
+`libgdal`, or that NumPy support (`gdal_array`) is missing.
+
+**Verification:**
 ```bash
-# Uninstall and reinstall GDAL via conda
-conda uninstall gdal
-conda install -c conda-forge gdal
-```
+python -c "from osgeo import gdal_array"
 
 ### PyTorch GPU Not Detected
 
