@@ -106,7 +106,7 @@ conda install -c conda-forge gdal
 ```
 **Restricted / HPC environments:**
 
-Avoid pip install gdal unless the wheel matches the system libgdal.
+Avoid `pip install gdal` unless the wheel matches the system libgdal.
 Prefer conda-forge GDAL or cluster-provided GDAL environment modules.
 
 **Advanced Work Around:**
