@@ -97,7 +97,7 @@ usually indicate that the GDAL Python bindings do not match the system
 **Verification:**
 ```bash
 python -c "from osgeo import gdal_array"
-
+```
 ### PyTorch GPU Not Detected
 
 Verify CUDA installation:
