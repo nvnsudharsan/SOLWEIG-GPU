@@ -98,6 +98,27 @@ usually indicate that the GDAL Python bindings do not match the system
 ```bash
 python -c "from osgeo import gdal_array"
 ```
+**Solution**
+```bash
+# Uninstall and reinstall GDAL via conda
+conda uninstall gdal
+conda install -c conda-forge gdal
+```
+**Restricted / HPC environments:**
+
+Avoid `pip install gdal` unless the wheel matches the system libgdal.
+Prefer conda-forge GDAL or cluster-provided GDAL environment modules.
+
+**Advanced Work Around:**
+
+Use the system GDAL inside a virtualenv
+```
+echo "/usr/lib/python3/dist-packages" > \
+  $VIRTUAL_ENV/lib/python*/site-packages/system-gdal.pth
+
+python -c "from osgeo import gdal_array"
+```
+
 ### PyTorch GPU Not Detected
 
 Verify CUDA installation:

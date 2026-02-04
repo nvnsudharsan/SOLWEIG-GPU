@@ -45,6 +45,12 @@ setup(
         "PyQt5",
         "matplotlib"
     ],
+    extras_require={
+        "test": [
+            "pytest",
+            "pytest-cov",
+        ],
+    },
     license="GPL-3.0-only",
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
