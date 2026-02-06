@@ -4,7 +4,12 @@
 
 - Python 3.10 or higher
 - CUDA-capable GPU (optional, but recommended for performance)
-- GDAL library
+- GDAL library (libgdal) with matching Python bindings
+
+> **Note:** The GDAL Python bindings (`osgeo`) must be built against the same
+> `libgdal` version available on the system. Installing GDAL via `pip` in
+> environments with older system GDAL (common on HPC / institutional systems)
+> may result in import errors such as `_gdal` or `_gdal_array`.
 
 ## Using Conda (Recommended)
 
@@ -59,6 +64,9 @@ print(solweig_gpu.__version__)
 import torch
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA devices: {torch.cuda.device_count()}")
+
+# Verify GDAL NumPy support
+python -c "from osgeo import gdal_array"
 ```
 
 ## GPU Setup
@@ -75,14 +83,40 @@ SOLWEIG-GPU automatically falls back to CPU if no GPU is detected, though perfor
 
 ## Common Issues
 
+
 ### GDAL Import Error
 
-If you get `ModuleNotFoundError: No module named '_gdal'`:
+Errors such as:
 
+- `ModuleNotFoundError: No module named '_gdal'`
+- `ModuleNotFoundError: No module named '_gdal_array'`
+
+usually indicate that the GDAL Python bindings do not match the system
+`libgdal`, or that NumPy support (`gdal_array`) is missing.
+
+**Verification:**
+```bash
+python -c "from osgeo import gdal_array"
+```
+**Solution**
 ```bash
 # Uninstall and reinstall GDAL via conda
 conda uninstall gdal
 conda install -c conda-forge gdal
+```
+**Restricted / HPC environments:**
+
+Avoid `pip install gdal` unless the wheel matches the system libgdal.
+Prefer conda-forge GDAL or cluster-provided GDAL environment modules.
+
+**Advanced Work Around:**
+
+Use the system GDAL inside a virtualenv
+```
+echo "/usr/lib/python3/dist-packages" > \
+  $VIRTUAL_ENV/lib/python*/site-packages/system-gdal.pth
+
+python -c "from osgeo import gdal_array"
 ```
 
 ### PyTorch GPU Not Detected
