@@ -80,7 +80,7 @@ Tests run automatically on GitHub Actions for:
 - **Operating systems:** Linux, macOS
 - **On every:** Push, pull request
 
-See [.github/workflows/tests.yml](https://github.com/your-repo/blob/main/.github/workflows/tests.yml)
+See [.github/workflows/tests.yml](https://github.com/nvnsudharsan/SOLWEIG-GPU/main/.github/workflows/tests.yml)
 
 ## Manual Testing
 
