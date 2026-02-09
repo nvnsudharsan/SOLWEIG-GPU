@@ -36,12 +36,12 @@ thermal_comfort(
 
 ### Parameters
 
--   `base_path` (str): The base directory containing the input raster data.
+-   `base_path` (str): Base directory for `output_folder/` and `processed_inputs/`; also used to resolve relative raster paths. To write outputs elsewhere, set this to that directory and pass complete paths for the raster parameters.
 -   `selected_date_str` (str): The date for the simulation in `YYYY-MM-DD` format.
--   `building_dsm_filename` (str): The filename of the Building DSM raster. Defaults to `'Building_DSM.tif'`.
--   `dem_filename` (str): The filename of the DEM raster. Defaults to `'DEM.tif'`.
--   `trees_filename` (str): The filename of the Tree DSM raster. Defaults to `'Trees.tif'`.
--   `landcover_filename` (str, optional): The filename of the land cover raster. Defaults to `None`.
+-   `building_dsm_filename` (str): Path or filename of the Building DSM raster (relative to `base_path`, or a complete path). Defaults to `'Building_DSM.tif'`.
+-   `dem_filename` (str): Path or filename of the DEM raster. Defaults to `'DEM.tif'`.
+-   `trees_filename` (str): Path or filename of the Tree DSM raster. Defaults to `'Trees.tif'`.
+-   `landcover_filename` (str, optional): Path or filename of the land cover raster. Defaults to `None`.
 -   `tile_size` (int): The size of the tiles in pixels. Defaults to `3600`.
 -   `overlap` (int): The overlap between tiles in pixels. Defaults to `20`.
 -   `use_own_met` (bool): Whether to use a custom meteorological file. Defaults to `True`.

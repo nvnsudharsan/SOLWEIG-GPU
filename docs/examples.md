@@ -1,8 +1,8 @@
 # Examples (Using the sample data)
 
-This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.
+This section provides a collection of examples demonstrating how to use SOLWEIG-GPU across different scenarios.
 
-Sample data is available in [Zenodo](https://zenodo.org/records/18283037)
+Sample data is available in [Zenodo](https://zenodo.org/records/18561860)
 
 ## Example 1: Using WRF Data
 
@@ -52,10 +52,11 @@ thermal_comfort(
     data_folder='/path/to/era5',
 )
 ```
-**See the interactive** [Jupyter notebook](notebooks/Example_ERA5.ipynb) 
+**See the interactive** [Jupyter notebook](notebooks/Example_ERA5.ipynb).
+
 ## How to install CDS API
 
-ECMWF Climate Data Store(CDS) API key is required to download ERA-5 data programatically. To set-up API, please follow: <https://cds.climate.copernicus.eu/how-to-api> . Alternatively, the data can be directed downloaded from CDS: <https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview>
+ECMWF Climate Data Store (CDS) API key is required to download ERA5 data programmatically. To set-up API, please follow: <https://cds.climate.copernicus.eu/how-to-api> . Alternatively, the data can be downloaded directly from CDS: <https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview>
 
 ## You can download ERA5 as below
 ```python
