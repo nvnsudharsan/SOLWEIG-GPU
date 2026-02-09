@@ -11,5 +11,5 @@
 #MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #GNU General Public License for more details.
 
-__version__ = "1.2.21"  
-from .solweig_gpu import thermal_comfort
+__version__ = "1.2.21"
+from .solweig_gpu import thermal_comfort, preprocess, run_walls_aspect, run_utci_tiles

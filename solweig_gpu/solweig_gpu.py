@@ -10,7 +10,189 @@
 #but WITHOUT ANY WARRANTY; without even the implied warranty of
 #MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #GNU General Public License for more details.
-from typing import Optional
+from typing import Optional, List
+
+# Lazy imports used below to avoid loading heavy deps at import time.
+
+
+def preprocess(
+    base_path: str,
+    selected_date_str: str,
+    building_dsm_filename: str = 'Building_DSM.tif',
+    dem_filename: str = 'DEM.tif',
+    trees_filename: str = 'Trees.tif',
+    landcover_filename: Optional[str] = None,
+    tile_size: int = 3600,
+    overlap: int = 20,
+    use_own_met: bool = True,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    data_source_type: Optional[str] = None,
+    data_folder: Optional[str] = None,
+    own_met_file: Optional[str] = None,
+    preprocess_dir: Optional[str] = None,
+) -> str:
+    """
+    Run preprocessing only: validate rasters, create tiles, and prepare metfiles.
+
+    Use this when you want to run preprocessing once and then call
+    :func:`run_walls_aspect` and :func:`run_utci_tiles` separately (e.g. for
+    multiple dates or a subset of tiles).
+
+    Args:
+        base_path: Base directory; used to resolve relative raster paths.
+        selected_date_str: Simulation date 'YYYY-MM-DD'.
+        building_dsm_filename, dem_filename, trees_filename, landcover_filename:
+            Raster paths or filenames (relative to base_path or absolute).
+        tile_size: Tile size in pixels.
+        overlap: Overlap between tiles in pixels.
+        use_own_met: If True, use own_met_file; else use ERA5/WRF (requires
+            start_time, end_time, data_source_type, data_folder).
+        start_time, end_time: Required for ERA5/WRF (UTC 'YYYY-MM-DD HH:MM:SS').
+        data_source_type: 'ERA5' or 'wrfout' when use_own_met is False.
+        data_folder: Folder with ERA5/WRF NetCDF files when use_own_met is False.
+        own_met_file: Path to custom met file when use_own_met is True.
+        preprocess_dir: Directory for preprocessing outputs. Defaults to
+            ``{base_path}/processed_inputs``.
+
+    Returns:
+        The path to the preprocessing directory (tiles and metfiles written there).
+    """
+    import os
+    from .preprocessor import ppr
+
+    if preprocess_dir is None:
+        preprocess_dir = os.path.join(base_path, "processed_inputs")
+    os.makedirs(preprocess_dir, exist_ok=True)
+
+    ppr(
+        base_path, building_dsm_filename, dem_filename, trees_filename,
+        landcover_filename, tile_size, overlap, selected_date_str, use_own_met,
+        start_time, end_time, data_source_type, data_folder, own_met_file,
+        preprocess_dir=preprocess_dir,
+    )
+    return preprocess_dir
+
+
+def run_walls_aspect(preprocess_dir: str) -> None:
+    """
+    Run wall height and aspect calculation for all tiles in the preprocessing directory.
+
+    Call this after :func:`preprocess`. Writes to ``{preprocess_dir}/walls`` and
+    ``{preprocess_dir}/aspect``.
+
+    Args:
+        preprocess_dir: Path returned by :func:`preprocess` (contains
+            Building_DSM/, DEM/, Trees/, etc.).
+    """
+    import os
+    from .walls_aspect import run_parallel_processing
+
+    building_dsm_dir = os.path.join(preprocess_dir, "Building_DSM")
+    walls_dir = os.path.join(preprocess_dir, "walls")
+    aspect_dir = os.path.join(preprocess_dir, "aspect")
+    run_parallel_processing(building_dsm_dir, walls_dir, aspect_dir)
+
+
+def run_utci_tiles(
+    base_path: str,
+    preprocess_dir: str,
+    selected_date_str: str,
+    tile_keys: Optional[List[str]] = None,
+    save_tmrt: bool = True,
+    save_svf: bool = False,
+    save_kup: bool = False,
+    save_kdown: bool = False,
+    save_lup: bool = False,
+    save_ldown: bool = False,
+    save_shadow: bool = False,
+) -> None:
+    """
+    Run UTCI (and optional outputs) for tiles in the preprocessing directory.
+
+    Call this after :func:`preprocess` and :func:`run_walls_aspect`. Writes
+    GeoTIFFs to ``{base_path}/output_folder/{tile_key}/``.
+
+    Args:
+        base_path: Base directory; output_folder is created under this.
+        preprocess_dir: Path returned by :func:`preprocess`.
+        selected_date_str: Simulation date 'YYYY-MM-DD'.
+        tile_keys: If None, process all tiles. If a list (e.g. ``["0_0", "1000_0"]``),
+            process only those tile keys.
+        save_tmrt, save_svf, save_kup, save_kdown, save_lup, save_ldown, save_shadow:
+            Which outputs to save (UTCI is always saved).
+    """
+    import os
+    import numpy as np
+    import torch
+    from .utci_process import compute_utci, map_files_by_key
+
+    base_output_path = os.path.join(base_path, "output_folder")
+    input_met = os.path.join(preprocess_dir, "metfiles")
+    building_dsm_dir = os.path.join(preprocess_dir, "Building_DSM")
+    tree_dir = os.path.join(preprocess_dir, "Trees")
+    dem_dir = os.path.join(preprocess_dir, "DEM")
+    landcover_dir = os.path.join(preprocess_dir, "Landcover")
+    walls_dir = os.path.join(preprocess_dir, "walls")
+    aspect_dir = os.path.join(preprocess_dir, "aspect")
+
+    building_dsm_map = map_files_by_key(building_dsm_dir, ".tif")
+    tree_map = map_files_by_key(tree_dir, ".tif")
+    dem_map = map_files_by_key(dem_dir, ".tif")
+    landcover_map = map_files_by_key(landcover_dir, ".tif") if os.path.isdir(landcover_dir) else {}
+    walls_map = map_files_by_key(walls_dir, ".tif")
+    aspect_map = map_files_by_key(aspect_dir, ".tif")
+    met_map = map_files_by_key(input_met, ".txt")
+
+    common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map)
+    if landcover_map:
+        common_keys &= set(landcover_map)
+
+    if tile_keys is not None:
+        common_keys = common_keys & set(tile_keys)
+        if not common_keys:
+            raise ValueError(f"No tiles to run; tile_keys={tile_keys} not found in preprocess_dir")
+
+    def _numeric_key(k: str):
+        x, y = k.split("_")
+        return (int(x), int(y))
+
+    print("Running Solweig ...")
+    for key in sorted(common_keys, key=_numeric_key):
+        building_dsm_path = building_dsm_map[key]
+        tree_path = tree_map[key]
+        dem_path = dem_map[key]
+        landcover_path = landcover_map.get(key) if landcover_map else None
+        walls_path = walls_map[key]
+        aspect_path = aspect_map[key]
+        met_file_path = met_map[key]
+
+        output_folder = os.path.join(base_output_path, key)
+        os.makedirs(output_folder, exist_ok=True)
+
+        met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ')
+
+        compute_utci(
+            building_dsm_path,
+            tree_path,
+            dem_path,
+            walls_path,
+            aspect_path,
+            landcover_path,
+            met_file_data,
+            output_folder,
+            key,
+            selected_date_str,
+            save_tmrt=save_tmrt,
+            save_svf=save_svf,
+            save_kup=save_kup,
+            save_kdown=save_kdown,
+            save_lup=save_lup,
+            save_ldown=save_ldown,
+            save_shadow=save_shadow,
+        )
+        torch.cuda.empty_cache()
+
 
 def thermal_comfort(
     base_path,
@@ -112,87 +294,33 @@ def thermal_comfort(
         ValueError: If input rasters have mismatched dimensions, CRS, or pixel sizes
         FileNotFoundError: If the required input files are missing
     """
-
-    from .preprocessor import ppr
-    from .utci_process import compute_utci, map_files_by_key
-    from .walls_aspect import run_parallel_processing
-    import os
-    import numpy as np
-    import torch
-    # Create preprocessing outputs directory
-    preprocess_dir = os.path.join(base_path, "processed_inputs")
-    os.makedirs(preprocess_dir, exist_ok=True)
-
-    ppr(
-        base_path, building_dsm_filename, dem_filename, trees_filename,
-        landcover_filename, tile_size, overlap, selected_date_str, use_own_met,
-        start_time, end_time, data_source_type, data_folder, own_met_file,
-         preprocess_dir=preprocess_dir
+    preprocess_dir = preprocess(
+        base_path=base_path,
+        selected_date_str=selected_date_str,
+        building_dsm_filename=building_dsm_filename,
+        dem_filename=dem_filename,
+        trees_filename=trees_filename,
+        landcover_filename=landcover_filename,
+        tile_size=tile_size,
+        overlap=overlap,
+        use_own_met=use_own_met,
+        start_time=start_time,
+        end_time=end_time,
+        data_source_type=data_source_type,
+        data_folder=data_folder,
+        own_met_file=own_met_file,
     )
-
-    base_output_path = os.path.join(base_path, "output_folder")
-    inputMet = os.path.join(preprocess_dir, "metfiles")
-    building_dsm_dir = os.path.join(preprocess_dir, "Building_DSM")
-    tree_dir = os.path.join(preprocess_dir, "Trees")
-    dem_dir = os.path.join(preprocess_dir, "DEM")
-    landcover_dir = os.path.join(preprocess_dir, "Landcover") if landcover_filename is not None else None
-    walls_dir = os.path.join(preprocess_dir, "walls")
-    aspect_dir = os.path.join(preprocess_dir, "aspect")
-
-    run_parallel_processing(building_dsm_dir, walls_dir, aspect_dir)
-    print("Running Solweig ...")
-
-    building_dsm_map = map_files_by_key(building_dsm_dir, ".tif")
-    tree_map = map_files_by_key(tree_dir, ".tif")
-    dem_map = map_files_by_key(dem_dir, ".tif")
-    landcover_map = map_files_by_key(landcover_dir, ".tif") if landcover_dir else {}
-    walls_map = map_files_by_key(walls_dir, ".tif")
-    aspect_map = map_files_by_key(aspect_dir, ".tif")
-    met_map = map_files_by_key(inputMet, ".txt")
-
-    common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map)
-    if landcover_dir:
-        common_keys &= set(landcover_map)
-
-    def _numeric_key(k: str):
-        """Sort tiles by numeric coordinates (x, y)."""
-        x, y = k.split("_")
-        return (int(x), int(y))
-
-    for key in sorted(common_keys, key=_numeric_key):
-
-        building_dsm_path = building_dsm_map[key]
-        tree_path = tree_map[key]
-        dem_path = dem_map[key]
-        landcover_path = landcover_map.get(key) if landcover_dir else None
-        walls_path = walls_map.get(key)
-        aspect_path = aspect_map.get(key)
-        met_file_path = met_map[key]
-
-        output_folder = os.path.join(base_output_path, key)
-        os.makedirs(output_folder, exist_ok=True)
-
-        met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ')
-
-        compute_utci(
-            building_dsm_path,
-            tree_path,
-            dem_path,
-            walls_path,
-            aspect_path,
-            landcover_path,
-            met_file_data,
-            output_folder,
-            key,  
-            selected_date_str,
-            save_tmrt=save_tmrt,
-            save_svf=save_svf,
-            save_kup=save_kup,
-            save_kdown=save_kdown,
-            save_lup=save_lup,
-            save_ldown=save_ldown,
-            save_shadow=save_shadow
-        )
-
-        # Free GPU memory between tiles
-        torch.cuda.empty_cache()
+    run_walls_aspect(preprocess_dir)
+    run_utci_tiles(
+        base_path=base_path,
+        preprocess_dir=preprocess_dir,
+        selected_date_str=selected_date_str,
+        tile_keys=None,
+        save_tmrt=save_tmrt,
+        save_svf=save_svf,
+        save_kup=save_kup,
+        save_kdown=save_kdown,
+        save_lup=save_lup,
+        save_ldown=save_ldown,
+        save_shadow=save_shadow,
+    )
