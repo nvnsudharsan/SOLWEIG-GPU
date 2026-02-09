@@ -9,7 +9,7 @@
   <a href="https://www.repostatus.org/#active"><img src="https://img.shields.io/badge/Status-Active-%232ecc71.svg" alt="Project Status: Active"></a>
   <a href="https://pypi.org/project/solweig-gpu/"><img src="https://img.shields.io/pypi/v/solweig-gpu.svg?color=%230d6efd" alt="PyPI version"></a>
   <a href="https://solweig-gpu.readthedocs.io/en/latest/?badge=latest"><img src="https://img.shields.io/badge/docs-latest-%235bc0ff.svg" alt="Documentation Status"></a>
-  <a href="https://doi.org/10.5281/zenodo.18283037"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18283037-%23ff6b6b.svg" alt="DOI"></a>
+  <a href="https://doi.org/10.5281/zenodo.18561860"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18561860-%23ff6b6b.svg" alt="DOI"></a>
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-%230ab5b3.svg" alt="License: GPL v3"></a>
   <a href="https://pepy.tech/projects/solweig-gpu"><img src="https://static.pepy.tech/personalized-badge/solweig-gpu?period=total&units=INTERNATIONAL_SYSTEM&left_color=GRAY&right_color=GREEN&left_text=downloads" alt="PyPI Downloads"></a>
   <a href="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34"><img src="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34/status.svg"></a>
