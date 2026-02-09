@@ -2,7 +2,7 @@
 
 This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.
 
-Sample data is available in [Zenodo](https://zenodo.org/records/18283037)
+Sample data is available in [Zenodo](https://zenodo.org/records/18561860)
 
 ## Example 1: Using WRF Data
 
