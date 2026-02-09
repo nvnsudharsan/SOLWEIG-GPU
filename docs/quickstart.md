@@ -134,7 +134,7 @@ thermal_comfort \
     --tile_size 1000 \
     --overlap 100 \
     --use_own_met False \
-    --data_source ERA5 \
+    --data_source_type ERA5 \
     --data_folder /path/to/era5 \
     --start "2020-08-13 00:00:00" \
     --end "2020-08-14 23:00:00"
@@ -197,28 +197,30 @@ solweig_gpu_gui
    - If `wrfout`: Provide a folder with WRF output NetCDF files.
 5. Set the **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
 6. Choose which outputs to generate (e.g., Tmrt, UTCI, radiation fluxes).
-7. Output will be saved in `Outputs/`, with subfolders for each tile.
+7. Output will be saved in `output_folder/`, with subfolders for each tile (keyed by tile origin, e.g. `0_0`, `1000_0`).
 
 ## Output Files
 
-Results are saved in `{base_path}/Outputs/{tile_key}/`:
+Results are saved in `{base_path}/output_folder/{tile_key}/`:
 
 ```
-Outputs/
+output_folder/
 ├── 0_0/
-│   ├── UTCI_2020-08-13.tif       # Thermal comfort index
-│   ├── Tmrt_2020-08-13.tif       # Mean radiant temperature
-│   ├── SVF.tif                    # Sky view factor
+│   ├── UTCI_0_0.tif       # Thermal comfort index (multi-band, one per hour)
+│   ├── TMRT_0_0.tif       # Mean radiant temperature (if save_tmrt=True)
+│   ├── SVF_0_0.tif        # Sky view factor (if save_svf=True)
 │   └── ...
 ├── 1000_0/
 │   └── ...
 ```
 
-Each `.tif` is a multi-band raster (one band per hour).
+See [Outputs](outputs.md) for full details. Each time-varying `.tif` is a multi-band raster (one band per hour).
 
 ## Next Steps
 
 - [Detailed Input Data Guide](input_data.md)
 - [Meteorological Forcing Options](configuration.md)
+- [Outputs](outputs.md)
+- [Testing Guide](testing.md)
 - [API Reference](api.rst)
 - [Examples Gallery](examples.md)

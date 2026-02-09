@@ -1,6 +1,6 @@
 # Testing Guide
 
-This page provides information about testing SOLWEIG-GPU.
+This page provides information about testing SOLWEIG-GPU. For installing the package and running a quick verification, see [Installation](installation.md#verify-with-test-suite).
 
 ## Running Tests
 
@@ -88,14 +88,14 @@ For GPU-dependent features, manual testing is required:
 
 ### Test with Sample Data
 
+Use the [official sample dataset on Zenodo](https://zenodo.org/records/18283037) (see also [Input Data](input_data.md) and [Installation](installation.md)):
+
 ```bash
-# Download sample dataset
-wget https://example.com/solweig_test_data.zip
-unzip solweig_test_data.zip
+# After downloading and extracting the sample data to e.g. ./sample_data
 
 # Run simulation
 python -m solweig_gpu.cli \
-    --base_path ./test_data \
+    --base_path ./sample_data \
     --date 2020-08-13 \
     --tile_size 500
 ```

@@ -2,6 +2,11 @@
 
 This guide is intended for developers who want to understand the architecture of SOLWEIG-GPU and contribute to its development.
 
+## Reporting issues and getting support
+
+- **Bug reports and feature requests**: Please open an [issue on GitHub](https://github.com/nvnsudharsan/SOLWEIG-GPU/issues). Use the [bug report](https://github.com/nvnsudharsan/SOLWEIG-GPU/issues/new?template=bug_report.md) or [feature request](https://github.com/nvnsudharsan/SOLWEIG-GPU/issues/new?template=feature_request.md) templates when applicable so we can help you faster.
+- **Questions and discussion**: For usage questions, ideas, or general discussion, you can open a [GitHub Discussion](https://github.com/nvnsudharsan/SOLWEIG-GPU/discussions) or use the repository’s issue tracker with the “Question” label.
+
 ## Architecture Overview
 
 SOLWEIG-GPU is a modular package that separates the different stages of the thermal comfort modeling process. The main components are:

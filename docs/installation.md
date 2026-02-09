@@ -66,8 +66,24 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA devices: {torch.cuda.device_count()}")
 
 # Verify GDAL NumPy support
-python -c "from osgeo import gdal_array"
+# Run in terminal: python -c "from osgeo import gdal_array"
 ```
+
+## Verify with test suite
+
+After installation, run the test suite to confirm everything works:
+
+```bash
+pytest tests/ -q
+```
+
+With a short coverage report:
+
+```bash
+pytest --cov=solweig_gpu --cov-report=term-missing tests/
+```
+
+For full testing options, markers (e.g. `-m "not gpu"`), and CI details, see the [Testing Guide](testing.md).
 
 ## GPU Setup
 
@@ -138,4 +154,5 @@ conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
 
 - [Quick Start Guide](quickstart.md)
 - [Input Data Preparation](input_data.md)
+- [Testing Guide](testing.md)
 - [API Reference](api.rst)
