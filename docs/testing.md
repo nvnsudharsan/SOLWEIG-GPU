@@ -89,7 +89,7 @@ For GPU-dependent features, manual testing is required:
 
 ### Test with Sample Data
 
-Use the [official sample dataset on Zenodo](https://zenodo.org/records/18283037) (see also [Input Data](input_data.md) and [Installation](installation.md)):
+Use the [official sample dataset on Zenodo](https://zenodo.org/records/18561860) (see also [Input Data](input_data.md) and [Installation](installation.md)):
 
 ```bash
 # After downloading and extracting the sample data to e.g. ./sample_data
