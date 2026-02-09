@@ -50,8 +50,8 @@ For contributing or development:
 git clone https://github.com/nvnsudharsan/SOLWEIG-GPU.git
 cd SOLWEIG-GPU
 
-# Install in editable mode
-pip install -e .
+# Install in editable mode with test dependencies (pytest, pytest-cov)
+pip install -e ".[test]"
 ```
 
 ## Verify Installation
@@ -71,7 +71,12 @@ print(f"CUDA devices: {torch.cuda.device_count()}")
 
 ## Verify with test suite
 
-After installation, run the test suite to confirm everything works:
+Test dependencies (pytest, pytest-cov) are declared in the package; install with the `[test]` extra to run the test suite:
+
+- **From a clone (development):** use `pip install -e ".[test]"` as in Development Installation above.
+- **From PyPI:** `pip install solweig-gpu[test]` (you still need the repository clone to have the `tests/` directory).
+
+Then run:
 
 ```bash
 pytest tests/ -q
