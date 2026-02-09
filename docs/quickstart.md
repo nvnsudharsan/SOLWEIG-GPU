@@ -10,7 +10,9 @@ This guide will get you running SOLWEIG-GPU in minutes.
 4. Analyze outputs
 
 ## Sample Data
-Sample data is available in [zenodo](https://zenodo.org/records/18283037)
+
+Sample data is available in [Zenodo](https://zenodo.org/records/18561860).
+
 ## Example 1: Using Your Own Met Data
 
 The simplest way to run SOLWEIG-GPU:
@@ -31,16 +33,18 @@ thermal_comfort(
 
 ### Required Input Files
 
-Place these in your `base_path` directory:
+Place these in your `base_path` directory (or pass complete paths to rasters in other locations):
 
 1. **Building_DSM.tif** - Building + terrain heights
 2. **DEM.tif** - Digital elevation model (terrain only)
 3. **Trees.tif** - Vegetation heights
 4. **met_data.txt** - Meteorological forcing data
 
+To write outputs to a different folder, set `base_path` to that directory and give full paths for Building DSM, DEM, Trees, and land cover (optional).
+
 ### Met Data Format
 
-Create a text file with hourly data: Using [UMEP MetProcessor](https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html)
+Create a text file with hourly data using the [UMEP MetProcessor](https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html).
 
 ## Example 2: Using ERA5 Data
 
@@ -80,8 +84,8 @@ thermal_comfort(
 When using wrfout, the `start_time` and `end_time` should be the first and last time stamps in the wrfout dataset. The package won't compare the selected `start_time` and `end_time` to the wrfout file timestamps and automatically fetch the corresponding data. 
 `start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
 
-### Note for Windows Users: 
-If you run SOLWEIG-GPU on Windows, call thermal_comfort() inside a main() function and use if __name__ == "__main__": (see example below). This avoids multiprocessing issues (e.g., BrokenProcessPool) on Windows, where the spawn process start method re-imports the main module and can fail when multiprocessing code is executed at the top level.
+### Note for Windows Users
+On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
 ```python
 from solweig_gpu import thermal_comfort
 import multiprocessing as mp

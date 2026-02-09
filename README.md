@@ -9,7 +9,7 @@
   <a href="https://www.repostatus.org/#active"><img src="https://img.shields.io/badge/Status-Active-%232ecc71.svg" alt="Project Status: Active"></a>
   <a href="https://pypi.org/project/solweig-gpu/"><img src="https://img.shields.io/pypi/v/solweig-gpu.svg?color=%230d6efd" alt="PyPI version"></a>
   <a href="https://solweig-gpu.readthedocs.io/en/latest/?badge=latest"><img src="https://img.shields.io/badge/docs-latest-%235bc0ff.svg" alt="Documentation Status"></a>
-  <a href="https://doi.org/10.5281/zenodo.18283037"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18283037-%23ff6b6b.svg" alt="DOI"></a>
+  <a href="https://doi.org/10.5281/zenodo.18561860"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.18561860-%23ff6b6b.svg" alt="DOI"></a>
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-%230ab5b3.svg" alt="License: GPL v3"></a>
   <a href="https://pepy.tech/projects/solweig-gpu"><img src="https://static.pepy.tech/personalized-badge/solweig-gpu?period=total&units=INTERNATIONAL_SYSTEM&left_color=GRAY&right_color=GREEN&left_text=downloads" alt="PyPI Downloads"></a>
   <a href="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34"><img src="https://joss.theoj.org/papers/27faa2bf5f6058d981df8b565f8e9a34/status.svg"></a>
@@ -66,10 +66,12 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 
 ## Output Details
 
-- Output directory: `Outputs/`
-- Structure: One folder per tile (e.g., `tile_0_0/`, `tile_0_600/`)
+- Output directory: `output_folder/` (under the directory you pass as `base_path`)
+- Structure: One folder per tile (e.g., `0_0/`, `1000_0/`)
 - SVF: Single-band raster
 - Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
+
+If you need outputs in a different folder, set `base_path` to that directory and pass **complete paths** for the rasters: `building_dsm_filename`, `dem_filename`, `trees_filename`, and `landcover_filename` (optional).
 
 ![UTCI for New Delhi](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/UTCI_New_Delhi.jpeg)  
 *UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
@@ -111,7 +113,7 @@ CI runs tests on Linux and macOS across Python 3.10–3.12.
 
 ## Sample Data
 
-Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  <a href="https://doi.org/10.5281/zenodo.18283037"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18283037.svg" alt="DOI"></a>
+Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  <a href="https://doi.org/10.5281/zenodo.18561860"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18561860.svg" alt="DOI"></a>
 
 ---
 
@@ -169,9 +171,9 @@ thermal_comfort(
 )
 ```
 - The model simulation date is `2020-08-13`
-- The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are start and end time of wrfout in UTC. In local time it is `2020-08-13 01:00:00` to `2020-08-13 23:00:00` (Austin, TX). UTC to local time conversion will be done   internally.
-- The tile_size depends on the RAM of the GPU but can be set to 1000 in the example.
-- overlap is set to 100 pixels meaning the raster size will be 1100*1100 pixels. The additional 100 pixels are for shadow transfer between the tiles.
+- The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are the start and end times of wrfout in UTC. In local time, it is `2020-08-13 01:00:00` to `2020-08-13 23:00:00` (Austin, TX). UTC to local time conversion will be done   internally.
+- The tile_size depends on the RAM of the GPU, but can be set to 1000 in the example.
+- overlap is set to 100 pixels, meaning the raster size will be 1100*1100 pixels. The additional 100 pixels are for shadow transfer between the tiles.
 
 #### Example 2: ERA5
 
@@ -234,8 +236,8 @@ thermal_comfort(
     save_shadow=False
 )
 ```
-### Note for Windows Users: 
-If you run SOLWEIG-GPU on Windows, call thermal_comfort() inside a main() function and use if __name__ == "__main__": (see example below). This avoids multiprocessing issues (e.g., BrokenProcessPool) on Windows, where the spawn process start method re-imports the main module and can fail when multiprocessing code is executed at the top level.
+### Note for Windows Users
+On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
 ```python
 from solweig_gpu import thermal_comfort
 import multiprocessing as mp
@@ -323,7 +325,7 @@ solweig_gpu_gui
    - If `wrfout`: Provide a folder with WRF output NetCDF files.
 5. Set the **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
 6. Choose which outputs to generate (e.g., Tmrt, UTCI, radiation fluxes).
-7. Output will be saved in `Outputs/`, with subfolders for each tile.
+7. Output will be saved in `output_folder/`, with subfolders for each tile.
 
 ---
 

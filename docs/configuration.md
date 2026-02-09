@@ -11,13 +11,13 @@ These parameters must be specified for every simulation.
 #### `base_path`
 
 **Type:** String  
-**Description:** The base directory containing your input raster data.
+**Description:** The base directory used for outputs (`output_folder/`, `processed_inputs/`) and, when raster paths are relative, for resolving input rasters.
 
 ```python
 base_path = '/path/to/your/input_data'
 ```
 
-The directory structure should be:
+When all rasters live in the same directory, use that as `base_path` and pass filenames only:
 
 ```
 base_path/
@@ -26,6 +26,9 @@ base_path/
 ├── Trees.tif
 └── Landcover.tif (optional)
 ```
+
+!!! tip "Outputs in a different folder"
+    If you need outputs in a different folder, set `base_path` to that directory and pass **complete (full) paths** for the rasters: `building_dsm_filename`, `dem_filename`, `trees_filename`, and `landcover_filename` (optional). The rasters can then live anywhere on disk.
 
 #### `selected_date_str`
 
@@ -42,10 +45,10 @@ selected_date_str = '2020-08-13'
 
 ### Raster Filenames
 
-You can specify custom filenames for your input rasters. If not specified, default filenames are used.
+You can specify custom filenames for your input rasters (relative to `base_path`), or **complete paths** if rasters are elsewhere—e.g. when using a dedicated output directory (see tip under `base_path`). If not specified, default filenames are used.
 
 ```python
-building_dsm_filename = 'Building_DSM.tif'  # Default
+building_dsm_filename = 'Building_DSM.tif'  # Default; or e.g. '/data/rasters/Building_DSM.tif'
 dem_filename = 'DEM.tif'                    # Default
 trees_filename = 'Trees.tif'                # Default
 landcover_filename = None                   # Optional
@@ -85,7 +88,7 @@ The optimal tile size depends on your GPU memory. Here are some guidelines:
 **Type:** Integer  
 **Default:** 20  
 **Units:** Pixels  
-**Description:** To consider building the tree shading between adjacent raster tiles.
+**Description:** Overlap in pixels to account for building and tree shading between adjacent raster tiles.
 
 ```python
 overlap = 100  

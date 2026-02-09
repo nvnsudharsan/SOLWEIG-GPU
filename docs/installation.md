@@ -116,10 +116,13 @@ usually indicate that the GDAL Python bindings do not match the system
 `libgdal`, or that NumPy support (`gdal_array`) is missing.
 
 **Verification:**
+
 ```bash
 python -c "from osgeo import gdal_array"
 ```
-**Solution**
+
+**Solution:**
+
 ```bash
 # Uninstall and reinstall GDAL via conda
 conda uninstall gdal
@@ -130,10 +133,11 @@ conda install -c conda-forge gdal
 Avoid `pip install gdal` unless the wheel matches the system libgdal.
 Prefer conda-forge GDAL or cluster-provided GDAL environment modules.
 
-**Advanced Work Around:**
+**Advanced workaround:**
 
-Use the system GDAL inside a virtualenv
-```
+Use the system GDAL inside a virtualenv:
+
+```bash
 echo "/usr/lib/python3/dist-packages" > \
   $VIRTUAL_ENV/lib/python*/site-packages/system-gdal.pth
 

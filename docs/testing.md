@@ -59,17 +59,18 @@ from pathlib import Path
 
 @pytest.fixture
 def temp_workspace(tmp_path):
-    """Create temporary workspace structure."""
+    """Create temporary workspace structure (mirrors real layout: output_folder under base_path)."""
     workspace = tmp_path / "solweig_test"
     workspace.mkdir()
     (workspace / "Input_rasters").mkdir()
-    (workspace / "Outputs").mkdir()
+    (workspace / "output_folder").mkdir()
     return workspace
 
 def test_file_creation(temp_workspace):
     """Test that files are created in correct location."""
-    output_file = temp_workspace / "Outputs" / "test.tif"
-    # ... test code ...
+    output_file = temp_workspace / "output_folder" / "test.tif"
+    # Create the file (in a real test you might write actual raster data):
+    output_file.touch()
     assert output_file.exists()
 ```
 
@@ -88,7 +89,7 @@ For GPU-dependent features, manual testing is required:
 
 ### Test with Sample Data
 
-Use the [official sample dataset on Zenodo](https://zenodo.org/records/18283037) (see also [Input Data](input_data.md) and [Installation](installation.md)):
+Use the [official sample dataset on Zenodo](https://zenodo.org/records/18561860) (see also [Input Data](input_data.md) and [Installation](installation.md)):
 
 ```bash
 # After downloading and extracting the sample data to e.g. ./sample_data
