@@ -113,7 +113,7 @@ CI runs tests on Linux and macOS across Python 3.10–3.12.
 
 ## Sample Data
 
-Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  <a href="https://doi.org/10.5281/zenodo.18283037"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18283037.svg" alt="DOI"></a>
+Please refer to the sample dataset to familiarize yourself with the expected inputs. Sample data can be found at:  <a href="https://doi.org/10.5281/zenodo.18561860"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.18561860.svg" alt="DOI"></a>
 
 ---
 
@@ -171,9 +171,9 @@ thermal_comfort(
 )
 ```
 - The model simulation date is `2020-08-13`
-- The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are start and end time of wrfout in UTC. In local time it is `2020-08-13 01:00:00` to `2020-08-13 23:00:00` (Austin, TX). UTC to local time conversion will be done   internally.
-- The tile_size depends on the RAM of the GPU but can be set to 1000 in the example.
-- overlap is set to 100 pixels meaning the raster size will be 1100*1100 pixels. The additional 100 pixels are for shadow transfer between the tiles.
+- The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are the start and end times of wrfout in UTC. In local time, it is `2020-08-13 01:00:00` to `2020-08-13 23:00:00` (Austin, TX). UTC to local time conversion will be done   internally.
+- The tile_size depends on the RAM of the GPU, but can be set to 1000 in the example.
+- overlap is set to 100 pixels, meaning the raster size will be 1100*1100 pixels. The additional 100 pixels are for shadow transfer between the tiles.
 
 #### Example 2: ERA5
 
