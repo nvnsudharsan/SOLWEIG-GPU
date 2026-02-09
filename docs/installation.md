@@ -50,8 +50,8 @@ For contributing or development:
 git clone https://github.com/nvnsudharsan/SOLWEIG-GPU.git
 cd SOLWEIG-GPU
 
-# Install in editable mode
-pip install -e .
+# Install in editable mode with test dependencies (pytest, pytest-cov)
+pip install -e ".[test]"
 ```
 
 ## Verify Installation
@@ -66,8 +66,29 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA devices: {torch.cuda.device_count()}")
 
 # Verify GDAL NumPy support
-python -c "from osgeo import gdal_array"
+# Run in terminal: python -c "from osgeo import gdal_array"
 ```
+
+## Verify with test suite
+
+Test dependencies (pytest, pytest-cov) are declared in the package; install with the `[test]` extra to run the test suite:
+
+- **From a clone (development):** use `pip install -e ".[test]"` as in Development Installation above.
+- **From PyPI:** `pip install solweig-gpu[test]` (you still need the repository clone to have the `tests/` directory).
+
+Then run:
+
+```bash
+pytest tests/ -q
+```
+
+With a short coverage report:
+
+```bash
+pytest --cov=solweig_gpu --cov-report=term-missing tests/
+```
+
+For full testing options, markers (e.g. `-m "not gpu"`), and CI details, see the [Testing Guide](testing.md).
 
 ## GPU Setup
 
@@ -138,4 +159,5 @@ conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
 
 - [Quick Start Guide](quickstart.md)
 - [Input Data Preparation](input_data.md)
+- [Testing Guide](testing.md)
 - [API Reference](api.rst)
