@@ -88,7 +88,7 @@ The optimal tile size depends on your GPU memory. Here are some guidelines:
 **Type:** Integer  
 **Default:** 20  
 **Units:** Pixels  
-**Description:** To consider building the tree shading between adjacent raster tiles.
+**Description:** Overlap in pixels to account for building and tree shading between adjacent raster tiles.
 
 ```python
 overlap = 100  

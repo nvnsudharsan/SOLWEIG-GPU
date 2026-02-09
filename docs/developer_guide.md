@@ -26,9 +26,11 @@ We welcome contributions to the SOLWEIG-GPU project. To contribute, please follo
 
 1.  **Fork the Repository**: Create your own fork of the [SOLWEIG-GPU repository](https://github.com/nvnsudharsan/SOLWEIG-GPU) on GitHub.
 2.  **Create a Feature Branch**: Create a new branch for your feature or bug fix.
-3.  **Commit Your Changes**: Make your changes and commit them with clear and concise commit messages.
-4.  **Push to Your Branch**: Push your changes to your forked repository.
-5.  **Create a Pull Request**: Open a pull request from your branch to the `main` branch of the original repository.
+3.  **Set up for development**: Clone your fork and install with the test extra: `pip install -e ".[test]"`. See [Installation](installation.md).
+4.  **Run the test suite** before submitting: `pytest tests/ -q`. See the [Testing Guide](testing.md).
+5.  **Commit Your Changes**: Make your changes and commit them with clear and concise commit messages.
+6.  **Push to Your Branch**: Push your changes to your forked repository.
+7.  **Create a Pull Request**: Open a pull request from your branch to the `main` branch of the original repository.
 
-Please ensure that your pull requests are small and focused on a single feature or bug fix. This makes it easier to review and merge your contributions.
+Please ensure that your pull requests are small and focused on a single feature or bug fix. For the full contributor guide including reporting issues, see [CONTRIBUTING](../CONTRIBUTING.md) in the repository root. This makes it easier to review and merge your contributions.
 

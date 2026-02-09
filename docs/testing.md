@@ -69,7 +69,8 @@ def temp_workspace(tmp_path):
 def test_file_creation(temp_workspace):
     """Test that files are created in correct location."""
     output_file = temp_workspace / "output_folder" / "test.tif"
-    # ... test code ...
+    # Create the file (in a real test you might write actual raster data):
+    output_file.touch()
     assert output_file.exists()
 ```
 

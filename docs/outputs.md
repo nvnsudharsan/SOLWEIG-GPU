@@ -77,7 +77,7 @@ SVF is a geometric parameter that quantifies the openness of a location to the s
 !!! Note:
     Unlike other outputs, SVF is a geometric property that doesn't change with time. It is saved as a single-band raster, not multi-band.
 
-#### Downwelling Shortwave
+### Downwelling Shortwave (Kdown)
 
 **Filename:** `Kdown_X_Y.tif`  
 **Format:** Multi-band GeoTIFF  
@@ -86,7 +86,7 @@ SVF is a geometric parameter that quantifies the openness of a location to the s
 
 **Saved when:** `save_kdown=True`
 
-#### Upwelling Shortwave (Kup)
+### Upwelling Shortwave (Kup)
 
 **Filename:** `Kup_X_Y.tif`  
 **Format:** Multi-band GeoTIFF  
@@ -95,7 +95,7 @@ SVF is a geometric parameter that quantifies the openness of a location to the s
 
 **Saved when:** `save_kup=True`
 
-#### Downwelling Longwave (Ldown)
+### Downwelling Longwave (Ldown)
 
 **Filename:** `Ldown_X_Y.tif`  
 **Format:** Multi-band GeoTIFF  
@@ -104,7 +104,7 @@ SVF is a geometric parameter that quantifies the openness of a location to the s
 
 **Saved when:** `save_ldown=True`
 
-#### Upwelling Longwave (Lup)
+### Upwelling Longwave (Lup)
 
 **Filename:** `Lup_X_Y.tif`  
 **Format:** Multi-band GeoTIFF  

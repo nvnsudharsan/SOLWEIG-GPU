@@ -66,7 +66,7 @@ A Digital Surface Model representing only the vegetation heights (The Tree DSM s
 
 **Filename:** `Landcover.tif` (optional)
 
-A raster representing land cover types. If not provided, the model will assume default land cover properties. The package accepts UMEP style landcover (<https://umep-docs.readthedocs.io/en/latest/pre-processor/Urban%20Land%20Cover%20Land%20Cover%20Reclassifier.html>
+A raster representing land cover types. If not provided, the model will assume default land cover properties. The package accepts UMEP-style land cover (see [Urban Land Cover Reclassifier](https://umep-docs.readthedocs.io/en/latest/pre-processor/Urban%20Land%20Cover%20Land%20Cover%20Reclassifier.html)).
 
 The package uses the classification scheme defined in `landcoverclasses_2016a.txt`. Key classes include:
 

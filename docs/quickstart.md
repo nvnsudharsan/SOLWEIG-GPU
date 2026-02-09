@@ -10,7 +10,9 @@ This guide will get you running SOLWEIG-GPU in minutes.
 4. Analyze outputs
 
 ## Sample Data
-Sample data is available in [zenodo](https://zenodo.org/records/18283037)
+
+Sample data is available in [Zenodo](https://zenodo.org/records/18283037).
+
 ## Example 1: Using Your Own Met Data
 
 The simplest way to run SOLWEIG-GPU:
@@ -42,7 +44,7 @@ To write outputs to a different folder, set `base_path` to that directory and gi
 
 ### Met Data Format
 
-Create a text file with hourly data: Using [UMEP MetProcessor](https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html)
+Create a text file with hourly data using the [UMEP MetProcessor](https://umep-docs.readthedocs.io/en/latest/pre-processor/Meteorological%20Data%20MetPreprocessor.html).
 
 ## Example 2: Using ERA5 Data
 
