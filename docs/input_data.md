@@ -2,6 +2,9 @@
 
 SOLWEIG-GPU requires two main types of input data: geospatial rasters and meteorological forcing data. This guide provides detailed information on how to prepare and format your input data.
 
+!!! tip "Outputs in a different folder"
+    If you want outputs written to a different directory, set `base_path` to that folder and pass **complete paths** for the Building DSM, DEM, Trees, and land cover (optional) rasters. See [Configuration](configuration.md#base_path).
+
 ## Geospatial Rasters
 
 All input rasters must be in **GeoTIFF format** and share the same properties to ensure proper alignment and processing.

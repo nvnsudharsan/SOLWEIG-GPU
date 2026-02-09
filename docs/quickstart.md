@@ -31,12 +31,14 @@ thermal_comfort(
 
 ### Required Input Files
 
-Place these in your `base_path` directory:
+Place these in your `base_path` directory (or pass complete paths to rasters in other locations):
 
 1. **Building_DSM.tif** - Building + terrain heights
 2. **DEM.tif** - Digital elevation model (terrain only)
 3. **Trees.tif** - Vegetation heights
 4. **met_data.txt** - Meteorological forcing data
+
+To write outputs to a different folder, set `base_path` to that directory and give full paths for Building DSM, DEM, Trees, and land cover (optional).
 
 ### Met Data Format
 

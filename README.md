@@ -66,10 +66,12 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 
 ## Output Details
 
-- Output directory: `output_folder/`
-- Structure: One folder per tile (e.g., `tile_0_0/`, `tile_0_600/`)
+- Output directory: `output_folder/` (under the directory you pass as `base_path`)
+- Structure: One folder per tile (e.g., `0_0/`, `1000_0/`)
 - SVF: Single-band raster
 - Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
+
+If you need outputs in a different folder, set `base_path` to that directory and pass **complete paths** for the rasters: `building_dsm_filename`, `dem_filename`, `trees_filename`, and `landcover_filename` (optional).
 
 ![UTCI for New Delhi](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/UTCI_New_Delhi.jpeg)  
 *UTCI for New Delhi, India, generated using SOLWEIG-GPU and visualized with ArcGIS Online.*
