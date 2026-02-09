@@ -66,7 +66,7 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 
 ## Output Details
 
-- Output directory: `Outputs/`
+- Output directory: `output_folder/`
 - Structure: One folder per tile (e.g., `tile_0_0/`, `tile_0_600/`)
 - SVF: Single-band raster
 - Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
@@ -234,8 +234,8 @@ thermal_comfort(
     save_shadow=False
 )
 ```
-### Note for Windows Users: 
-If you run SOLWEIG-GPU on Windows, call thermal_comfort() inside a main() function and use if __name__ == "__main__": (see example below). This avoids multiprocessing issues (e.g., BrokenProcessPool) on Windows, where the spawn process start method re-imports the main module and can fail when multiprocessing code is executed at the top level.
+### Note for Windows Users
+On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
 ```python
 from solweig_gpu import thermal_comfort
 import multiprocessing as mp
@@ -323,7 +323,7 @@ solweig_gpu_gui
    - If `wrfout`: Provide a folder with WRF output NetCDF files.
 5. Set the **start** and **end times** in UTC (`YYYY-MM-DD HH:MM:SS`).
 6. Choose which outputs to generate (e.g., Tmrt, UTCI, radiation fluxes).
-7. Output will be saved in `Outputs/`, with subfolders for each tile.
+7. Output will be saved in `output_folder/`, with subfolders for each tile.
 
 ---
 

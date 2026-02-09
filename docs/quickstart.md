@@ -80,8 +80,8 @@ thermal_comfort(
 When using wrfout, the `start_time` and `end_time` should be the first and last time stamps in the wrfout dataset. The package won't compare the selected `start_time` and `end_time` to the wrfout file timestamps and automatically fetch the corresponding data. 
 `start_time` and `end_time` must be in **UTC**. The package will automatically convert to local time based on the geographic location of your study area.
 
-### Note for Windows Users: 
-If you run SOLWEIG-GPU on Windows, call thermal_comfort() inside a main() function and use if __name__ == "__main__": (see example below). This avoids multiprocessing issues (e.g., BrokenProcessPool) on Windows, where the spawn process start method re-imports the main module and can fail when multiprocessing code is executed at the top level.
+### Note for Windows Users
+On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
 ```python
 from solweig_gpu import thermal_comfort
 import multiprocessing as mp
