@@ -70,7 +70,7 @@ def thermal_comfort(
         save_shadow (bool): Save shadow maps. Default: False
     
     Returns:
-        None: Outputs are saved to `{base_path}/Outputs/` directory
+        None: Outputs are saved to `{base_path}/output_folder/` directory
     
     Output Structure:
         - {base_path}/processed_inputs/ - All preprocessing files
@@ -81,7 +81,7 @@ def thermal_comfort(
           - walls/ - Wall height rasters
           - aspect/ - Wall aspect rasters
           - Outfile.nc - Processed NetCDF (if using ERA5/WRF)
-        - Outputs/{tile_key}/ - One folder per tile
+        - output_folder/{tile_key}/ - One folder per tile
           - UTCI_{date}.tif - Universal Thermal Climate Index (always saved)
           - Tmrt_{date}.tif - Mean radiant temperature (if save_tmrt=True)
           - SVF.tif - Sky view factor (if save_svf=True)

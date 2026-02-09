@@ -59,16 +59,16 @@ from pathlib import Path
 
 @pytest.fixture
 def temp_workspace(tmp_path):
-    """Create temporary workspace structure."""
+    """Create temporary workspace structure (mirrors real layout: output_folder under base_path)."""
     workspace = tmp_path / "solweig_test"
     workspace.mkdir()
     (workspace / "Input_rasters").mkdir()
-    (workspace / "Outputs").mkdir()
+    (workspace / "output_folder").mkdir()
     return workspace
 
 def test_file_creation(temp_workspace):
     """Test that files are created in correct location."""
-    output_file = temp_workspace / "Outputs" / "test.tif"
+    output_file = temp_workspace / "output_folder" / "test.tif"
     # ... test code ...
     assert output_file.exists()
 ```
