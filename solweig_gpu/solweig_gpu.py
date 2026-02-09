@@ -47,12 +47,12 @@ def thermal_comfort(
     6. Saves outputs as georeferenced rasters
     
     Args:
-        base_path (str): Base directory containing input rasters
+        base_path (str): Base directory for output_folder/ and processed_inputs/; also used to resolve relative raster paths. For outputs elsewhere, set this to the desired output directory and pass complete paths for the raster arguments.
         selected_date_str (str): Simulation date in format 'YYYY-MM-DD'
-        building_dsm_filename (str): Building+terrain DSM filename. Default: 'Building_DSM.tif'
-        dem_filename (str): Digital Elevation Model filename. Default: 'DEM.tif'
-        trees_filename (str): Vegetation DSM filename. Default: 'Trees.tif'
-        landcover_filename (str, optional): Land cover raster filename. Default: None
+        building_dsm_filename (str): Building+terrain DSM path or filename (relative to base_path). Default: 'Building_DSM.tif'. Can be a complete path if rasters live elsewhere.
+        dem_filename (str): DEM path or filename (relative to base_path). Default: 'DEM.tif'
+        trees_filename (str): Vegetation DSM path or filename (relative to base_path). Default: 'Trees.tif'
+        landcover_filename (str, optional): Land cover raster path or filename. Default: None
         tile_size (int): Tile size in pixels. Default: 3600. Adjust based on GPU RAM.
         overlap (int): Overlap between tiles in pixels. Default: 20. Used for shadow transfer.
         use_own_met (bool): Use custom meteorological file. Default: True
@@ -81,15 +81,15 @@ def thermal_comfort(
           - walls/ - Wall height rasters
           - aspect/ - Wall aspect rasters
           - Outfile.nc - Processed NetCDF (if using ERA5/WRF)
-        - output_folder/{tile_key}/ - One folder per tile
-          - UTCI_{date}.tif - Universal Thermal Climate Index (always saved)
-          - Tmrt_{date}.tif - Mean radiant temperature (if save_tmrt=True)
-          - SVF.tif - Sky view factor (if save_svf=True)
-          - Kup_{date}.tif - Upward shortwave (if save_kup=True)
-          - Kdown_{date}.tif - Downward shortwave (if save_kdown=True)
-          - Lup_{date}.tif - Upward longwave (if save_lup=True)
-          - Ldown_{date}.tif - Downward longwave (if save_ldown=True)
-          - Shadow_{date}.tif - Shadow maps (if save_shadow=True)
+        - output_folder/{tile_key}/ - One folder per tile (tile_key e.g. "0_0", "1000_0")
+          - UTCI_{tile_key}.tif - Universal Thermal Climate Index (always saved)
+          - TMRT_{tile_key}.tif - Mean radiant temperature (if save_tmrt=True)
+          - SVF_{tile_key}.tif - Sky view factor (if save_svf=True)
+          - Kup_{tile_key}.tif - Upward shortwave (if save_kup=True)
+          - Kdown_{tile_key}.tif - Downward shortwave (if save_kdown=True)
+          - Lup_{tile_key}.tif - Upward longwave (if save_lup=True)
+          - Ldown_{tile_key}.tif - Downward longwave (if save_ldown=True)
+          - Shadow_{tile_key}.tif - Shadow maps (if save_shadow=True)
     
     Notes:
         - Automatically uses GPU if available, falls back to CPU
