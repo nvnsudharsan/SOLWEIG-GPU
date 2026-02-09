@@ -2,7 +2,7 @@
 
 SOLWEIG-GPU requires two main types of input data: geospatial rasters and meteorological forcing data. This guide provides detailed information on how to prepare and format your input data.
 
-!!! tip "Outputs in a different folder"
+!!! tip "Outputs in a different folder."
     If you want outputs written to a different directory, set `base_path` to that folder and pass **complete paths** for the Building DSM, DEM, Trees, and land cover (optional) rasters. See [Configuration](configuration.md#base_path).
 
 ## Geospatial Rasters
@@ -139,7 +139,7 @@ Currently, SOLWEIG-GPU is tested and optimized for **hourly data**. Sub-hourly o
 
 A complete sample dataset is available for download to help you understand the expected data format and structure.
 
-**Download:** [Sample Data on Zenodo](https://zenodo.org/records/18283037)
+**Download:** [Sample Data on Zenodo](https://zenodo.org/records/18561860)
 
 The sample dataset includes:
 
