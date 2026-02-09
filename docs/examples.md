@@ -1,6 +1,6 @@
 # Examples (Using the sample data)
 
-This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.
+This section provides a collection of examples demonstrating how to use SOLWEIG-GPU across different scenarios.
 
 Sample data is available in [Zenodo](https://zenodo.org/records/18561860)
 
