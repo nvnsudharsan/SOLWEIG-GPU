@@ -2,26 +2,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-print("Developed by Andrea Zonato, andrea.zonato@cimafoundation.org")
+print("Input data creation adopted from Andrea Zonato, andrea.zonato@cimafoundation.org")
 
 """Build input datasets for SOLWEIG.
 
-Author: Andrea Zonato
+Input data creation adopted from Andrea Zonato.
 
 What this script does
 - Given a target location (lat, lon), it computes geographic bounding boxes
   and a UTM working CRS, then prepares a common analysis grid for SOLWEIG.
 - It collects static inputs: landcover (ESA WorldCover), canopy height/trees
-  (multiple Earth Engine sources), and a DEM (TINITALY if in Italy, otherwise
-  MERIT/DEM via Earth Engine). It also derives urban layers from OSM (vegetation,
-  impervious, water) and buildings from a public GBA WFS (LOD1), with an OSM fallback.
+  (multiple Earth Engine sources), and a DEM (MERIT/DEM via Earth Engine). It also
+  derives urban layers from OSM (vegetation, impervious, water) and buildings from
+  a public GBA WFS (LOD1), with an OSM fallback.
 - It rasterizes vector layers (vegetation, water, buildings, urban surfaces),
   resamples everything to the common grid, applies stacking logic (water >
   vegetation > urban), and builds a Building DSM = DEM + building heights.
-- It downloads and prepares meteorological forcing. If the area is in Italy,
-  it uses the DDS downscaled dataset; elsewhere it samples ERA5 via Earth Engine.
-  In both cases, it standardizes names/dimensions and derives relative
-  humidity and surface altitude to save a single, consistent NetCDF file.
+- It downloads and prepares meteorological forcing via ERA5 (Earth Engine),
+  standardizes names/dimensions and derives relative humidity and surface
+  altitude to save a single, consistent NetCDF file.
 
 """
 
@@ -34,25 +33,26 @@ from typing import Any, List
 
 # Bootstrap: ensure third-party packages are installed before importing
 def _ensure(mod, pip_name=None, required=True):
-    """Ensure module is installable; avoid importing until actually needed."""
+    """Ensure module is available; if missing, try pip install when required (no conda - conda is not a Python module)."""
     if importlib.util.find_spec(mod) is None:
         pkg = pip_name or mod
+        if not required:
+            print(f"[deps] Optional package '{pkg}' not installed.")
+            return
         try:
-            subprocess.check_call([sys.executable, "-m", "conda", "install", pkg])
+            subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
         except Exception as e:
-            if required:
-                raise
-            else:
-                print(f"[deps] Optional package '{pkg}' not installed: {e}")
+            raise RuntimeError(
+                f"Missing required package '{pkg}'. Install with: {sys.executable} -m pip install {pkg}"
+            ) from e
 
 for _mod, _pip in [
-    ("ee", "earthengine-api"), ("geemap", None), ("geopandas", None), ("numpy", None),
+    ("ee", "earthengine-api"), ("geemap", None), ("geopandas", None), ("fiona", None), ("numpy", None),
     ("pandas", None), ("rasterio", None), ("requests", None), ("osmnx", None),
     ("scipy", None), ("geopy", None), ("pyproj", None), ("shapely", None), ("xarray", None),
-    ("cftime", None), ("netCDF4", None), ("ddsapi", None)
+    ("cftime", None), ("netCDF4", None),
 ]:
     _ensure(_mod, _pip)
-
 import ee
 import geemap
 import geopandas as gpd
@@ -165,7 +165,7 @@ G0 = 9.80665  # standard gravity (m s-2)
 # Air density × specific heat capacity (rho * Cp) to convert fluxes to kinematic units
 RHO_CP = 1.225 * 1005.0
 
-# Variable standardization (common to DDS and ERA5)
+# Variable standardization for ERA5
 VAR_MAP = {
     "t2m": "T2M", "air_temperature": "T2M",
     "T_2M": "T2M",
@@ -540,14 +540,6 @@ def compute_bounding_boxes(lat, lon, km_buffer, km_reduced_lat, km_reduced_lon):
     bbox_utm_solweig = box(minx + sx, miny + sy, maxx - sx, maxy - sy)
     return BBoxes(bbox4326, bbox_osm, bbox_utm, bbox_utm_solweig, crs_utm)
 
-# -------------------------- Country Helpers (Italy) ------------------------- #
-
-ITALY_REGIONS = {
-    "Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia",
-    "Lazio","Liguria","Lombardia","Marche","Molise","Piemonte","Puglia","Sardegna",
-    "Sicilia","Toscana","Trentino-Alto Adige/Südtirol","Umbria","Valle d'Aosta/Vallée d'Aoste","Veneto"
-}
-
 # ---------------------------- Reverse Geocode -------------------------------- #
 
 @timed("Reverse geocoding")
@@ -569,13 +561,41 @@ def reverse_geocode(lat, lon):
 def safe_initialize_ee():
     """Initialize Earth Engine with fallbacks (local creds or interactive)."""
     import os
+    project = os.environ.get("EE_PROJECT")
     try:
-        ee.Initialize(project=os.environ.get("EE_PROJECT")); return
-    except Exception:
+        if project:
+            ee.Initialize(project=project)
+        else:
+            ee.Initialize()
+        return
+    except Exception as e:
+        err_msg = str(e).lower() if e else ""
+        if "no project" in err_msg or "project" in err_msg and "found" in err_msg:
+            raise RuntimeError(
+                "Earth Engine requires a Google Cloud project. Set your project ID and rerun, e.g.:\n"
+                "  export EE_PROJECT=your-gcp-project-id\n"
+                "Create a project at https://console.cloud.google.com and enable the Earth Engine API."
+            ) from e
         try:
-            ee.Authenticate(); ee.Initialize(project=os.environ.get("EE_PROJECT")); return
-        except Exception as e:
-            raise RuntimeError("Earth Engine not initialized. Run ee.Authenticate() or set service account env.") from e
+            ee.Authenticate()
+            if project:
+                ee.Initialize(project=project)
+            else:
+                ee.Initialize()
+            return
+        except Exception as e2:
+            err2 = str(e2).lower() if e2 else ""
+            if "no project" in err2 or "project" in err2 and "found" in err2:
+                raise RuntimeError(
+                    "Earth Engine requires a Google Cloud project. Set your project ID and rerun, e.g.:\n"
+                    "  export EE_PROJECT=your-gcp-project-id\n"
+                    "Create a project at https://console.cloud.google.com and enable the Earth Engine API."
+                ) from e2
+            raise RuntimeError(
+                "Earth Engine not initialized. Run in a terminal: python -c \"import ee; ee.Authenticate()\" "
+                "(complete the browser sign-in). Credentials in ~/.config/earthengine/credentials. "
+                "If you see 'no project found', set EE_PROJECT=your-gcp-project-id."
+            ) from e2
 
 # ------------------------------ OSM / GBA ------------------------------------ #
 
@@ -1110,40 +1130,18 @@ def download_tree_dsm(out_tif: Path, tiles_dir: Path, bbox4326: List[float]):
 
     fail("No canopy tiles downloaded from any source.")
 
-@timed("DEM download (TINITALY if Italy else MERIT/DEM)")
-def download_dem(out_tif, bbox_utm, crs_utm, bbox4326, in_italy):
+@timed("DEM download (MERIT/DEM via Earth Engine)")
+def download_dem(out_tif, bbox_utm, crs_utm, bbox4326):
     if out_tif.exists():
         tlog(f"DEM exists: {out_tif}")
         return
-
-    if in_italy:
-        # Use TINITALY via WCS
-        tlog("Using TINITALY DEM (WCS)")
-        wcs_url = "http://tinitaly.pi.ingv.it/TINItaly_1_1/wcs"
-        params = {
-            "service": "WCS",
-            "version": "1.0.0",
-            "request": "GetCoverage",
-            "coverage": "TINItaly_1_1:tinitaly_dem",
-            "CRS": crs_utm,
-            "BBOX": f"{bbox_utm.bounds[0]},{bbox_utm.bounds[1]},{bbox_utm.bounds[2]},{bbox_utm.bounds[3]}",
-            "WIDTH": 1000,
-            "HEIGHT": 1000,
-            "FORMAT": "image/tiff",
-        }
-        r = requests.get(wcs_url, params=params, timeout=60)
-        r.raise_for_status()
-        out_tif.write_bytes(r.content)
-
-    else:
-        # Use MERIT/DEM via Earth Engine
-        tlog("Using MERIT/DEM (Earth Engine)")
-        region = ee.Geometry.BBox(*bbox4326)
-        image = ee.Image("MERIT/DEM/v1_0_3")
-        geemap.ee_export_image(
-            image, filename=str(out_tif),
-            scale=90, region=region, file_per_band=False
-        )
+    tlog("Using MERIT/DEM (Earth Engine)")
+    region = ee.Geometry.BBox(*bbox4326)
+    image = ee.Image("MERIT/DEM/v1_0_3")
+    geemap.ee_export_image(
+        image, filename=str(out_tif),
+        scale=90, region=region, file_per_band=False
+    )
 
 # ------------------------------- Processing ---------------------------------- #
 
@@ -1823,11 +1821,8 @@ def final_report_table(paths):
     print(pd.DataFrame(rows).to_string(index=False))
 
 @timed("ERA5 hourly → NetCDF")
-def download_and_embed_era5(out_nc, bbox_osm, year_start, year_end, data_dir, in_italy):
-    """Download+build meteo forcing via DDS (Italy) or ERA5 (CDS) with a single, standardized output.
-    - DDS: hourly GRIB + const NetCDF (HSURF). Compute RH, standardize names, keep only wanted variables.
-    - ERA5: yearly GRIB ZIPs → unzip → grib_to_netcdf → concat years, compute HGT (z/g), RH, divide SSRD/STRD by 3600, standardize names, keep only wanted vars.
-    """
+def download_and_embed_era5(out_nc, bbox_osm, year_start, year_end, data_dir):
+    """Download and build meteo forcing via ERA5 (Earth Engine) with standardized output."""
     import os
     import xarray as xr
 
@@ -1839,92 +1834,7 @@ def download_and_embed_era5(out_nc, bbox_osm, year_start, year_end, data_dir, in
         tlog(f"ERA5 hourly+geopotential already present: {out_nc}")
         return
 
-    # Determine source area from bbox_osm
     min_lat, min_lon, max_lat, max_lon = bbox_osm
-
-    if in_italy:
-        # ------------------- ITALY (DDSAPI) -------------------
-        import ddsapi
-        client = ddsapi.Client()
-        hourly_nc = data_dir / "era5_hourly.tmp.nc"
-        const_nc  = data_dir / "era5_const.tmp.nc"
-        out_tmp   = data_dir / (out_nc.name + ".tmp")
-        area = {"north": max_lat, "south": min_lat, "east": max_lon, "west": min_lon}
-
-        tlog("Downloading ERA5 (Italy downscaled) hourly")
-        client.retrieve(
-            "era5-downscaled-over-italy", "hourly",
-            {
-                "area": area,
-                "vertical": [0.005],
-                "time": {
-                    "hour":  [f"{h:02}" for h in range(24)],
-                    "year":  [str(y) for y in range(year_start, year_end + 1)],
-                    "month": [str(m) for m in range(1, 13)],
-                    "day":   [str(d) for d in range(1, 32)],
-                },
-                "variable": [
-                    "grid_northward_wind",
-                    "air_pressure_at_sea_level",
-                    "surface_net_downward_shortwave_flux",
-                    "surface_net_downward_longwave_flux",
-                    "air_temperature",
-                    "grid_eastward_wind",
-                    "specific_humidity",
-                ],
-                "format": "netcdf",
-            },
-            str(hourly_nc),
-        )
-
-        tlog("Downloading ERA5 const (surface_altitude)")
-        client.retrieve(
-            "era5-downscaled-over-italy", "const",
-            {"area": area, "variable": ["surface_altitude"], "format": "netcdf"},
-            str(const_nc),
-        )
-
-        tlog("Embedding HSURF, computing RH, and standardizing names")
-        with xr.open_dataset(hourly_nc, use_cftime=True) as ds_h, xr.open_dataset(const_nc, use_cftime=True) as ds_c:
-            hsurf = ds_c["HSURF"].squeeze()
-            if "time" in hsurf.dims:
-                hsurf = hsurf.isel(time=0, drop=True)
-            ds_h["surface_altitude"] = hsurf
-            if "valid_time" in ds_h.variables: ds_h = ds_h.drop_vars("valid_time")
-            # Relative humidity from T, q, and sea-level pressure (DDS variables)
-            Tvar = ds_h.get("air_temperature") or ds_h.get("T_2M")
-            Qvar = ds_h.get("specific_humidity") or ds_h.get("QV_2M")
-            Pvar = ds_h.get("air_pressure_at_sea_level") or ds_h.get("PMSL")
-            if (Tvar is not None) and (Qvar is not None) and (Pvar is not None):
-                T = Tvar  # K
-                q = Qvar  # kg/kg
-                p = Pvar  # Pa
-                e  = q * p / (0.622 + 0.378*q)     # vapor pressure (Pa)
-                es = 611.2 * np.exp(17.67 * (T - 273.15) / (T - 29.65))  # saturation vapor pressure (Pa)
-                ds_h["relative_humidity"] = (100.0 * e/es).clip(min=0, max=100)
-                # Rename immediately to requested name
-                ds_h = ds_h.rename({"relative_humidity": "RH2M"})
-            # Standardize dims/vars, keep only requested, set time encoding
-            ren_dims = {k:v for k,v in DIMS_MAP.items() if (k in ds_h.dims or k in ds_h.coords)}
-            ren_vars = {k:v for k,v in VAR_MAP.items()  if k in ds_h.variables}
-            ds_h = ds_h.rename({**ren_dims, **ren_vars})
-            # Exclude roughness length (Z0) for DDS over Italy per request
-            wanted_no_z0 = [v for v in WANTED_VARS if v != "Z0"]
-            ds_h = ds_h[[v for v in wanted_no_z0 if v in ds_h]]
-            ds_h = add_uhi_indicator(ds_h)
-            if "time" in ds_h.coords:
-                ds_h["time"].encoding.update(units="hours since 1900-01-01 00:00:00", calendar="gregorian")
-
-            ds_h.to_netcdf(str(out_tmp), format="NETCDF4", engine="netcdf4")
-            os.replace(out_tmp, out_nc)
-
-        # Keep DDS intermediate files for inspection (requested)
-        tlog("Keeping DDS intermediate NetCDF files (hourly/const)")
-
-        tlog(f"Saved ERA5 hourly + HSURF + RH: {out_nc}")
-        return
-
-    # ------------------- REST OF THE WORLD (Earth Engine single point) -------------------
     out_tmp = data_dir / (out_nc.name + ".tmp")
 
     # Use bbox centre as target coordinate for the point extraction
@@ -2116,36 +2026,67 @@ def download_and_embed_era5(out_nc, bbox_osm, year_start, year_end, data_dir, in
 
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Build all static/forcing inputs for the SOLWEIG GPU pipeline.")
-    ap.add_argument("--lat", type=float, default=DEFAULT_LAT)
-    ap.add_argument("--lon", type=float, default=DEFAULT_LON)
-    ap.add_argument("--city", type=str, default=None, help="Optional city name; if provided, skip reverse-geocoded name")
-    ap.add_argument("--km-buffer", type=float, default=DEFAULT_KM_BUFFER, help="Half-size of initial bbox in km")
-    ap.add_argument("--km-reduced-lat", type=float, default=DEFAULT_KM_REDUCED_LAT, help="Shrink (N/S) from bbox for SOLWEIG in km")
-    ap.add_argument("--km-reduced-lon", type=float, default=DEFAULT_KM_REDUCED_LON, help="Shrink (E/W) from bbox for SOLWEIG in km")
-    ap.add_argument("--year-start", type=int, default=DEFAULT_YEAR_START, help="Start year for meteorology (inclusive)")
-    ap.add_argument("--year-end", type=int, default=DEFAULT_YEAR_END, help="End year for meteorology (inclusive)")
-    ap.add_argument("--base-folder", type=str, default=DEFAULT_BASE, help="Workspace base folder")
-    ap.add_argument("--resolution", type=float, default=DEFAULT_RES_M, help="Reference grid resolution (meters)")
-    args = ap.parse_args()
+def run_create_inputs(
+    lat: float,
+    lon: float,
+    city: str = None,
+    km_buffer: float = DEFAULT_KM_BUFFER,
+    km_reduced_lat: float = DEFAULT_KM_REDUCED_LAT,
+    km_reduced_lon: float = DEFAULT_KM_REDUCED_LON,
+    year_start: int = DEFAULT_YEAR_START,
+    year_end: int = DEFAULT_YEAR_END,
+    base_folder: str = None,
+    resolution: float = DEFAULT_RES_M,
+):
+    """
+    Build all static and meteorological inputs for SOLWEIG-GPU for a given location.
 
-    # Resolve workspace paths (per-city input and SOLWEIG output folders)
-    base = Path(args.base_folder)
+    Downloads and processes WorldCover, tree DSM, DEM, LCZ, OSM/GBA vectors,
+    builds Building_DSM, Trees, DEM, Landuse rasters and meteorological NetCDF,
+    then computes wind coefficient. Outputs are written to
+    ``{base_folder}/{city}_for_solweig/`` with standard names (Building_DSM.tif,
+    DEM.tif, Trees.tif, Landuse.tif, etc.). Use that folder as base_path for
+    :func:`solweig_gpu.preprocess` and the rest of the pipeline.
+
+    Parameters
+    ----------
+    lat, lon : float
+        Center of the area (degrees).
+    city : str, optional
+        Name for the output folder. If None, derived from reverse geocoding.
+    km_buffer : float
+        Half-size of initial bounding box in km.
+    km_reduced_lat, km_reduced_lon : float
+        Shrink (N/S and E/W) from bbox for SOLWEIG domain in km.
+    year_start, year_end : int
+        Start/end year for meteorology (inclusive).
+    base_folder : str, optional
+        Workspace root. Defaults to DEFAULT_BASE (script directory or fixed path).
+    resolution : float
+        Reference grid resolution in meters.
+
+    Returns
+    -------
+    str
+        Path to the output directory (e.g. ``{base_folder}/{city}_for_solweig``)
+        containing Building_DSM.tif, DEM.tif, Trees.tif, Landuse.tif and met NetCDF.
+    """
+    if base_folder is None:
+        base_folder = DEFAULT_BASE
+    base = Path(base_folder)
     ensure_dir(base)
 
-    if args.city and args.city.strip():
-        city = args.city.strip()
+    if city and str(city).strip():
+        city = str(city).strip()
         tlog(f"Using provided city name: {city}")
-        # Still derive region info for country-based logic
-        _, state, cc = reverse_geocode(args.lat, args.lon)
     else:
         tlog("Reverse geocoding location name...")
-        city, state, cc = reverse_geocode(args.lat, args.lon)
+        city, _, _ = reverse_geocode(lat, lon)
         tlog(f"Location: {city}")
 
     paths = build_paths(base, city)
-    ensure_dir(paths.data_dir); ensure_dir(paths.out_dir)
+    ensure_dir(paths.data_dir)
+    ensure_dir(paths.out_dir)
 
     # Clean old TIFs in out_dir before rebuilding assets, but keep existing vector rasters
     keep_rasters = {paths.veg_ras.resolve(), paths.wat_ras.resolve(), paths.bld_ras.resolve()}
@@ -2159,9 +2100,7 @@ def main():
 
     # BBoxes
     tlog("Computing bounding boxes...")
-    b = compute_bounding_boxes(
-        args.lat, args.lon, args.km_buffer, args.km_reduced_lat, args.km_reduced_lon
-    )
+    b = compute_bounding_boxes(lat, lon, km_buffer, km_reduced_lat, km_reduced_lon)
 
     # Earth Engine
     tlog("Initializing Earth Engine...")
@@ -2175,18 +2114,14 @@ def main():
         tlog("Fetching OSM/GBA vectors (missing outputs)...")
         build_vectors_from_osm_gba(paths, b.bbox4326)
 
-    # Decide Italy via reverse geocode (prefer country code, fallback to region name)
-    in_italy = (cc == "it") or (state in ITALY_REGIONS)
-    tlog("Area is in Italy" if in_italy else "Area is not in Italy")
-
     # Downloads
     download_worldcover(paths.esa_tif, b.bbox4326)
     download_tree_dsm(paths.tree_tif, paths.tree_tiles, b.bbox4326)
-    download_dem(paths.dem_tif, b.bbox_utm, b.crs_utm, b.bbox4326, in_italy)
+    download_dem(paths.dem_tif, b.bbox_utm, b.crs_utm, b.bbox4326)
     download_lcz(paths.lcz_tif, b.bbox4326)
 
     # Build the reference analysis grid (SOLWEIG domain) in UTM
-    grid = compute_reference_grid(b.bbox_utm_solweig, args.resolution)
+    grid = compute_reference_grid(b.bbox_utm_solweig, resolution)
 
     # Resample to reference grid
     tlog("Resampling rasters to unified grid...")
@@ -2244,10 +2179,9 @@ def main():
     # Apply raster logic and create Building_DSM
     apply_raster_logic(paths.bld_ras, paths.tree_ras, paths.landuse_ras, paths.wat_ras, paths.veg_ras, paths.dem_ras, paths.dsm_plus_ras, urban_arr=urban_arr)
 
-    # Meteorology: choose output prefix by source (cosmo for DDS over Italy, era5 otherwise)
-    prefix = "cosmo" if in_italy else "era5"
-    met_out = paths.out_dir / f"{prefix}_{city}_{args.year_start}_{args.year_end}.nc"
-    download_and_embed_era5(met_out, b.bbox_osm, args.year_start, args.year_end, paths.data_dir, in_italy)
+    # Meteorology: ERA5 via Earth Engine
+    met_out = paths.out_dir / f"era5_{city}_{year_start}_{year_end}.nc"
+    download_and_embed_era5(met_out, b.bbox_osm, year_start, year_end, paths.data_dir)
 
     # Compute wind coefficient AFTER meteorology, using ERA5 Z0 mean if available
     z0_ref_value = 0.03
@@ -2305,6 +2239,35 @@ def main():
     final_report_table(final_outputs)
 
     tlog("Completed successfully.")
+    return str(paths.out_dir)
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Build all static/forcing inputs for the SOLWEIG GPU pipeline.")
+    ap.add_argument("--lat", type=float, default=DEFAULT_LAT)
+    ap.add_argument("--lon", type=float, default=DEFAULT_LON)
+    ap.add_argument("--city", type=str, default=None, help="Optional city name; if provided, skip reverse-geocoded name")
+    ap.add_argument("--km-buffer", type=float, default=DEFAULT_KM_BUFFER, help="Half-size of initial bbox in km")
+    ap.add_argument("--km-reduced-lat", type=float, default=DEFAULT_KM_REDUCED_LAT, help="Shrink (N/S) from bbox for SOLWEIG in km")
+    ap.add_argument("--km-reduced-lon", type=float, default=DEFAULT_KM_REDUCED_LON, help="Shrink (E/W) from bbox for SOLWEIG in km")
+    ap.add_argument("--year-start", type=int, default=DEFAULT_YEAR_START, help="Start year for meteorology (inclusive)")
+    ap.add_argument("--year-end", type=int, default=DEFAULT_YEAR_END, help="End year for meteorology (inclusive)")
+    ap.add_argument("--base-folder", type=str, default=DEFAULT_BASE, help="Workspace base folder")
+    ap.add_argument("--resolution", type=float, default=DEFAULT_RES_M, help="Reference grid resolution (meters)")
+    args = ap.parse_args()
+    run_create_inputs(
+        lat=args.lat,
+        lon=args.lon,
+        city=args.city,
+        km_buffer=args.km_buffer,
+        km_reduced_lat=args.km_reduced_lat,
+        km_reduced_lon=args.km_reduced_lon,
+        year_start=args.year_start,
+        year_end=args.year_end,
+        base_folder=args.base_folder,
+        resolution=args.resolution,
+    )
+
 
 if __name__ == "__main__":
     main()

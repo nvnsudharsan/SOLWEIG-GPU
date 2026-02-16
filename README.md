@@ -35,6 +35,7 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 - CPU-based computations of wall height and aspect are parallelized across multiple CPUs
 - GPU-based computation of SVF, shortwave/longwave radiation, shadows, Tmrt, and UTCI
 - Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
+- Pipeline can be run in stages (`preprocess`, `run_walls_aspect`, `run_utci_tiles`) for subset-of-tiles or reuse; see [documentation](https://solweig-gpu.readthedocs.io/en/latest/) (Developer Guide and API Reference)
 
 ![SOLWEIG-GPU workflow ](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/solweig_diagram.png)  
 *Flowchart of the SOLWEIG-GPU modeling framework*

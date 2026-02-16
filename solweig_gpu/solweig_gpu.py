@@ -74,6 +74,60 @@ def preprocess(
     return preprocess_dir
 
 
+def create_inputs(
+    lat: float,
+    lon: float,
+    city: Optional[str] = None,
+    km_buffer: float = 8.0,
+    km_reduced_lat: float = 3.0,
+    km_reduced_lon: float = 1.0,
+    year_start: int = 2024,
+    year_end: int = 2025,
+    base_folder: Optional[str] = None,
+    resolution: float = 2.0,
+) -> str:
+    """
+    Build static and meteorological inputs for SOLWEIG-GPU at a given location.
+
+    Downloads and processes WorldCover, tree DSM, DEM, LCZ, OSM/GBA vectors,
+    builds Building_DSM, Trees, DEM, Landuse rasters and meteorological NetCDF,
+    and computes wind coefficient. Requires optional dependencies (e.g. earthengine-api,
+    geemap, geopandas, osmnx); install them if you use this step.
+
+    Use the returned path as ``base_path`` for :func:`preprocess` (with raster
+    filenames like ``Building_DSM.tif``, ``DEM.tif``, ``Trees.tif``, ``Landuse.tif``
+    in that folder) and optionally set ``use_own_met=False`` with the generated
+    NetCDF in ``data_folder``.
+
+    Args:
+        lat, lon: Center of the area (degrees).
+        city: Name for the output folder. If None, derived from reverse geocoding.
+        km_buffer: Half-size of initial bounding box in km.
+        km_reduced_lat, km_reduced_lon: Shrink (N/S and E/W) from bbox for SOLWEIG in km.
+        year_start, year_end: Start/end year for meteorology (inclusive).
+        base_folder: Workspace root. Defaults to the create_inputs module default.
+        resolution: Reference grid resolution in meters.
+
+    Returns:
+        Path to the output directory (e.g. ``{base_folder}/{city}_for_solweig``)
+        containing Building_DSM.tif, DEM.tif, Trees.tif, Landuse.tif and met NetCDF.
+    """
+    from .create_inputs import run_create_inputs
+
+    return run_create_inputs(
+        lat=lat,
+        lon=lon,
+        city=city,
+        km_buffer=km_buffer,
+        km_reduced_lat=km_reduced_lat,
+        km_reduced_lon=km_reduced_lon,
+        year_start=year_start,
+        year_end=year_end,
+        base_folder=base_folder,
+        resolution=resolution,
+    )
+
+
 def run_walls_aspect(preprocess_dir: str) -> None:
     """
     Run wall height and aspect calculation for all tiles in the preprocessing directory.

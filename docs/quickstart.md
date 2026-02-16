@@ -220,11 +220,26 @@ output_folder/
 
 See [Outputs](outputs.md) for full details. Each time-varying `.tif` is a multi-band raster (one band per hour).
 
+## Calling pipeline stages separately
+
+You can run the workflow in three steps: **preprocess** → **run_walls_aspect** → **run_utci_tiles**. This is useful to run only a subset of tiles or to reuse preprocessed data. The CLI and GUI still use the one-shot `thermal_comfort()`; no changes there.
+
+```python
+from solweig_gpu import preprocess, run_walls_aspect, run_utci_tiles
+
+preprocess_dir = preprocess(base_path=base_path, selected_date_str=date_str, ...)
+run_walls_aspect(preprocess_dir)
+run_utci_tiles(base_path=base_path, preprocess_dir=preprocess_dir, selected_date_str=date_str, ...)
+```
+
+For full parameter lists and examples (including running only specific tiles), see [Developer Guide – Pipeline stages](developer_guide.md#pipeline-stages) and [API Reference](api_reference.md).
+
 ## Next Steps
 
 - [Detailed Input Data Guide](input_data.md)
 - [Meteorological Forcing Options](configuration.md)
 - [Outputs](outputs.md)
+- [Developer Guide](developer_guide.md) (pipeline stages, architecture)
 - [Testing Guide](testing.md)
-- [API Reference](api.rst)
+- [API Reference](api_reference.md)
 - [Examples Gallery](examples.md)
