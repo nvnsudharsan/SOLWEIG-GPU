@@ -1,0 +1,2 @@
+solweig_gpu
+tests
