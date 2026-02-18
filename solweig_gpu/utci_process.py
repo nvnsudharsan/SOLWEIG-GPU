@@ -311,10 +311,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Tstart        = torch.from_numpy(Tstart_np).to(device).float()
         alb_grid      = torch.from_numpy(alb_np).to(device).float()
         emis_grid     = torch.from_numpy(emis_np).to(device).float()
-        TgK_wall      = torch.tensor(float(TgK_wall_np)     , device=device)
-        Tstart_wall   = torch.tensor(float(Tstart_wall_np)  , device=device)
+        TgK_wall      = torch.tensor(np.asarray(TgK_wall_np).item(), device=device)
+        Tstart_wall   = torch.tensor(np.asarray(Tstart_wall_np).item(), device=device)
         TmaxLST       = torch.from_numpy(TmaxLST_np ).to(device).float()
-        TmaxLST_wall  = torch.tensor(float(TmaxLST_wall_np) , device=device)
+        TmaxLST_wall  = torch.tensor(np.asarray(TmaxLST_wall_np).item(), device=device)
     else:
         TgK = Knight + 0.37
         Tstart = Knight - 3.41
@@ -566,5 +566,4 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     end_time = time.time()
     time_taken = end_time - start_time
     print(f"Time taken to execute tile {number}: {time_taken:.2f} seconds")
-
 
