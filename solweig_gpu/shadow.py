@@ -77,7 +77,7 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     if azimuth == 0.0:
         azimuth = 1e-12
     azimuth = ensure_tensor(azimuth)
-    altitutde = ensure_tensor(altitude)
+    altitude = ensure_tensor(altitude)
     azimuth = azimuth * degrees #torch.tensor(azimuth * degrees, device=a.device)
     altitude = altitude * degrees #torch.tensor(altitude * degrees, device=a.device)
 
@@ -171,7 +171,7 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
 
         if bush.max() > 0. and torch.max(fabovea * bush) > 0.:
             tempbush.zero_()
-            tempbush[int(xp1)-1:int(xp2), int(yp1)-1:int(yp2)] = bush[int(xc1)-1:int(xc2), int(yc1)-1:int(yc2)] - dz
+            tempbush[int(xp1):int(xp2), int(yp1):int(yp2)] = bush[int(xc1):int(xc2), int(yc1):int(yc2)] - dz
             g = torch.max(g, tempbush)
             g *= bushplant
 
@@ -373,7 +373,7 @@ def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
                     svfS = svfS + weight
                 if 180 <= azimuth < 360:
                     svfW = svfW + weight
-                if 270 <= azimuth < 90:
+                if azimuth >= 270 or azimuth < 90:
                     svfN = svfN + weight
 
                 weight = annulus_weight(k, aziinterval[i], device)
@@ -389,7 +389,7 @@ def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
                 if 180 <= azimuth < 360:
                     svfWveg = svfWveg + weight * vegsh
                     svfWaveg = svfWaveg + weight * vbshvegsh
-                if 270 <= azimuth < 90:
+                if azimuth >= 270 or azimuth < 90:
                     svfNveg = svfNveg + weight * vegsh
                     svfNaveg = svfNaveg + weight * vbshvegsh
 
