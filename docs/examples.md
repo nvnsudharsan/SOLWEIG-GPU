@@ -74,7 +74,7 @@ request = {
         "surface_solar_radiation_downwards",
         "surface_thermal_radiation_downwards"
     ],
-    "year": ["2000"], # change to the desired year
+    "year": ["2020"], # change to the desired year
     "month": ["08"], # change to the desired month
     "day": ["13", "14"], # change to the desired date
     "time": [
