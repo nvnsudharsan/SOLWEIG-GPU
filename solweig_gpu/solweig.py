@@ -1082,10 +1082,10 @@ def shadowingfunction_wallheight_23(a, vegdem, vegdem2, azimuth, altitude, scale
     tempvegdem2 = torch.zeros((sizex, sizey), device=device)
     templastfabovea = torch.zeros((sizex, sizey), device=device)
     templastgabovea = torch.zeros((sizex, sizey), device=device)
-    bushplant = bush > 1
-    sh = torch.zeros((sizex, sizey), device=device) 
-    vbshvegsh = torch.zeros((sizex, sizey), device=device) 
-    vegsh = torch.zeros((sizex, sizey), device=device) + bushplant.float() 
+    bushplant = (bush > 1).float()
+    sh = torch.zeros((sizex, sizey), device=device)
+    vbshvegsh = torch.zeros((sizex, sizey), device=device)
+    vegsh = torch.zeros((sizex, sizey), device=device) + bushplant
     f = a 
     shvoveg = vegdem 
     wallbol = (walls > 0).float()
@@ -1105,6 +1105,11 @@ def shadowingfunction_wallheight_23(a, vegdem, vegdem2, azimuth, altitude, scale
 
     index = 0
     dzprev = torch.tensor(0.0, device=device)
+    fabovea = None
+    gabovea = None
+    lastfabovea = None
+    lastgabovea = None
+    vegsh2 = None
 
     while (amaxvalue >= dz) and (torch.abs(dx) < sizex) and (torch.abs(dy) < sizey):
         if ((pibyfour <= azimuth) and (azimuth < threetimespibyfour)) or ((fivetimespibyfour <= azimuth) and (azimuth < seventimespibyfour)):

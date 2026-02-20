@@ -102,8 +102,8 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
 
     f = a.clone()
     g = torch.zeros((sizex, sizey), device=device)
-    bushplant = bush > 1.
-    vegsh = torch.zeros((sizex, sizey), device=device) + bushplant.float()
+    bushplant = (bush > 1.).float()
+    vegsh = torch.zeros((sizex, sizey), device=device) + bushplant
 
     pibyfour = torch.pi / 4.
     threetimespibyfour = 3. * pibyfour
@@ -119,6 +119,10 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     tanaltitudebyscale = torch.tan(altitude) / scale
 
     index = 1
+    fabovea = None
+    gabovea = None
+    vegsh2 = None
+
     while (amaxvalue >= dz and torch.abs(dx) < sizex and torch.abs(dy) < sizey):
         if (pibyfour <= azimuth < threetimespibyfour or fivetimespibyfour <= azimuth < seventimespibyfour):
             dy = signsinazimuth * index
