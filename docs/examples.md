@@ -1,8 +1,8 @@
 # Examples (Using the sample data)
 
-This section provides a collection of examples to demonstrate how to use SOLWEIG-GPU for different scenarios.
+This section provides a collection of examples demonstrating how to use SOLWEIG-GPU across different scenarios.
 
-Sample data is available in [Zenodo](https://zenodo.org/records/18283037)
+Sample data is available in [Zenodo](https://zenodo.org/records/18561860)
 
 ## Example 1: Using WRF Data
 
@@ -74,7 +74,7 @@ request = {
         "surface_solar_radiation_downwards",
         "surface_thermal_radiation_downwards"
     ],
-    "year": ["2000"], # change to the desired year
+    "year": ["2020"], # change to the desired year
     "month": ["08"], # change to the desired month
     "day": ["13", "14"], # change to the desired date
     "time": [

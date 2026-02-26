@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 project = 'SOLWEIG-GPU'
-copyright = '2022-2025, Harsh Kamath and Naveen Sudharsan'
+copyright = '2022-2026, Harsh Kamath and Naveen Sudharsan'
 author = 'Harsh Kamath and Naveen Sudharsan'
 
 # Try to get version from package, fallback to static version
@@ -17,7 +17,7 @@ try:
     from solweig_gpu import __version__
     release = __version__
 except ImportError:
-    release = '1.2.15'
+    release = '1.2.21'
 
 # -- General configuration ---------------------------------------------------
 extensions = [

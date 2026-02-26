@@ -2,7 +2,7 @@
 
 SOLWEIG-GPU requires two main types of input data: geospatial rasters and meteorological forcing data. This guide provides detailed information on how to prepare and format your input data.
 
-!!! tip "Outputs in a different folder"
+!!! tip "Outputs in a different folder."
     If you want outputs written to a different directory, set `base_path` to that folder and pass **complete paths** for the Building DSM, DEM, Trees, and land cover (optional) rasters. See [Configuration](configuration.md#base_path).
 
 ## Geospatial Rasters
@@ -120,9 +120,9 @@ Output files from the Weather Research and Forecasting (WRF) model.
 
 Where `X` is the domain number (1-9).
 
-**Required Variables:** The package will automatically extract the necessary meteorological variables from the WRF output files.
+**Required Variables:** The package automatically extracts the required meteorological variables from the WRF output files.
 
-!!! warning "Time Specification"
+!!! warning "Time Specification."
     When using WRF data, you must specify `start_time` and `end_time` in **UTC**. The package will automatically convert to local time.
 
 ## Data Preparation Tips
@@ -139,13 +139,12 @@ Currently, SOLWEIG-GPU is tested and optimized for **hourly data**. Sub-hourly o
 
 A complete sample dataset is available for download to help you understand the expected data format and structure.
 
-**Download:** [Sample Data on Zenodo](https://zenodo.org/records/18283037)
+**Download:** [Sample Data on Zenodo](https://zenodo.org/records/18561860)
 
 The sample dataset includes:
 
 - Example input rasters for Austin, Texas
-- Meteorological forcing data in all three formats (custom text, ERA5, WRF)
-- Expected output structure
+- Meteorological forcing data in all three formats (custom text, ERA5, WRF) 
 
 !!! Tip:
-    We recommend starting with the sample data to familiarize yourself with the package before processing your own data.
+    We recommend starting with the sample data to familiarize yourself with the package before processing your own data. For a quick test, download only ERA5 or ownmet data, since the entire forcing data set is too large (which includes high-resolution WRF data). 

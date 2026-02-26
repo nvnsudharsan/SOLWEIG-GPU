@@ -11,7 +11,7 @@ This guide will get you running SOLWEIG-GPU in minutes.
 
 ## Sample Data
 
-Sample data is available in [Zenodo](https://zenodo.org/records/18283037).
+Sample data is available in [Zenodo](https://zenodo.org/records/18561860).
 
 ## Example 1: Using Your Own Met Data
 
