@@ -15,6 +15,8 @@ from typing import Optional, List
 # Lazy imports used below to avoid loading heavy deps at import time.
 
 
+from typing import Optional, List
+
 def preprocess(
     base_path: str,
     selected_date_str: str,
@@ -31,6 +33,7 @@ def preprocess(
     data_folder: Optional[str] = None,
     own_met_file: Optional[str] = None,
     preprocess_dir: Optional[str] = None,
+    use_uhi: bool = True,
 ) -> str:
     """
     Run preprocessing only: validate rasters, create tiles, and prepare metfiles.
@@ -54,6 +57,9 @@ def preprocess(
         own_met_file: Path to custom met file when use_own_met is True.
         preprocess_dir: Directory for preprocessing outputs. Defaults to
             ``{base_path}/processed_inputs``.
+        use_uhi: If True, use UHI-aware ERA5 processing and write UHI_CYCLE/uhii
+            into generated metfiles when available. If False, use standard ERA5
+            processing and write uhii = 0.0.
 
     Returns:
         The path to the preprocessing directory (tiles and metfiles written there).
@@ -66,10 +72,22 @@ def preprocess(
     os.makedirs(preprocess_dir, exist_ok=True)
 
     ppr(
-        base_path, building_dsm_filename, dem_filename, trees_filename,
-        landcover_filename, tile_size, overlap, selected_date_str, use_own_met,
-        start_time, end_time, data_source_type, data_folder, own_met_file,
+        base_path,
+        building_dsm_filename,
+        dem_filename,
+        trees_filename,
+        landcover_filename,
+        tile_size,
+        overlap,
+        selected_date_str,
+        use_own_met,
+        start_time,
+        end_time,
+        data_source_type,
+        data_folder,
+        own_met_file,
         preprocess_dir=preprocess_dir,
+        use_uhi=use_uhi,
     )
     return preprocess_dir
 
@@ -254,15 +272,16 @@ def thermal_comfort(
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
-    landcover_filename: Optional[str] = None, 
-    tile_size=3600, 
-    overlap = 20,
+    landcover_filename: Optional[str] = None,
+    tile_size=3600,
+    overlap=20,
     use_own_met=True,
-    start_time=None, 
-    end_time=None, 
-    data_source_type=None, 
+    start_time=None,
+    end_time=None,
+    data_source_type=None,
     data_folder=None,
     own_met_file=None,
+    use_uhi=True,
     save_tmrt=True,
     save_svf=False,
     save_kup=False,
@@ -283,70 +302,32 @@ def thermal_comfort(
     6. Saves outputs as georeferenced rasters
     
     Args:
-        base_path (str): Base directory for output_folder/ and processed_inputs/; also used to resolve relative raster paths. For outputs elsewhere, set this to the desired output directory and pass complete paths for the raster arguments.
+        base_path (str): Base directory for output_folder/ and processed_inputs/; also used to resolve relative raster paths.
         selected_date_str (str): Simulation date in format 'YYYY-MM-DD'
-        building_dsm_filename (str): Building+terrain DSM path or filename (relative to base_path). Default: 'Building_DSM.tif'. Can be a complete path if rasters live elsewhere.
-        dem_filename (str): DEM path or filename (relative to base_path). Default: 'DEM.tif'
-        trees_filename (str): Vegetation DSM path or filename (relative to base_path). Default: 'Trees.tif'
-        landcover_filename (str, optional): Land cover raster path or filename. Default: None
-        tile_size (int): Tile size in pixels. Default: 3600. Adjust based on GPU RAM.
-        overlap (int): Overlap between tiles in pixels. Default: 20. Used for shadow transfer.
-        use_own_met (bool): Use custom meteorological file. Default: True
-        start_time (str, optional): Start datetime 'YYYY-MM-DD HH:MM:SS' (UTC for ERA5/WRF)
-        end_time (str, optional): End datetime 'YYYY-MM-DD HH:MM:SS' (UTC for ERA5/WRF)
-        data_source_type (str, optional): 'ERA5' or 'wrfout' if not using own met file
+        building_dsm_filename (str): Building+terrain DSM path or filename.
+        dem_filename (str): DEM path or filename.
+        trees_filename (str): Vegetation DSM path or filename.
+        landcover_filename (str, optional): Land cover raster path or filename.
+        tile_size (int): Tile size in pixels.
+        overlap (int): Overlap between tiles in pixels.
+        use_own_met (bool): Use custom meteorological file.
+        start_time (str, optional): Start datetime 'YYYY-MM-DD HH:MM:SS'
+        end_time (str, optional): End datetime 'YYYY-MM-DD HH:MM:SS'
+        data_source_type (str, optional): 'ERA5' or 'wrfout'
         data_folder (str, optional): Folder containing ERA5/WRF NetCDF files
         own_met_file (str, optional): Path to custom meteorological text file
-        save_tmrt (bool): Save mean radiant temperature output. Default: True
-        save_svf (bool): Save sky view factor output. Default: False
-        save_kup (bool): Save upward shortwave radiation. Default: False
-        save_kdown (bool): Save downward shortwave radiation. Default: False
-        save_lup (bool): Save upward longwave radiation. Default: False
-        save_ldown (bool): Save downward longwave radiation. Default: False
-        save_shadow (bool): Save shadow maps. Default: False
+        use_uhi (bool): If True, use UHI-aware ERA5 processing and propagate
+            UHI_CYCLE into metfiles. If False, disable it and write uhii = 0.0.
+        save_tmrt (bool): Save mean radiant temperature output.
+        save_svf (bool): Save sky view factor output.
+        save_kup (bool): Save upward shortwave radiation.
+        save_kdown (bool): Save downward shortwave radiation.
+        save_lup (bool): Save upward longwave radiation.
+        save_ldown (bool): Save downward longwave radiation.
+        save_shadow (bool): Save shadow maps.
     
     Returns:
-        None: Outputs are saved to `{base_path}/output_folder/` directory
-    
-    Output Structure:
-        - {base_path}/processed_inputs/ - All preprocessing files
-          - Building_DSM/ - Preprocessing tiles
-          - DEM/ - Preprocessing tiles
-          - Trees/ - Preprocessing tiles
-          - metfiles/ - Meteorological files
-          - walls/ - Wall height rasters
-          - aspect/ - Wall aspect rasters
-          - Outfile.nc - Processed NetCDF (if using ERA5/WRF)
-        - output_folder/{tile_key}/ - One folder per tile (tile_key e.g. "0_0", "1000_0")
-          - UTCI_{tile_key}.tif - Universal Thermal Climate Index (always saved)
-          - TMRT_{tile_key}.tif - Mean radiant temperature (if save_tmrt=True)
-          - SVF_{tile_key}.tif - Sky view factor (if save_svf=True)
-          - Kup_{tile_key}.tif - Upward shortwave (if save_kup=True)
-          - Kdown_{tile_key}.tif - Downward shortwave (if save_kdown=True)
-          - Lup_{tile_key}.tif - Upward longwave (if save_lup=True)
-          - Ldown_{tile_key}.tif - Downward longwave (if save_ldown=True)
-          - Shadow_{tile_key}.tif - Shadow maps (if save_shadow=True)
-    
-    Notes:
-        - Automatically uses GPU if available, falls back to CPU
-        - Processes tiles in parallel for large domains
-        - UTC to local time conversion handled automatically
-        - Multi-band rasters: one band per hour
-    
-    Example:
-        >>> from solweig_gpu import thermal_comfort
-        >>> thermal_comfort(
-        ...     base_path='/path/to/input',
-        ...     selected_date_str='2020-08-13',
-        ...     tile_size=1000,
-        ...     overlap=100,
-        ...     use_own_met=True,
-        ...     own_met_file='/path/to/met.txt'
-        ... )
-    
-    Raises:
-        ValueError: If input rasters have mismatched dimensions, CRS, or pixel sizes
-        FileNotFoundError: If the required input files are missing
+        None
     """
     preprocess_dir = preprocess(
         base_path=base_path,
@@ -363,8 +344,11 @@ def thermal_comfort(
         data_source_type=data_source_type,
         data_folder=data_folder,
         own_met_file=own_met_file,
+        use_uhi=use_uhi,
     )
+
     run_walls_aspect(preprocess_dir)
+
     run_utci_tiles(
         base_path=base_path,
         preprocess_dir=preprocess_dir,
