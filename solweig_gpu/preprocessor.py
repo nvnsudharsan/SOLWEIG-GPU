@@ -1170,7 +1170,7 @@ def create_met_files(base_path, source_met_file, preprocess_dir):
 # =============================================================================
 def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcover_filename,
          tile_size, overlap, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
-         own_met_file=None, preprocess_dir=None):
+         own_met_file=None, preprocess_dir=None, use_uhi=True):
     """
     Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.
 
@@ -1249,6 +1249,11 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         processed_nc_file = os.path.join(preprocess_dir, "Outfile.nc")
         
         if data_source_type.lower() == "era5":
+            if use_uhi:
+                print("[INFO] Using ERA5 processing with UHI correction")
+                process_era5_data_uhi(start_time, end_time, data_folder, output_file=processed_nc_file)
+            else:
+            print("[INFO] Using standard ERA5 processing (no UHI)")
             process_era5_data(start_time, end_time, data_folder, output_file=processed_nc_file)
         elif data_source_type.lower() == "wrfout":
             process_wrfout_data(start_time, end_time, data_folder, output_file=processed_nc_file)
