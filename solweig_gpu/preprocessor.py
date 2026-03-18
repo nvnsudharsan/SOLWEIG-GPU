@@ -1291,8 +1291,8 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
                 print("[INFO] Using ERA5 processing with UHI correction")
                 process_era5_data_uhi(start_time, end_time, data_folder, output_file=processed_nc_file)
             else:
-            print("[INFO] Using standard ERA5 processing (no UHI)")
-            process_era5_data(start_time, end_time, data_folder, output_file=processed_nc_file)
+                print("[INFO] Using standard ERA5 processing (no UHI)")
+                process_era5_data(start_time, end_time, data_folder, output_file=processed_nc_file)
         elif data_source_type.lower() == "wrfout":
             process_wrfout_data(start_time, end_time, data_folder, output_file=processed_nc_file)
         else:
