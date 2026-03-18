@@ -919,9 +919,7 @@ def _tile_size_m(poly):
     return w, h
 
 def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, preprocess_dir):
-    """
-    Minimal-edits, curvilinear-safe version of your function.
-    """
+
     metfiles_folder = os.path.join(preprocess_dir, "metfiles")
     os.makedirs(metfiles_folder, exist_ok=True)
     
