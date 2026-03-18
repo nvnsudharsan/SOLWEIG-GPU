@@ -31,15 +31,163 @@ from timezonefinder import TimezoneFinder
 from scipy.spatial import cKDTree
 import math
 from tqdm import tqdm
-import shutil
+import pytz
 
 gdal.UseExceptions()
+RHO_CP = 1.225 * 1005.0  # air density * Cp
 
 WRF_PATTERNS = [
     re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}_\d{2}_\d{2})$'),  # HH_MM_SS
     re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})$'),  # HH:MM:SS
     re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2})$'),              # HH
 ]
+
+def infer_timezone_from_grid(latitudes, longitudes):
+    """Infer timezone name from the center of the ERA5 grid."""
+    tf = TimezoneFinder()
+
+    if latitudes.ndim == 1 and longitudes.ndim == 1:
+        lat_c = float(latitudes[len(latitudes)//2])
+        lon_c = float(longitudes[len(longitudes)//2])
+    else:
+        i = latitudes.shape[0] // 2
+        j = latitudes.shape[1] // 2
+        lat_c = float(latitudes[i, j])
+        lon_c = float(longitudes[i, j])
+
+    tz_name = tf.timezone_at(lat=lat_c, lng=lon_c)
+    return tz_name or "UTC"
+    
+def utc_times_to_local_naive(times_utc, timezone_name):
+    """
+    Convert UTC timestamps to local naive datetimes for local-day resampling
+    and local-night detection.
+    """
+    t = pd.to_datetime(times_utc, utc=True)
+    t_local = t.tz_convert(timezone_name).tz_localize(None)
+    return t_local.to_numpy()
+
+######################################### 
+# Modified after Andrea Zonato
+def _night_sine_profile(sw_values, amp_values, extension_before=0, extension_after=1):
+    """
+    Build a nighttime UHI profile from SWDOWN in local time:
+    - detect night where SWDOWN <= 0
+    - optionally extend before/after
+    - shape with a sine curve over each night segment
+    """
+    sw_arr  = np.asarray(sw_values, dtype=float)
+    amp_arr = np.asarray(amp_values, dtype=float)
+
+    n = sw_arr.size
+    out = np.zeros(n, dtype=float)
+
+    if n == 0 or amp_arr.shape != sw_arr.shape:
+        return out
+
+    valid = np.isfinite(sw_arr) & np.isfinite(amp_arr)
+
+    # Night starts exactly when SWDOWN <= 0
+    base_night = valid & (sw_arr <= 5.0)
+
+    if not np.any(base_night):
+        return out
+
+    idx = np.flatnonzero(base_night)
+    splits = np.where(np.diff(idx) > 1)[0] + 1
+    raw_segments = [seg for seg in np.split(idx, splits) if seg.size]
+
+    for seg in raw_segments:
+        s = int(max(0, seg[0] - extension_before))
+        e = int(min(n, seg[-1] + 1 + extension_after))
+        seg_ext = np.arange(s, e, dtype=int)
+
+        L = seg_ext.size
+        if L < 2:
+            continue
+
+        seg_amp = amp_arr[seg_ext]
+        seg_amp = seg_amp[np.isfinite(seg_amp)]
+        if seg_amp.size == 0:
+            continue
+
+        A = float(np.mean(seg_amp))
+        if A <= 0:
+            continue
+
+        x = np.linspace(0, np.pi, L)
+        profile = np.sin(x)
+        profile = np.maximum(profile, 0.0)
+
+        out[seg_ext] = A * profile
+
+    return out
+
+def compute_uhi_cycle_from_arrays(times, t2_k, swdown_wm2, u_wind_ms, v_wind_ms):
+    """
+    Compute UHI_CYCLE from arrays already extracted from ERA5.
+
+    Parameters
+    ----------
+    times : 1D array-like of datetimes
+    t2_k : ndarray (time, lat, lon), air temperature in K
+    swdown_wm2 : ndarray (time, lat, lon), shortwave down radiation in W m-2
+    u_wind_ms : ndarray (time, lat, lon), zonal wind speed in m s-1
+    v_wind_ms : ndarray (time, lat, lon), meridional wind speed in m s-1
+
+    Returns
+    -------
+    uhi_cycle : ndarray (time, lat, lon), in K
+    """
+    lat_n = t2_k.shape[1]
+    lon_n = t2_k.shape[2]
+
+    coords = {"time": times, "lat": np.arange(lat_n), "lon": np.arange(lon_n)}
+
+    da_t2 = xr.DataArray(t2_k, dims=("time", "lat", "lon"), coords=coords)
+    da_sw = xr.DataArray(swdown_wm2, dims=("time", "lat", "lon"), coords=coords)
+    da_u = xr.DataArray(u_wind_ms, dims=("time", "lat", "lon"), coords=coords)
+    da_v = xr.DataArray(v_wind_ms, dims=("time", "lat", "lon"), coords=coords)
+
+    # Wind speed magnitude
+    da_wd = np.sqrt(da_u**2 + da_v**2)
+
+    # Daily diagnostics
+    sdown_daily = (da_sw / RHO_CP).resample(time="1D").mean()
+    wd_daily = da_wd.resample(time="1D").mean()
+    tmax_daily = da_t2.resample(time="1D").max()
+    tmin_daily = da_t2.resample(time="1D").min()
+    dtr_daily = tmax_daily - tmin_daily
+
+    numerator = (sdown_daily * dtr_daily**3)
+    numerator = numerator.where(np.isfinite(numerator), 0).clip(min=0)
+
+    # Avoid divide-by-zero / near-zero wind
+    wd_daily_safe = xr.where(wd_daily > 1.0, wd_daily, 1.0)
+
+    uhi_max_daily = (numerator / wd_daily_safe) ** 0.25
+    uhi_max_daily = uhi_max_daily.fillna(0)
+
+    # Expand daily amplitude back to hourly timestamps
+    uhi_max_ts = uhi_max_daily.reindex(time=da_t2.time, method="ffill").fillna(0)
+
+    # Build nighttime UHI cycle
+    uhi_cycle = xr.apply_ufunc(
+        _night_sine_profile,
+        da_sw,
+        uhi_max_ts,
+        input_core_dims=[["time"], ["time"]],
+        output_core_dims=[["time"]],
+        vectorize=True,
+        dask="allowed",
+        kwargs={"extension_before": 0, "extension_after": 0},
+    )
+
+    uhi_cycle = uhi_cycle.transpose("time", "lat", "lon")
+    return uhi_cycle.values.astype(np.float32)
+
+# Modified after Andrea Zonato
+######################################### 
 
 def _match_wrfout(base):
     """
@@ -392,6 +540,143 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         swdown_var[:, :, :] = swd
         # glw_var[:, :, :]  = ...
 
+    print(f"ERA5 forcing file created: {output_file}  ({len(times)} steps from {py_times[0]} to {py_times[-1]} UTC)")
+
+# If the nightime UHI intensity needs to be included in air temperature calculation
+def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfile.nc"):
+    """
+    Same numeric outputs as your original function, but time is taken from the files
+    and sliced to [start_time, end_time] UTC. Variables written:
+      T2 (t2m, Kelvin), PSFC (sp, Pa), RH2 (%), WIND (m/s), SWDOWN (W/m^2), UHI_CYCLE (K).
+    """
+    start_dt = dt.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_dt   = dt.datetime.strptime(end_time,   "%Y-%m-%d %H:%M:%S")
+
+    # Pad the requested window so UHI_CYCLE can be computed on complete nights
+    pad_hours = 24
+    start_pad = start_dt - dt.timedelta(hours=pad_hours)
+    end_pad   = end_dt   + dt.timedelta(hours=pad_hours)
+
+    instant_file = os.path.join(folder_path, 'data_stream-oper_stepType-instant.nc')
+    accum_file   = os.path.join(folder_path, 'data_stream-oper_stepType-accum.nc')
+
+    ds_instant = _normalize_time_coord(xr.open_dataset(instant_file, decode_times=True))
+    ds_accum   = _normalize_time_coord(xr.open_dataset(accum_file,   decode_times=True))
+
+    # Select padded window for computation
+    ds_instant = ds_instant.sel(time=slice(start_pad, end_pad))
+    ds_accum   = ds_accum.sel(time=slice(start_pad, end_pad))
+
+    if ds_instant.time.size == 0:
+        raise ValueError("No instantaneous timestamps within requested window.")
+    if ds_accum.time.size == 0:
+        raise ValueError("No accumulated timestamps within requested window.")
+
+    common_t = np.intersect1d(ds_instant.time.values, ds_accum.time.values)
+    if common_t.size == 0:
+        raise ValueError("Instantaneous and accumulated streams have no overlapping timestamps.")
+
+    ds_instant = ds_instant.sel(time=common_t)
+    ds_accum   = ds_accum.sel(time=common_t)
+
+    def saturation_vapor_pressure(Tc):
+        return 6.112 * np.exp((17.67 * Tc) / (Tc + 243.5))
+
+    temperatures = ds_instant['t2m'].values
+    dew_points   = ds_instant['d2m'].values
+    surface_pressures = ds_instant['sp'].values
+    u10 = ds_instant['u10'].values
+    v10 = ds_instant['v10'].values
+    wind_speeds = np.sqrt(u10**2 + v10**2)
+
+    shortwave_radiation = (ds_accum['ssrd'].values / 3600.0).astype(np.float32)
+
+    e_temp      = saturation_vapor_pressure(temperatures - 273.15)
+    e_dew_point = saturation_vapor_pressure(dew_points   - 273.15)
+    relative_humidities = 100.0 * (e_dew_point / e_temp)
+    relative_humidities = np.clip(relative_humidities, 0, 100)
+
+    latitudes  = ds_instant['latitude'].values
+    longitudes = ds_instant['longitude'].values
+    if latitudes.ndim == 1 and longitudes.ndim == 1:
+        lon2d, lat2d = np.meshgrid(longitudes, latitudes)
+    else:
+        lat2d = latitudes
+        lon2d = longitudes
+
+    times = ds_instant.time.values  # keep original UTC times for writing output
+
+    tz_name = infer_timezone_from_grid(latitudes, longitudes)
+    times_local = utc_times_to_local_naive(times, tz_name)
+
+    print(f"Using local timezone for UHI_CYCLE: {tz_name}")
+
+    # Compute UHI in local time so daily grouping and night timing are local
+    uhi_cycle = compute_uhi_cycle_from_arrays(times_local, temperatures, shortwave_radiation, u10, v10)
+    
+    times_pd = pd.to_datetime(times)
+
+    keep = (times_pd >= pd.Timestamp(start_dt)) & (times_pd <= pd.Timestamp(end_dt))
+    keep_idx = np.where(keep)[0]
+
+    times = times[keep_idx]
+    temperatures = temperatures[keep_idx, :, :]
+    dew_points = dew_points[keep_idx, :, :]
+    surface_pressures = surface_pressures[keep_idx, :, :]
+    u10 = u10[keep_idx, :, :]
+    v10 = v10[keep_idx, :, :]
+    wind_speeds = wind_speeds[keep_idx, :, :]
+    shortwave_radiation = shortwave_radiation[keep_idx, :, :]
+    relative_humidities = relative_humidities[keep_idx, :, :]
+    uhi_cycle = uhi_cycle[keep_idx, :, :]
+
+    with Dataset(output_file, 'w', format='NETCDF4') as nc:
+        nc.createDimension('time', times.shape[0])
+        nc.createDimension('lat',  lat2d.shape[0])
+        nc.createDimension('lon',  lon2d.shape[1])
+
+        time_var = nc.createVariable('time', 'f8', ('time',))
+        lat_var  = nc.createVariable('lat',  'f4', ('lat', 'lon'))
+        lon_var  = nc.createVariable('lon',  'f4', ('lat', 'lon'))
+
+        t2_var     = nc.createVariable('T2',        'f4', ('time', 'lat', 'lon'), zlib=True)
+        psfc_var   = nc.createVariable('PSFC',      'f4', ('time', 'lat', 'lon'), zlib=True)
+        rh2_var    = nc.createVariable('RH2',       'f4', ('time', 'lat', 'lon'), zlib=True)
+        wind_var   = nc.createVariable('WIND',      'f4', ('time', 'lat', 'lon'), zlib=True)
+        swdown_var = nc.createVariable('SWDOWN',    'f4', ('time', 'lat', 'lon'), zlib=True)
+        uhi_var    = nc.createVariable('UHI_CYCLE', 'f4', ('time', 'lat', 'lon'), zlib=True)
+
+        time_var.units = "hours since 1970-01-01 00:00:00"
+        time_var.calendar = "gregorian"
+        lat_var.units = "degrees_north"
+        lon_var.units = "degrees_east"
+        t2_var.units = "K"
+        psfc_var.units = "Pa"
+        rh2_var.units = "%"
+        wind_var.units = "m/s"
+        swdown_var.units = "W/m^2"
+        uhi_var.units = "K"
+
+        py_times = [np.datetime64(t).astype("datetime64[s]").astype(object) for t in times]
+        time_var[:] = date2num(py_times, units=time_var.units, calendar=time_var.calendar)
+
+        lat_var[:, :] = lat2d.astype('float32')
+        lon_var[:, :] = lon2d.astype('float32')
+
+        t2 = temperatures.astype('float32')
+        sp = surface_pressures.astype('float32')
+        rh = relative_humidities.astype('float32')
+        wind = wind_speeds.astype('float32')
+        swd = shortwave_radiation.astype('float32')
+        uhi = uhi_cycle.astype('float32')
+
+        t2_var[:, :, :]     = t2
+        psfc_var[:, :, :]   = sp
+        rh2_var[:, :, :]    = rh
+        wind_var[:, :, :]   = wind
+        swdown_var[:, :, :] = swd
+        uhi_var[:, :, :]    = uhi
+        
     print(f"ERA5 forcing file created: {output_file}  ({len(times)} steps from {py_times[0]} to {py_times[-1]} UTC)")
 
     
