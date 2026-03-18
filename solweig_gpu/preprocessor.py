@@ -918,7 +918,7 @@ def _tile_size_m(poly):
     h = _haversine_m(miny, cx, maxy, cx) 
     return w, h
 
-def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, preprocess_dir):
+def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, preprocess_dir, use_uhi=True):
 
     metfiles_folder = os.path.join(preprocess_dir, "metfiles")
     os.makedirs(metfiles_folder, exist_ok=True)
@@ -933,12 +933,14 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         return
 
     var_map = {
-        "Wind": "WIND",     
+        "Wind": "WIND",
         "RH": "RH2",
-        "Td": "T2",         # K -> °C
-        "press": "PSFC",    # Pa -> kPa
-        "Kdn": "SWDOWN",       
+        "Td": "T2",           # K -> °C
+        "press": "PSFC",      # Pa -> kPa
+        "Kdn": "SWDOWN",
+        "uhii": "UHI_CYCLE"   # optional UHI term
     }
+
     fixed_values = {
         "Q*": -999, "QH": -999, "QE": -999, "Qs": -999, "Qf": -999,
         "snow": -999, "ldown": -999, "fcld": -999, "wuh": -999, "xsmd": -999, "lai_hr": -999,
@@ -951,21 +953,21 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
     time_base_date = nc.num2date(time_var, units=time_units, only_use_cftime_datetimes=False)
     selected_local_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d").date()
 
-    lat2d = np.array(dataset.variables["lat"][:], dtype=float)  
-    lon2d = np.array(dataset.variables["lon"][:], dtype=float)  
+    lat2d = np.array(dataset.variables["lat"][:], dtype=float)
+    lon2d = np.array(dataset.variables["lon"][:], dtype=float)
     ny, nx = lat2d.shape
     pts_flat = np.column_stack([lon2d.ravel(), lat2d.ravel()])
     tree = cKDTree(pts_flat)
-    # ----------------------------------------------------------------------------
-    
+
     columns = [
         'iy', 'id', 'it', 'imin',
         'Q*', 'QH', 'QE', 'Qs', 'Qf',
         'Wind', 'RH', 'Td', 'press',
-        'Kdn','rain', 'snow', 'ldown',
+        'Kdn', 'rain', 'snow', 'ldown',
         'fcld', 'wuh', 'xsmd', 'lai_hr',
-        'Kdiff', 'Kdir', 'Wd'
+        'Kdiff', 'Kdir', 'Wd', 'uhii'
     ]
+
     columns_out = [
         "iy", "id", "it", "imin",
         "Q*", "QH", "QE", "Qs", "Qf",
@@ -980,7 +982,8 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         "lai_hr",
         "Kdiff",
         "Kdir",
-        "Wd"
+        "Wd",
+        "uhii"
     ]
     
     for tif_file in tif_files:
@@ -1019,7 +1022,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         min_lon_tif, max_lon_tif = min(lons), max(lons)
         min_lat_tif, max_lat_tif = min(lats), max(lats)
         shape = box(min_lon_tif, min_lat_tif, max_lon_tif, max_lat_tif)
-        shape = Polygon([(x, y) for (x, y) in shape.exterior.coords])  # explicitly polygon
+        shape = Polygon([(x, y) for (x, y) in shape.exterior.coords])
 
         shape_name = os.path.splitext(os.path.basename(tif_file))[0]
         shape_name_clean = re.sub(r'\W+', '_', shape_name).replace("DEM", "metfile", 1)
@@ -1042,6 +1045,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
             print(f"No UTC data found for local date {selected_date_str} in {tif_file}.")
             ds_tif = None
             continue
+
         print(f"Processing {len(time_indices)} time steps for {shape_name_clean}")
 
         tile_w_m, tile_h_m = _tile_size_m(shape)
@@ -1071,26 +1075,23 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
                 var_name = var_map[key]
                 if var_name in dataset.variables:
                     try:
-                        data_array = dataset.variables[var_name][t, :, :]  # shape (ny, nx)
+                        data_array = dataset.variables[var_name][t, :, :]
                         data_array = np.asanyarray(data_array)
                         if np.ma.isMaskedArray(data_array):
                             data_array = np.where(data_array.mask, np.nan, data_array.data)
 
                         if use_nn:
-                            # nearest neighbor at centroid using KDTree
-                            _, idx_nn = cKDTree(np.column_stack([lon2d.ravel(), lat2d.ravel()])).query([lon_center, lat_center], k=1)
+                            _, idx_nn = tree.query([lon_center, lat_center], k=1)
                             ii, jj = np.unravel_index(idx_nn, (ny, nx))
                             mean_value = float(data_array[ii, jj])
                         else:
                             masked_data = np.where(inside_mask, data_array, np.nan)
                             mean_value = float(np.nanmean(masked_data)) if np.any(~np.isnan(masked_data)) else np.nan
                             if not np.isfinite(mean_value):
-                                # fallback to NN
-                                _, idx_nn = cKDTree(np.column_stack([lon2d.ravel(), lat2d.ravel()])).query([lon_center, lat_center], k=1)
+                                _, idx_nn = tree.query([lon_center, lat_center], k=1)
                                 ii, jj = np.unravel_index(idx_nn, (ny, nx))
                                 mean_value = float(data_array[ii, jj])
 
-                        # Adjust units if needed
                         if key == "Td" and np.isfinite(mean_value):
                             mean_value -= 273.15
                         if key == "press" and np.isfinite(mean_value):
@@ -1098,6 +1099,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
 
                         if not np.isfinite(mean_value):
                             mean_value = -999
+
                         row.append(mean_value)
 
                     except Exception as e:
@@ -1105,23 +1107,61 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
                         row.append(-999)
                 else:
                     row.append(-999)
-            
+
             row.append(fixed_values["rain"])
             row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir", "Wd"]])
+
+            # Add uhii at the end
+            uhii_value = 0.0
+            if use_uhi and (var_map["uhii"] in dataset.variables):
+                try:
+                    data_array = dataset.variables[var_map["uhii"]][t, :, :]
+                    data_array = np.asanyarray(data_array)
+                    if np.ma.isMaskedArray(data_array):
+                        data_array = np.where(data_array.mask, np.nan, data_array.data)
+
+                    if use_nn:
+                        _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                        ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                        uhii_value = float(data_array[ii, jj])
+                    else:
+                        masked_data = np.where(inside_mask, data_array, np.nan)
+                        uhii_value = float(np.nanmean(masked_data)) if np.any(~np.isnan(masked_data)) else np.nan
+                        if not np.isfinite(uhii_value):
+                            _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                            ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                            uhii_value = float(data_array[ii, jj])
+
+                    if not np.isfinite(uhii_value):
+                        uhii_value = 0.0
+
+                except Exception as e:
+                    print(f"Sampling error for UHI_CYCLE at time {t}: {e}")
+                    uhii_value = 0.0
+
+            row.append(uhii_value)
             met_new.append(row)
 
         df = pd.DataFrame(met_new, columns=columns)
         df = df[columns_out]
+
         with open(output_text_file, "w") as f:
             f.write(" ".join(df.columns) + "\n")
             for _, row in df.iterrows():
-                f.write('{:d} {:d} {:d} {:d} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.5f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {: .2f} {: .2f}\n'.format(
-                    int(row["iy"]), int(row["id"]), int(row["it"]), int(row["imin"]),
-                    row["Q*"], row["QH"], row["QE"], row["Qs"], row["Qf"],
-                    row["Wind"], row["RH"], row["Td"], row["press"], row["rain"],
-                    row["Kdn"], row["snow"], row["ldown"], row["fcld"], row["wuh"],
-                    row["xsmd"], row["lai_hr"], row["Kdiff"], row["Kdir"], row["Wd"]
-                ))
+                f.write(
+                    "{:d} {:d} {:d} {:d} "
+                    "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} "
+                    "{:.5f} {:.2f} {:.2f} {:.2f} "
+                    "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f}\n".format(
+                        int(row["iy"]), int(row["id"]), int(row["it"]), int(row["imin"]),
+                        row["Q*"], row["QH"], row["QE"], row["Qs"], row["Qf"],
+                        row["Wind"], row["RH"], row["Td"], row["press"],
+                        row["rain"], row["Kdn"], row["snow"], row["ldown"], row["fcld"],
+                        row["wuh"], row["xsmd"], row["lai_hr"], row["Kdiff"], row["Kdir"],
+                        row["Wd"], row["uhii"]
+                    )
+                )
+
         print(f"Metfile saved: {output_text_file}")
         ds_tif = None
 
@@ -1260,7 +1300,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
             exit(1)
         
         # Process the generated NetCDF file to create metfiles.
-        process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str, preprocess_dir)
+        process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str, preprocess_dir, use_uhi=use_uhi)
 
 
 
