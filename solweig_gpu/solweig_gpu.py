@@ -179,6 +179,8 @@ def run_utci_tiles(
     save_lup: bool = False,
     save_ldown: bool = False,
     save_shadow: bool = False,
+    save_ta: bool = False,
+    save_wind: bool = False,
 ) -> None:
     """
     Run UTCI (and optional outputs) for tiles in the preprocessing directory.
@@ -190,10 +192,11 @@ def run_utci_tiles(
         base_path: Base directory; output_folder is created under this.
         preprocess_dir: Path returned by :func:`preprocess`.
         selected_date_str: Simulation date 'YYYY-MM-DD'.
-        tile_keys: If None, process all tiles. If a list (e.g. ``["0_0", "1000_0"]``),
-            process only those tile keys.
+        tile_keys: If None, process all tiles. If a list, process only those tile keys.
         save_tmrt, save_svf, save_kup, save_kdown, save_lup, save_ldown, save_shadow:
             Which outputs to save (UTCI is always saved).
+        save_ta: Save diagnostic Ta field.
+        save_wind: Save diagnostic wind field.
     """
     import os
     import numpy as np
@@ -206,6 +209,7 @@ def run_utci_tiles(
     tree_dir = os.path.join(preprocess_dir, "Trees")
     dem_dir = os.path.join(preprocess_dir, "DEM")
     landcover_dir = os.path.join(preprocess_dir, "Landcover")
+    windcoeff_dir = os.path.join(preprocess_dir, "WindCoeff")
     walls_dir = os.path.join(preprocess_dir, "walls")
     aspect_dir = os.path.join(preprocess_dir, "aspect")
 
@@ -213,14 +217,17 @@ def run_utci_tiles(
     tree_map = map_files_by_key(tree_dir, ".tif")
     dem_map = map_files_by_key(dem_dir, ".tif")
     landcover_map = map_files_by_key(landcover_dir, ".tif") if os.path.isdir(landcover_dir) else {}
+    windcoeff_map = map_files_by_key(windcoeff_dir, ".tif") if os.path.isdir(windcoeff_dir) else {}
     walls_map = map_files_by_key(walls_dir, ".tif")
     aspect_map = map_files_by_key(aspect_dir, ".tif")
     met_map = map_files_by_key(input_met, ".txt")
 
-    common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map)
+    common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map) & set(walls_map) & set(aspect_map)
+
     if landcover_map:
         common_keys &= set(landcover_map)
 
+    # Do NOT force intersection with windcoeff_map, because windcoeff is optional
     if tile_keys is not None:
         common_keys = common_keys & set(tile_keys)
         if not common_keys:
@@ -236,6 +243,7 @@ def run_utci_tiles(
         tree_path = tree_map[key]
         dem_path = dem_map[key]
         landcover_path = landcover_map.get(key) if landcover_map else None
+        windcoeff_path = windcoeff_map.get(key) if windcoeff_map else None
         walls_path = walls_map[key]
         aspect_path = aspect_map[key]
         met_file_path = met_map[key]
@@ -252,6 +260,7 @@ def run_utci_tiles(
             walls_path,
             aspect_path,
             landcover_path,
+            windcoeff_path,
             met_file_data,
             output_folder,
             key,
@@ -263,6 +272,8 @@ def run_utci_tiles(
             save_lup=save_lup,
             save_ldown=save_ldown,
             save_shadow=save_shadow,
+            save_ta=save_ta,
+            save_wind=save_wind,
         )
         torch.cuda.empty_cache()
 
