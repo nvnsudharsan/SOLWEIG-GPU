@@ -1206,8 +1206,10 @@ def create_met_files(base_path, source_met_file, preprocess_dir):
 # user-supplied met file or a netCDF file. Only the parameters required for the chosen
 # method need to be provided.
 # =============================================================================
-def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcover_filename,
-         tile_size, overlap, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
+def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
+         landcover_filename, windcoeff_filename,
+         tile_size, overlap, selected_date_str, use_own_met,
+         start_time=None, end_time=None, data_source_type=None, data_folder=None,
          own_met_file=None, preprocess_dir=None, use_uhi=True):
     """
     Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.
@@ -1218,6 +1220,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         dem_filename (str): Filename of DEM raster.
         trees_filename (str): Filename of trees raster.
         landcover_filename (str): Filename of landcover raster or None.
+        windcoeff_filename (str): Filename of wind coefficient raster or None.
         tile_size (int): Tile size in pixels.
         overlap (int): Overlap between tiles in pixels.
         selected_date_str (str): Selected date (YYYY-MM-DD).
@@ -1227,50 +1230,61 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         data_source_type (str): Either 'ERA5' or 'wrfout'.
         data_folder (str): Folder containing input NetCDF files.
         own_met_file (str): Path to user-provided met file (used if use_own_met is True).
-        preprocess_dir (str): Directory for preprocessing outputs (pre_processing_outputs folder).
+        preprocess_dir (str): Directory for preprocessing outputs.
+        use_uhi (bool): Whether to use UHI-aware ERA5 preprocessing.
     """
     if preprocess_dir is None:
         preprocess_dir = os.path.join(base_path, "processed_inputs")
     os.makedirs(preprocess_dir, exist_ok=True)
-             
+
     building_dsm_path = os.path.join(base_path, building_dsm_filename)
     dem_path = os.path.join(base_path, dem_filename)
     trees_path = os.path.join(base_path, trees_filename)
+
+    landcover_path = None
+    windcoeff_path = None
+
     if landcover_filename is not None:
         landcover_path = os.path.join(base_path, landcover_filename)
 
+    if windcoeff_filename is not None:
+        windcoeff_path = os.path.join(base_path, windcoeff_filename)
+
     # Check that all rasters have matching dimensions, pixel size, and CRS.
     try:
-        if landcover_filename is not None:
-            check_rasters([building_dsm_path, dem_path, trees_path, landcover_path]) 
-        else:
-            check_rasters([building_dsm_path, dem_path, trees_path])
-            
+        raster_list = [building_dsm_path, dem_path, trees_path]
+
+        if landcover_path is not None:
+            raster_list.append(landcover_path)
+
+        if windcoeff_path is not None:
+            raster_list.append(windcoeff_path)
+
+        check_rasters(raster_list)
+
     except ValueError as error:
         print(error)
         exit(1)
 
-    if landcover_filename is not None:
-        rasters = {
-            "Building_DSM": building_dsm_path,
-            "DEM": dem_path,
-            "Trees": trees_path,
-            "Landcover": landcover_path
-        }
-    else: 
-        rasters = {
-            "Building_DSM": building_dsm_path,
-            "DEM": dem_path,
-            "Trees": trees_path   
-        }  
-        
+    rasters = {
+        "Building_DSM": building_dsm_path,
+        "DEM": dem_path,
+        "Trees": trees_path
+    }
+
+    if landcover_path is not None:
+        rasters["Landcover"] = landcover_path
+
+    if windcoeff_path is not None:
+        rasters["WindCoeff"] = windcoeff_path
+
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")
         create_tiles(raster, tile_size, overlap, tile_type, preprocess_dir)
-    
+
     # For metfiles processing, we use the DEM tiles folder.
     dem_tiles_folder = os.path.join(preprocess_dir, "DEM")
-    
+
     # Choose between own met file or processed NetCDF file.
     if use_own_met:
         if own_met_file is None:
@@ -1282,10 +1296,10 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         if data_folder is None or data_source_type is None or start_time is None or end_time is None:
             print("Error: When not using your own met file, please provide data_folder, data_source_type, start_time, and end_time.")
             exit(1)
-            
+
         # Define the name (and path) for the processed NetCDF output.
         processed_nc_file = os.path.join(preprocess_dir, "Outfile.nc")
-        
+
         if data_source_type.lower() == "era5":
             if use_uhi:
                 print("[INFO] Using ERA5 processing with UHI correction")
@@ -1293,12 +1307,14 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
             else:
                 print("[INFO] Using standard ERA5 processing (no UHI)")
                 process_era5_data(start_time, end_time, data_folder, output_file=processed_nc_file)
+
         elif data_source_type.lower() == "wrfout":
             process_wrfout_data(start_time, end_time, data_folder, output_file=processed_nc_file)
+
         else:
             print("Error: data_source_type must be either 'ERA5' or 'wrfout'.")
             exit(1)
-        
+
         # Process the generated NetCDF file to create metfiles.
         process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str, preprocess_dir, use_uhi=use_uhi)
 
