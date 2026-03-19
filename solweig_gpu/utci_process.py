@@ -157,7 +157,7 @@ def extract_number_from_filename(filename):
     return number
 
 
-def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, met_file, 
+def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file, 
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,save_ldown=False,save_shadow=False):
     """
     Compute UTCI and related thermal comfort outputs for a single tile.
@@ -172,6 +172,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         walls_path (str): Path to wall height raster
         aspect_path (str): Path to wall aspect raster  
         landcover_path (str): Path to land cover raster (can be None)
+        windcoeff_path (str): Path to wind coefficient raster (can be None)
         met_file (str): Path to meteorological forcing file
         output_path (str): Directory for saving output rasters
         number (str): Tile identifier (e.g., "0_0")
@@ -198,6 +199,18 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     temp2, dataset3 = load_raster_to_tensor(dem_path)
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
+
+    windcoeff = None
+    dataset6 = None
+    dataset7 = None
+    if windcoeff_path is not None:
+        windcoeff, dataset7 = load_raster_to_tensor(windcoeff_path)
+
+        if windcoeff.shape != a.shape:
+            raise ValueError(
+                f"Wind coefficient raster shape {tuple(windcoeff.shape)} does not match "
+                f"Building DSM shape {tuple(a.shape)}"
+            )
  
     # Added
     landcover = 0
@@ -294,6 +307,9 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     buildings[buildings < 2.] = 1.
     buildings[buildings >= 2.] = 0.
     valid_mask = (buildings == 1)
+    if windcoeff is None:
+        windcoeff = torch.ones((rows, cols), device=device)
+                    
     Knight = torch.zeros((rows, cols), device=device)
     Tgmap1 = torch.zeros((rows, cols), device=device)
     Tgmap1E = torch.zeros((rows, cols), device=device)
@@ -418,7 +434,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i]
         RH_mat = torch.zeros((rows, cols), device=device) + RH[i]
         Tmrt_mat = torch.zeros((rows, cols), device=device) + Tmrt
-        va10m_mat = torch.zeros((rows, cols), device=device) + Ws[i]
+        va10m_mat = torch.zeros((rows, cols), device=device) + windcoeff * Ws[i]
+        va10m_mat = torch.clamp(va10m_mat, min=0.1)
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
         UTCI[valid_mask] = UTCI_mat[valid_mask]
@@ -563,6 +580,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     dataset3 = None
     dataset4 = None
     dataset5 = None
+    dataset6 = None
+    dataset7 = None
     end_time = time.time()
     time_taken = end_time - start_time
     print(f"Time taken to execute tile {number}: {time_taken:.2f} seconds")
