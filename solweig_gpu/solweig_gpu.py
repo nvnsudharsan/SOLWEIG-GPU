@@ -24,6 +24,7 @@ def preprocess(
     dem_filename: str = 'DEM.tif',
     trees_filename: str = 'Trees.tif',
     landcover_filename: Optional[str] = None,
+    windcoeff_filename: Optional[str] = None,
     tile_size: int = 3600,
     overlap: int = 20,
     use_own_met: bool = True,
@@ -39,18 +40,17 @@ def preprocess(
     Run preprocessing only: validate rasters, create tiles, and prepare metfiles.
 
     Use this when you want to run preprocessing once and then call
-    :func:`run_walls_aspect` and :func:`run_utci_tiles` separately (e.g. for
-    multiple dates or a subset of tiles).
+    :func:`run_walls_aspect` and :func:`run_utci_tiles` separately.
 
     Args:
         base_path: Base directory; used to resolve relative raster paths.
         selected_date_str: Simulation date 'YYYY-MM-DD'.
-        building_dsm_filename, dem_filename, trees_filename, landcover_filename:
+        building_dsm_filename, dem_filename, trees_filename, landcover_filename,
+        windcoeff_filename:
             Raster paths or filenames (relative to base_path or absolute).
         tile_size: Tile size in pixels.
         overlap: Overlap between tiles in pixels.
-        use_own_met: If True, use own_met_file; else use ERA5/WRF (requires
-            start_time, end_time, data_source_type, data_folder).
+        use_own_met: If True, use own_met_file; else use ERA5/WRF.
         start_time, end_time: Required for ERA5/WRF (UTC 'YYYY-MM-DD HH:MM:SS').
         data_source_type: 'ERA5' or 'wrfout' when use_own_met is False.
         data_folder: Folder with ERA5/WRF NetCDF files when use_own_met is False.
@@ -77,6 +77,7 @@ def preprocess(
         dem_filename,
         trees_filename,
         landcover_filename,
+        windcoeff_filename,
         tile_size,
         overlap,
         selected_date_str,
