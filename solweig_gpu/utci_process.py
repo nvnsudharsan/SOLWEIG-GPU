@@ -199,7 +199,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     temp2, dataset3 = load_raster_to_tensor(dem_path)
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
-
+          
     windcoeff = None
     dataset6 = None
     dataset7 = None
@@ -302,6 +302,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     vegdsm[vegdsm == a] = 0
     vegdsm2 = temp1 * 0.25 + a
     vegdsm2[vegdsm2 == a] = 0
+    fveg = (temp1 > 0).float()
     amaxvalue = torch.maximum(a.max(), vegdem.max())
     buildings = a - temp2
     buildings[buildings < 2.] = 1.
@@ -360,6 +361,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     radI = torch.tensor(met_file[:, 22], device=device)
     P = torch.tensor(met_file[:, 12], device=device)
     Ws = torch.tensor(met_file[:, 9], device=device)
+    if met_file.shape[1] > 24:
+        uhii = torch.tensor(met_file[:, 24], device=device)
+    else:
+        uhii = torch.zeros(met_file.shape[0], device=device)
     # Prepare leafon based on vegetation type
     if conifer_bool:
         leafon = torch.ones((1, DOY.shape[0]), device=device)
@@ -436,6 +441,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Tmrt_mat = torch.zeros((rows, cols), device=device) + Tmrt
         va10m_mat = torch.zeros((rows, cols), device=device) + windcoeff * Ws[i]
         va10m_mat = torch.clamp(va10m_mat, min=0.1)
+        wind_factor = torch.pow(va10m_mat, -0.25)
+        uhi_term = (2.0 - svf - fveg) * uhii[i] * wind_factor
+        Ta_mat = Ta_mat + uhi_term
+        
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
         UTCI[valid_mask] = UTCI_mat[valid_mask]
