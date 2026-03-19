@@ -285,6 +285,7 @@ def thermal_comfort(
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
     landcover_filename: Optional[str] = None,
+    windcoeff_filename: Optional[str] = None,
     tile_size=3600,
     overlap=20,
     use_own_met=True,
@@ -300,26 +301,21 @@ def thermal_comfort(
     save_kdown=False,
     save_lup=False,
     save_ldown=False,
-    save_shadow=False
+    save_shadow=False,
+    save_ta=False,
+    save_wind=False,
 ):
     """
     Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
-    
-    This function orchestrates the complete workflow:
-    1. Preprocesses input rasters (tiling, validation)
-    2. Processes meteorological data (ERA5, WRF, or custom)
-    3. Calculates wall heights and aspects (parallel CPU)
-    4. Computes shadows, radiation, and SVF (GPU-accelerated)
-    5. Calculates UTCI thermal comfort index
-    6. Saves outputs as georeferenced rasters
-    
+
     Args:
-        base_path (str): Base directory for output_folder/ and processed_inputs/; also used to resolve relative raster paths.
+        base_path (str): Base directory for outputs and relative raster paths.
         selected_date_str (str): Simulation date in format 'YYYY-MM-DD'
         building_dsm_filename (str): Building+terrain DSM path or filename.
         dem_filename (str): DEM path or filename.
         trees_filename (str): Vegetation DSM path or filename.
         landcover_filename (str, optional): Land cover raster path or filename.
+        windcoeff_filename (str, optional): Wind coefficient raster path or filename.
         tile_size (int): Tile size in pixels.
         overlap (int): Overlap between tiles in pixels.
         use_own_met (bool): Use custom meteorological file.
@@ -337,7 +333,9 @@ def thermal_comfort(
         save_lup (bool): Save upward longwave radiation.
         save_ldown (bool): Save downward longwave radiation.
         save_shadow (bool): Save shadow maps.
-    
+        save_ta (bool): Save diagnostic Ta field.
+        save_wind (bool): Save diagnostic wind field.
+
     Returns:
         None
     """
@@ -348,6 +346,7 @@ def thermal_comfort(
         dem_filename=dem_filename,
         trees_filename=trees_filename,
         landcover_filename=landcover_filename,
+        windcoeff_filename=windcoeff_filename,
         tile_size=tile_size,
         overlap=overlap,
         use_own_met=use_own_met,
@@ -373,4 +372,6 @@ def thermal_comfort(
         save_lup=save_lup,
         save_ldown=save_ldown,
         save_shadow=save_shadow,
+        save_ta=save_ta,
+        save_wind=save_wind,
     )
