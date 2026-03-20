@@ -364,13 +364,13 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     P = torch.tensor(met_file[:, 12], device=device)
     Ws = torch.tensor(met_file[:, 9], device=device)
 
-    Ta_np = Ta.cpu().numpy()
-    RH_np = RH.cpu().numpy()
-    P_np  = P.cpu().numpy()
-
-    wbt_np = isobaric_wet_bulb_temperature_from_rh(p=P_np * 1000.0, T=Ta_np + 273.15, rh=RH_np,
-        phase='liquid', method='Romps', limit=True)
-    wbt = torch.tensor(wbt_np, device=device)
+    if save_wbgt:
+        Ta_np = Ta.cpu().numpy()
+        RH_np = RH.cpu().numpy()
+        P_np  = P.cpu().numpy()
+        wbt_np = isobaric_wet_bulb_temperature_from_rh(p=P_np * 1000.0, T=Ta_np + 273.15, rh=RH_np,
+            phase='liquid', method='Romps', limit=True)
+        wbt = torch.tensor(wbt_np, device=device)
                     
     if met_file.shape[1] > 24:
         uhii = torch.tensor(met_file[:, 24], device=device)
@@ -488,7 +488,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Lup_all   = np.array(Lup_all)
     Ldown_all = np.array(Ldown_all)
     Shadow_all= np.array(Shadow_all)
-    wbgt_all = np.array(wbgt_all)
+    if save_wbgt:
+        wbgt_all = np.array(wbgt_all)
                     
     # Write a multi-band GeoTIFF for UTCI (each band corresponds to one time step)
     driver = gdal.GetDriverByName('GTiff')
