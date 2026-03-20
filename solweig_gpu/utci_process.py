@@ -368,6 +368,14 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         uhii = torch.tensor(met_file[:, 24], device=device)
     else:
         uhii = torch.zeros(met_file.shape[0], device=device)
+
+    if save_wbgt:
+        Ta_np = (Ta + uhii).cpu().numpy()
+        RH_np = RH.cpu().numpy()
+        P_np = P.cpu().numpy()
+    
+        wbt_np = isobaric_wet_bulb_temperature_from_rh(p=P_np * 1000.0, T=Ta_np + 273.15, rh=RH_np, phase='liquid', method='Romps',limit=True)
+        wbt = torch.tensor(wbt_np, device=device, dtype=Ta.dtype)
     # Prepare leafon based on vegetation type
     if conifer_bool:
         leafon = torch.ones((1, DOY.shape[0]), device=device)
@@ -451,13 +459,6 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         #Ta_mat = Ta_mat + uhi_term
         
         if save_wbgt:
-            Ta_np = (Ta+uhii).cpu().numpy()
-            RH_np = RH.cpu().numpy()
-            P_np  = P.cpu().numpy()
-            wbt_np = isobaric_wet_bulb_temperature_from_rh(p=P_np * 1000.0, T=Ta_np + 273.15, rh=RH_np,
-                phase='liquid', method='Romps', limit=True)
-            wbt = torch.tensor(wbt_np, device=device)
-            
             coef = 6.3 / 0.46821
             hcg = coef*torch.pow(va10m_mat, 0.6)
             bgt_mat = black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95)
