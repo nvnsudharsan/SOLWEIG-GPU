@@ -33,7 +33,7 @@ from .sun_position import Solweig_2015a_metdata_noload
 from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
 from .calculate_utci import utci_calculator
-from .calculate_wbgt import isobaric_wet_bulb_temperature_from_rh
+from .calculate_wbgt import isobaric_wet_bulb_temperature_from_rh, black_globe_temperature
 import os
 import re
 # from .preprocessor import ppr
@@ -459,6 +459,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         if save_wbgt:
             coef = 6.3 / 0.46821
             hcg = coef*torch.pow(va10m_mat, 0.6)
+            bgt = black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95)
         
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
