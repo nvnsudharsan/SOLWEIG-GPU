@@ -460,6 +460,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             coef = 6.3 / 0.46821
             hcg = coef*torch.pow(va10m_mat, 0.6)
             bgt_mat = black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95)
+            cond = shadow < 0.1
+            wbgt_sun = 0.7 * wbt[i] + 0.3 * bgt_mat
+            wbgt_shade = 0.7 * wbt[i] + 0.2 * bgt_mat + 0.1 * Ta_mat
+            wbgt_mat = torch.where(cond, wbgt_sun, wbgt_shade)
         
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
@@ -472,6 +476,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Lup_all.append(Lup.cpu().numpy())
         Ldown_all.append(Ldown.cpu().numpy())
         Shadow_all.append(shadow.cpu().numpy())
+        if save_wbgt:    
+            wbgt_all.append(wbgt_mat.cpu().numpy())
 
     # Convert the lists to numpy arrays with shape (time_steps, rows, cols)
     UTCI_all  = np.array(UTCI_all)
@@ -481,6 +487,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Lup_all   = np.array(Lup_all)
     Ldown_all = np.array(Ldown_all)
     Shadow_all= np.array(Shadow_all)
+    wbgt_all = np.array(wbgt_all)
                     
     # Write a multi-band GeoTIFF for UTCI (each band corresponds to one time step)
     driver = gdal.GetDriverByName('GTiff')
@@ -594,6 +601,21 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         for band in range(num_bands_op):
             out_band = out_dataset_op.GetRasterBand(band + 1)
             out_band.WriteArray(Shadow_all[band])
+            out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
+        out_dataset_op = None
+    if save_wbgt:
+        out_file_path_op = os.path.join(output_path, f'WBGT_{number}.tif')
+        num_bands_op = wbgt_all.shape[0]
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
+        out_dataset_op.SetProjection(dataset.GetProjection())
+        for band in range(num_bands_op):
+            out_band = out_dataset_op.GetRasterBand(band + 1)
+            out_band.WriteArray(wbgt_all[band])
             out_band.FlushCache()
             hour = int(hours[band].cpu().item())
             minute = int(minu[band].cpu().item())
