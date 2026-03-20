@@ -712,7 +712,7 @@ def isobaric_wet_bulb_temperature_from_rh(
         p, T, q, phase=phase, method=method, limit=limit
     )
 
-    return Tw
+    return Tw - 273.15
 
 def black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95):
     """
