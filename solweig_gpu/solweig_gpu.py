@@ -179,6 +179,7 @@ def run_utci_tiles(
     save_lup: bool = False,
     save_ldown: bool = False,
     save_shadow: bool = False,
+    save_wbgt: bool = False,
 ) -> None:
     """
     Run UTCI (and optional outputs) for tiles in the preprocessing directory.
@@ -270,6 +271,7 @@ def run_utci_tiles(
             save_lup=save_lup,
             save_ldown=save_ldown,
             save_shadow=save_shadow,
+            save_wbgt=save_wbgt,
         )
         torch.cuda.empty_cache()
 
@@ -298,6 +300,7 @@ def thermal_comfort(
     save_lup=False,
     save_ldown=False,
     save_shadow=False,
+    save_wbgt=False,
 ):
     """
     Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
@@ -366,4 +369,5 @@ def thermal_comfort(
         save_lup=save_lup,
         save_ldown=save_ldown,
         save_shadow=save_shadow,
+        save_wbgt=save_wbgt,
     )
