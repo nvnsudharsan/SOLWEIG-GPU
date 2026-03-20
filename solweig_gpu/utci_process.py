@@ -447,7 +447,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i] + uhii[i]
         #wind_factor = torch.pow(va10m_mat, -0.25)
         #uhi_term = (2.0 - svf - fveg) * uhii[i] * wind_factor
-        Ta_mat = Ta_mat + uhi_term
+        #Ta_mat = Ta_mat + uhi_term
         
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
