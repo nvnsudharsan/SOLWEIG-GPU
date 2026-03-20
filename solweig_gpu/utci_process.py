@@ -363,6 +363,15 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     radI = torch.tensor(met_file[:, 22], device=device)
     P = torch.tensor(met_file[:, 12], device=device)
     Ws = torch.tensor(met_file[:, 9], device=device)
+
+    Ta_np = Ta.cpu().numpy()
+    RH_np = RH.cpu().numpy()
+    P_np  = P.cpu().numpy()
+
+    wbt_np = isobaric_wet_bulb_temperature_from_rh(p=P_np * 1000.0, T=Ta_np + 273.15, rh=RH_np,
+        phase='liquid', method='Romps', limit=True)
+    wbt = torch.tensor(wbt_np, device=device)
+                    
     if met_file.shape[1] > 24:
         uhii = torch.tensor(met_file[:, 24], device=device)
     else:
