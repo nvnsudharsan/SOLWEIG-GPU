@@ -971,7 +971,8 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
                 time['hour'] = YMDHM.hour
                 time['min'] = YMDHM.minute
                 sunmax = sun_position(time,location)
-        altmax[0, i] = sunmaximum
+        #altmax[0, i] = sunmaximum
+        altmax[0, i] = float(np.asarray(sunmaximum).squeeze()) # Newer version of Numpy needs this
 
         half = datetime.timedelta(days=halftimestepdec)
         H = datetime.timedelta(hours=met[i, 2])
