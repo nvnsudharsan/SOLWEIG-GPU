@@ -459,7 +459,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         if save_wbgt:
             coef = 6.3 / 0.46821
             hcg = coef*torch.pow(va10m_mat, 0.6)
-            bgt = black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95)
+            bgt_mat = black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95)
         
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
