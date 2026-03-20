@@ -2,10 +2,14 @@
 # Reference: Warren, R.A., 2025. A consistent treatment of mixed‐phase saturation for atmospheric thermodynamics. 
 # Quarterly Journal of the Royal Meteorological Society, 151(766), p.e4866.
 
+# Balck globe temperature calculation derived from Shonk et al., 2026.
+# Shonk, J.K., Blunn, L.P., Kumar, V., Wurtz, J. and Masson, V., 2026. 
+#UCanWBGT: urban street canyon heat stress calculation for weather and climate models. 
+#Quarterly Journal of the Royal Meteorological Society, p.e70082.
 
 import numpy as np
 from numba import vectorize
-
+import torch
 
 # ---------------------------------------------------------------------
 # Constants actually needed for RH -> q and isobaric wet-bulb temperature
@@ -709,3 +713,49 @@ def isobaric_wet_bulb_temperature_from_rh(
     )
 
     return Tw
+
+def black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95):
+    """
+    Compute black globe temperature (Tg) in degC using the closed-form solution
+    shown in the attached equations.
+
+    Args:
+        hcg (torch.Tensor): 2D convective heat transfer coefficient array
+        Tmrt_mat (torch.Tensor): 2D mean radiant temperature array (degC)
+        Ta_mat (torch.Tensor): 2D air temperature array (degC)
+        emissivity (float, optional): globe emissivity. Default is 0.95.
+
+    Returns:
+        torch.Tensor: 2D black globe temperature array (degC)
+    """
+
+    sigma = 5.670374419e-8  # Stefan-Boltzmann constant
+
+    dtype = hcg.dtype
+    device = hcg.device
+
+    emissivity = torch.as_tensor(emissivity, dtype=dtype, device=device)
+    sigma = torch.as_tensor(sigma, dtype=dtype, device=device)
+
+    a = hcg / (emissivity * sigma)
+    b = (Tmrt_mat + 273.15)**4 + a * (Ta_mat + 273.15)
+
+    m = 9.0 * a**2
+    n = 27.0 * a**4
+    p = 256.0 * b**3
+
+    E = (m + 1.73205 * torch.sqrt(n + p))**(1.0 / 3.0)
+    Q = 3.4943 * b / E
+    k = 0.381571 * E - Q / E
+
+    # Numerical protection against tiny negative values from floating-point roundoff
+    k_safe = torch.clamp(k, min=torch.finfo(dtype).tiny)
+    inner = 2.0 * a / torch.sqrt(k_safe) - k
+    inner = torch.clamp(inner, min=0.0)
+
+    i = 0.5 * torch.sqrt(inner)
+    j = 0.5 * torch.sqrt(torch.clamp(k, min=0.0))
+
+    Tg = i - j - 273.15
+
+    return Tg
