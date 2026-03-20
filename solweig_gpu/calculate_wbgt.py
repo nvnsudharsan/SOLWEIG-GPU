@@ -745,7 +745,7 @@ def black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95):
     p = 256.0 * b**3
 
     E = (m + 1.73205 * torch.sqrt(n + p))**(1.0 / 3.0)
-    Q = 3.4943 * b / E
+    Q = 3.4943 * b
     k = 0.381571 * E - Q / E
 
     # Numerical protection against tiny negative values from floating-point roundoff
