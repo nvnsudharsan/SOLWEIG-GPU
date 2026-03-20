@@ -33,6 +33,7 @@ from .sun_position import Solweig_2015a_metdata_noload
 from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
 from .calculate_utci import utci_calculator
+from .calculate_wbgt import isobaric_wet_bulb_temperature_from_rh
 import os
 import re
 # from .preprocessor import ppr
