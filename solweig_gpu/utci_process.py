@@ -160,7 +160,7 @@ def extract_number_from_filename(filename):
 
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file, 
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
-                save_ldown=False,save_shadow=False):
+                save_ldown=False,save_shadow=False,save_wbgt=False):
     """
     Compute UTCI and related thermal comfort outputs for a single tile.
     
@@ -456,6 +456,9 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         #wind_factor = torch.pow(va10m_mat, -0.25)
         #uhi_term = (2.0 - svf - fveg) * uhii[i] * wind_factor
         #Ta_mat = Ta_mat + uhi_term
+        if save_wbgt:
+            coef = 6.3 / 0.46821
+            hcg = coef*torch.pow(va10m_mat, 0.6)
         
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
