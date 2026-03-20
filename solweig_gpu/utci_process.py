@@ -303,7 +303,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     vegdsm[vegdsm == a] = 0
     vegdsm2 = temp1 * 0.25 + a
     vegdsm2[vegdsm2 == a] = 0
-    fveg = (temp1 > 0).float()
+    # fveg = (temp1 > 0).float()
     amaxvalue = torch.maximum(a.max(), vegdem.max())
     buildings = a - temp2
     buildings[buildings < 2.] = 1.
@@ -440,13 +440,13 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             amaxvalue, bush, Twater, TgK, Tstart, alb_grid, emis_grid, TgK_wall, Tstart_wall, TmaxLST, TmaxLST_wall, first, second, svfalfa, svfbuveg, firstdaytime, timeadd, timestepdec, Tgmap1, Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N,
             CI, TgOut1, diffsh, shmat, vegshmat, vbshvegshmat, anisotropic_sky, asvf, patch_option)
         # Create matrices for meteorological parameters for the current time step
-        Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i]
         RH_mat = torch.zeros((rows, cols), device=device) + RH[i]
         Tmrt_mat = torch.zeros((rows, cols), device=device) + Tmrt
         va10m_mat = torch.zeros((rows, cols), device=device) + windcoeff * Ws[i]
-        va10m_mat = torch.clamp(va10m_mat, min=0.1)
-        wind_factor = torch.pow(va10m_mat, -0.25)
-        uhi_term = (2.0 - svf - fveg) * uhii[i] * wind_factor
+        va10m_mat = torch.clamp(va10m_mat, min=0.15) #WGBT works for u > 0.15 m/s
+        Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i] + uhii[i]
+        #wind_factor = torch.pow(va10m_mat, -0.25)
+        #uhi_term = (2.0 - svf - fveg) * uhii[i] * wind_factor
         Ta_mat = Ta_mat + uhi_term
         
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
