@@ -39,7 +39,6 @@ setup(
         "pytz",
         "shapely",
         "timezonefinder",
-        "gdal",
         "xarray",
         "tqdm",
         "PyQt5",
