@@ -185,7 +185,7 @@ VAR_MAP = {
     "z0": "Z0", "forecast_surface_roughness": "Z0", "surface_roughness": "Z0", "roughness_length": "Z0",
 }
 DIMS_MAP = {"latitude": "lat", "longitude": "lon"}
-WANTED_VARS = ["T2M", "RH2M", "SWDOWN", "HGT", "LWDOWN", "PSFC", "U10M", "V10M", "Z0", "UHI_CYCLE", "T2M_UHI"]
+WANTED_VARS = ["T2M", "RH2M", "SWDOWN", "HGT", "LWDOWN", "PSFC", "U10M", "V10M", "Z0"]
 
 # ------------------------------- OSM Tags ----------------------------------- #
 
@@ -287,10 +287,10 @@ OSM_TAGS_IMPERVIOUS_PARKING = {"amenity": "parking"}
 # DEFAULT_YEAR_START = 2025
 # DEFAULT_YEAR_END = 2025
 # DEFAULT_RES_M = 2  # reference grid resolution (meters)
-DEFAULT_LAT = 51.510
-DEFAULT_LON = 7.4733
-DEFAULT_KM_BUFFER = 8
-DEFAULT_KM_REDUCED_LAT = 3
+DEFAULT_LAT = 30.2857
+DEFAULT_LON = -97.7396
+DEFAULT_KM_BUFFER = 3
+DEFAULT_KM_REDUCED_LAT = 1
 DEFAULT_KM_REDUCED_LON = 1
 DEFAULT_YEAR_START = 2024
 DEFAULT_YEAR_END = 2025
@@ -1897,7 +1897,6 @@ def download_and_embed_era5(out_nc, bbox_osm, year_start, year_end, data_dir):
 
     wanted = [v for v in WANTED_VARS if v in ds.data_vars]
     ds = ds[wanted]
-    ds = add_uhi_indicator(ds)
 
     if "time" in ds.coords:
         ds["time"].encoding.update(units="hours since 1900-01-01 00:00:00", calendar="gregorian")
