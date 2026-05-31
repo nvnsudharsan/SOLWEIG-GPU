@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 
 print("Input data creation adopted from Andrea Zonato, andrea.zonato@cimafoundation.org")
+print("Modified to work with SOLWEIG-GPU v1.X.X by Harsh Kamath and Naveen Sudharsan")
 
 """Build input datasets for SOLWEIG.
 
@@ -1028,28 +1029,35 @@ def download_dem(out_tif, bbox_utm, crs_utm, bbox4326):
 # ------------------------------- Processing ---------------------------------- #
 
 @timed("Reclassify WorldCover → Landuse")
-def reclassify_esa_worldcover_inplace(tif_path):
-    """Reclassify WorldCover-coded raster into simplified land-use classes.
-
-    Note: this function now targets the Landuse output (not the original
-    ESA_WorldCover file). Call it on `paths.landuse_ras` after resampling.
-
-    Mapping used:
-    - 1: urban (WorldCover 50)
-    - 2: vegetation (default for others)
-    - 3: water (WorldCover in WORLD_COVER_WATER)
-    - 4: other (WorldCover 60)
-    """
-    WORLD_COVER_URBAN = [50]
-    WORLD_COVER_WATER = [80,70,90]  
-    WORLD_COVER_OTHER = [60]
+def reclassify_esa_worldcover_inplace(tif_path, bld_tif_path):
+    """Reclassify ESA WorldCover raster into UMEP land-cover classes. """
 
     with rasterio.open(tif_path, "r+") as src:
         wc = src.read(1)
-        out = np.full(wc.shape, 2, dtype=np.uint8)  # default vegetation
-        out[np.isin(wc, WORLD_COVER_URBAN)] = 1
-        out[np.isin(wc, WORLD_COVER_WATER)] = 3
-        out[np.isin(wc, WORLD_COVER_OTHER)] = 4
+
+        out = np.zeros(wc.shape, dtype=np.uint8)
+
+        # ESA WorldCover -> UMEP mapping
+        out[np.isin(wc, [50])] = 1           # Built-up -> Paved
+        out[np.isin(wc, [20, 95])] = 3       # Shrubland, mangroves -> Evergreen Trees/Shrubs
+        out[np.isin(wc, [10])] = 4           # Tree cover -> Deciduous Trees
+        out[np.isin(wc, [30, 40, 90])] = 5   # Grassland, cropland, wetland -> Grass
+        out[np.isin(wc, [60, 70, 100])] = 6  # Bare/sparse, snow/ice, moss/lichen -> Bare soil
+        out[np.isin(wc, [80])] = 7           # Water
+        out[wc == 0] = 0                     # No data
+
+        # Read building raster and overwrite building pixels
+        with rasterio.open(bld_tif_path) as bld_src:
+            bld = bld_src.read(1)
+
+        if bld.shape != wc.shape:
+            raise ValueError(
+                f"Building raster shape {bld.shape} does not match "
+                f"WorldCover raster shape {wc.shape}. Resample/alignment is needed first."
+            )
+
+        out[bld > 1] = 2  # Buildings
+
         src.write(out.astype(src.meta["dtype"]), 1)
 
 def compute_reference_grid(bbox_utm, resolution_m):
@@ -1604,48 +1612,34 @@ def rasterize_polygons_to_array(gdf: gpd.GeoDataFrame, transform, width: int, he
     shapes = ((geom, value) for geom in gdf.geometry)
     return rasterize(shapes=shapes, out_shape=(height, width), transform=transform, fill=0, dtype=dtype)
 
-@timed("Apply raster logic")
-def apply_raster_logic(building_fp, tree_fp, landuse_fp, water_fp, vegetation_fp, dem_fp, dem_plus_building_fp, urban_arr=None):
-    """Apply layer precedence and compute the Building DSM.
+@timed("Create Building DSM and clean tree raster")
+def create_building_dsm_and_clean_trees(building_fp, tree_fp, dem_fp, dem_plus_building_fp):
+    """Create Building_DSM = DEM + building heights.
 
-    - Trees are zeroed wherever buildings exist (canopies cannot overlap roofs).
-    - Landuse precedence: water(3) > vegetation(2) > urban(1). Urban can come
-      from rasterized OSM impervious∪buildings (urban_arr) if provided.
-    - Building DSM is computed as DEM + building heights (meter units).
+    This function does NOT modify Landuse.tif.
+    Landuse.tif should come only from ESA WorldCover + building raster.
     """
+
     with rasterio.open(building_fp) as b, \
          rasterio.open(tree_fp, "r+") as t, \
-         rasterio.open(landuse_fp, "r+") as l, \
-         rasterio.open(water_fp) as w, \
-         rasterio.open(vegetation_fp) as v, \
          rasterio.open(dem_fp) as d:
 
-        b_arr, t_arr, l_arr = b.read(1), t.read(1), l.read(1)
-        w_arr, v_arr = w.read(1), v.read(1)
-        if urban_arr is None:
-            # no urban override available
-            import numpy as np
-            u_arr = np.zeros_like(l_arr, dtype=np.uint8)
-        else:
-            u_arr = urban_arr.astype(l_arr.dtype)
+        b_arr = b.read(1)
+        t_arr = t.read(1)
         dem_arr = d.read(1)
 
-        # Trees: zero over buildings
-        t_arr[b_arr > 0] = 0
-        # Landuse stacking: urban(1) → vegetation(2) overrides urban → water(3) overrides all
-        l_arr[w_arr > 0] = 3
-        l_arr[v_arr > 0] = 2
-        l_arr[u_arr > 0] = 1
-
-
+        # Trees cannot overlap buildings
+        t_arr[b_arr > 1] = 0
         t.write(t_arr, 1)
-        l.write(l_arr, 1)
 
+        # Building DSM = DEM + building height
         dem_plus = dem_arr.astype("float32") + b_arr.astype("float32")
-        prof = d.profile
+
+        prof = d.profile.copy()
         prof.update(dtype="float32", compress="lzw", nodata=None)
+
         with rasterio.open(dem_plus_building_fp, "w", **prof) as dst:
-            dst.write(dem_plus, 1)
+            dst.write(dem_plus.astype("float32"), 1)
 
 def check_raster_alignment(paths):
     """Ensure a group of rasters share CRS, resolution, bounds and shape.
@@ -2007,8 +2001,6 @@ def run_create_inputs(
     # Resample to reference grid
     tlog("Resampling rasters to unified grid...")
     _resample_to_grid(paths.esa_tif,  paths.landuse_ras, b.crs_utm, grid.transform, grid.width, grid.height, Resampling.nearest)
-    # Reclassify only the Landuse output
-    reclassify_esa_worldcover_inplace(paths.landuse_ras)
     _resample_to_grid(paths.tree_tif, paths.tree_ras,    b.crs_utm, grid.transform, grid.width, grid.height, Resampling.bilinear)
     _resample_to_grid(paths.dem_tif,  paths.dem_ras,     b.crs_utm, grid.transform, grid.width, grid.height, Resampling.bilinear)
     _resample_to_grid(paths.lcz_tif,  paths.lcz_ras,     b.crs_utm, grid.transform, grid.width, grid.height, Resampling.nearest)
@@ -2023,6 +2015,9 @@ def run_create_inputs(
         rasterize_vector_checked(paths.wat_fp,  paths.wat_ras,  3,             grid.transform, grid.width, grid.height, b.crs_utm, "water")
         rasterize_vector_checked(paths.bld_fp,  paths.bld_ras,  "HEIGHT_ROOF", grid.transform, grid.width, grid.height, b.crs_utm, "buildings", dtype="float32")
 
+    # Reclassify only the Landuse output
+    reclassify_esa_worldcover_inplace(paths.landuse_ras, paths.bld_ras )
+  
     # Cleanup temporary tile directories (if they exist) to keep workspace tidy
     try:
         wc_tiles = paths.esa_tif.parent / "worldcover_tiles"
@@ -2039,26 +2034,14 @@ def run_create_inputs(
     except Exception as e:
         tlog(f"WARNING: could not remove tree tiles: {e}")
 
-    # Create in-memory urban mask (impervious ∪ buildings) without writing to disk
-    imprv_gdf = _read_vector_or_warn(paths.imprv_fp, "impervious")
-    bld_gdf   = _read_vector_or_warn(paths.bld_fp,   "building")
-    urban_arr = None
-    try:
-        frames = []
-        if imprv_gdf is not None and not imprv_gdf.empty:
-            frames.append(imprv_gdf[["geometry"]])
-        if bld_gdf is not None and not bld_gdf.empty:
-            frames.append(bld_gdf[["geometry"]])
-        if frames:
-            urban_gdf = gpd.GeoDataFrame(pd.concat(frames, ignore_index=True), crs=imprv_gdf.crs if imprv_gdf is not None else bld_gdf.crs)
-            if urban_gdf.crs.to_string() != b.crs_utm:
-                urban_gdf = urban_gdf.to_crs(b.crs_utm)
-            urban_arr = rasterize_polygons_to_array(urban_gdf, grid.transform, grid.width, grid.height, b.crs_utm, value=1, dtype="uint8")
-    except Exception as e:
-        tlog(f"WARNING: could not build in-memory urban mask: {e}")
-
-    # Apply raster logic and create Building_DSM
-    apply_raster_logic(paths.bld_ras, paths.tree_ras, paths.landuse_ras, paths.wat_ras, paths.veg_ras, paths.dem_ras, paths.dsm_plus_ras, urban_arr=urban_arr)
+    # Create Building_DSM and remove trees over buildings.
+    # Do not modify Landuse.tif here; Landuse.tif already comes from ESA + buildings.
+    create_building_dsm_and_clean_trees(
+        paths.bld_ras,
+        paths.tree_ras,
+        paths.dem_ras,
+        paths.dsm_plus_ras
+    )
 
     # Meteorology: ERA5 via Earth Engine
     met_out = paths.out_dir / f"era5_{city}_{year_start}_{year_end}.nc"
