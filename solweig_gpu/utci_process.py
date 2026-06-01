@@ -180,6 +180,21 @@ def _svf_cache_paths_from_building_dsm(building_dsm_path: str, number: str):
 
     return base_path, svf_dir, svftotal_path, zip_path, npz_path
 
+def _svf_cache_exists(building_dsm_path: str, number: str) -> bool:
+    """
+    Check whether all standalone SVF cache files exist.
+    """
+    _, _, svftotal_path, zip_path, npz_path = _svf_cache_paths_from_building_dsm(
+        building_dsm_path,
+        number,
+    )
+
+    return (
+        os.path.isfile(svftotal_path)
+        and os.path.isfile(zip_path)
+        and os.path.isfile(npz_path)
+    )
+
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file, 
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
                 save_ldown=False,save_shadow=False,save_wbgt=False):
