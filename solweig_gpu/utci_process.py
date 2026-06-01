@@ -516,7 +516,28 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     firstdaytime = 1.
     start_time = time.time()
     # Calculate SVF and related parameters (remains unchanged)
-    svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal = svf_calculator(patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale)
+    #svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal = svf_calculator(patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale)
+
+    base_path, svf_cache_dir, svftotal_cache_path, svf_zip_path, svf_npz_path = (_svf_cache_paths_from_building_dsm(building_dsm_path, number))
+    
+    svf_cache_available = _svf_cache_exists(building_dsm_path, number)
+    
+    if svf_cache_available:
+        print(f"[INFO] Loading cached SVF outputs for tile {number} from {svf_cache_dir}")
+
+        (
+        svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg,
+        svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal,) = load_cached_svf_outputs(building_dsm_path, number)
+
+    else:
+        print(f"[INFO] Cached SVF outputs not found for tile {number}. Calculating SVF.")
+
+        (
+        svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg,
+        svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal,) = svf_calculator(
+        patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale, save_rasters=True,
+        output_dir=svf_cache_dir, number=number, gdal_dsm=dataset,)
+    
     svfbuveg = svf - (1.0 - svfveg) * (1.0 - transVeg)
     asvf = torch.acos(torch.sqrt(svf))
     diffsh = torch.zeros((rows, cols, shmat.shape[2]), device=device)
