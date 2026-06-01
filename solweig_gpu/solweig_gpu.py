@@ -93,7 +93,7 @@ def preprocess(
     return preprocess_dir
 
 
-def create_inputs(
+def build_inputs(
     lat: float,
     lon: float,
     city: Optional[str] = None,
