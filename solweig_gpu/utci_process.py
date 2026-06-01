@@ -195,6 +195,81 @@ def _svf_cache_exists(building_dsm_path: str, number: str) -> bool:
         and os.path.isfile(npz_path)
     )
 
+def _load_raster_to_tensor_from_path(raster_path: str):
+    """
+    Load a normal GeoTIFF path into a GPU/CPU tensor.
+    """
+    ds = gdal.Open(raster_path)
+    if ds is None:
+        raise FileNotFoundError(f"Could not open raster: {raster_path}")
+
+    arr = ds.GetRasterBand(1).ReadAsArray().astype(np.float32)
+    ds = None
+
+    return torch.tensor(arr, device=device)
+
+
+def _load_raster_to_tensor_from_zip(zip_path: str, internal_tif_name: str):
+    """
+    Load a GeoTIFF inside svfs_*.zip directly using GDAL /vsizip/.
+    """
+    vsi_path = f"/vsizip/{zip_path}/{internal_tif_name}"
+
+    ds = gdal.Open(vsi_path)
+    if ds is None:
+        raise FileNotFoundError(
+            f"Could not open {internal_tif_name} inside ZIP: {zip_path}"
+        )
+
+    arr = ds.GetRasterBand(1).ReadAsArray().astype(np.float32)
+    ds = None
+
+    return torch.tensor(arr, device=device)
+
+
+def load_cached_svf_outputs(building_dsm_path: str, number: str):
+    """
+    Load cached standalone SVF outputs from base_path/SVF onto GPU.
+
+    Expected files:
+        base_path/SVF/SkyViewFactor_<number>.tif
+        base_path/SVF/svfs_<number>.zip
+        base_path/SVF/shadowmats_<number>.npz
+    """
+    _, _, svftotal_path, zip_path, npz_path = _svf_cache_paths_from_building_dsm(
+        building_dsm_path,
+        number,
+    )
+
+    svf = _load_raster_to_tensor_from_zip(zip_path, "svf.tif")
+    svfE = _load_raster_to_tensor_from_zip(zip_path, "svfE.tif")
+    svfS = _load_raster_to_tensor_from_zip(zip_path, "svfS.tif")
+    svfW = _load_raster_to_tensor_from_zip(zip_path, "svfW.tif")
+    svfN = _load_raster_to_tensor_from_zip(zip_path, "svfN.tif")
+
+    svfveg = _load_raster_to_tensor_from_zip(zip_path, "svfveg.tif")
+    svfEveg = _load_raster_to_tensor_from_zip(zip_path, "svfEveg.tif")
+    svfSveg = _load_raster_to_tensor_from_zip(zip_path, "svfSveg.tif")
+    svfWveg = _load_raster_to_tensor_from_zip(zip_path, "svfWveg.tif")
+    svfNveg = _load_raster_to_tensor_from_zip(zip_path, "svfNveg.tif")
+
+    svfaveg = _load_raster_to_tensor_from_zip(zip_path, "svfaveg.tif")
+    svfEaveg = _load_raster_to_tensor_from_zip(zip_path, "svfEaveg.tif")
+    svfSaveg = _load_raster_to_tensor_from_zip(zip_path, "svfSaveg.tif")
+    svfWaveg = _load_raster_to_tensor_from_zip(zip_path, "svfWaveg.tif")
+    svfNaveg = _load_raster_to_tensor_from_zip(zip_path, "svfNaveg.tif")
+
+    svftotal = _load_raster_to_tensor_from_path(svftotal_path)
+
+    with np.load(npz_path) as npz:
+        shmat = torch.tensor(npz["shadowmat"].astype(np.float32), device=device)
+        vegshmat = torch.tensor(npz["vegshadowmat"].astype(np.float32), device=device)
+        vbshvegshmat = torch.tensor(npz["vbshmat"].astype(np.float32), device=device)
+
+    return (
+        svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg,
+        svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal,)
+
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file, 
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
                 save_ldown=False,save_shadow=False,save_wbgt=False):
