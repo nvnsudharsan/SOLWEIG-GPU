@@ -17,5 +17,6 @@ from .solweig_gpu import (
     preprocess,
     create_inputs,
     run_walls_aspect,
+    calculate_svf,
     run_utci_tiles,
 )
