@@ -25,7 +25,22 @@ import torch
 import torch.nn.functional as F
 from scipy.ndimage import rotate
 import time
+import os
+import zipfile
+
 gdal.UseExceptions()
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def load_raster_to_tensor(dem_path, device=device):
+    dataset = gdal.Open(dem_path)
+    if dataset is None:
+        raise FileNotFoundError(f"Could not open raster: {dem_path}")
+
+    band = dataset.GetRasterBand(1)
+    array = band.ReadAsArray().astype(np.float32)
+
+    return torch.tensor(array, device=device), dataset
 
 def ensure_tensor(x, device=None):
     """
