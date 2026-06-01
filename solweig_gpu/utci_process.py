@@ -442,10 +442,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Tstart        = torch.from_numpy(Tstart_np).to(device).float()
         alb_grid      = torch.from_numpy(alb_np).to(device).float()
         emis_grid     = torch.from_numpy(emis_np).to(device).float()
-        TgK_wall      = torch.tensor(float(TgK_wall_np)     , device=device)
-        Tstart_wall   = torch.tensor(float(Tstart_wall_np)  , device=device)
-        TmaxLST       = torch.from_numpy(TmaxLST_np ).to(device).float()
-        TmaxLST_wall  = torch.tensor(float(TmaxLST_wall_np) , device=device)
+        TgK_wall = torch.as_tensor(TgK_wall_np, device=device).float()
+        Tstart_wall = torch.as_tensor(Tstart_wall_np, device=device).float()
+        TmaxLST = torch.as_tensor(TmaxLST_np, device=device).float()
+        TmaxLST_wall = torch.as_tensor(TmaxLST_wall_np, device=device).float()
     else:
         TgK = Knight + 0.37
         Tstart = Knight - 3.41
