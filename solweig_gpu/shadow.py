@@ -59,6 +59,110 @@ def ensure_tensor(x, device=None):
         x = torch.tensor(x, device=device)
     return x
 
+def tensor_to_numpy(x):
+    """
+    Move GPU/CPU torch tensor to CPU NumPy array before writing.
+    """
+    if isinstance(x, torch.Tensor):
+        return x.detach().cpu().numpy()
+    return np.asarray(x)
+
+
+def save_raster_like_gdal(gdal_template, output_path, array):
+    """
+    Save a 2D array as GeoTIFF using geotransform/projection
+    from the input DSM raster.
+    """
+    array = tensor_to_numpy(array).astype(np.float32)
+
+    driver = gdal.GetDriverByName("GTiff")
+    rows, cols = array.shape
+
+    out_ds = driver.Create(
+        output_path,
+        cols,
+        rows,
+        1,
+        gdal.GDT_Float32,
+    )
+
+    out_ds.SetGeoTransform(gdal_template.GetGeoTransform())
+    out_ds.SetProjection(gdal_template.GetProjection())
+
+    out_band = out_ds.GetRasterBand(1)
+    out_band.WriteArray(array)
+    out_band.FlushCache()
+
+    out_ds.FlushCache()
+    out_ds = None
+
+
+def save_svf_zip_npz_outputs(output_dir, gdal_dsm, svf, svfE, svfS, svfW, svfN, svfveg, svfEveg, svfSveg, svfWveg, svfNveg, svfaveg, svfEaveg, svfSaveg,
+    svfWaveg, svfNaveg, shmat, vegshmat, vbshvegshmat, svftotal, number=None,):
+    """
+    - svfs.zip containing SVF GeoTIFFs
+    - shadowmats.npz containing shadow matrices
+    - SkyViewFactor.tif or SkyViewFactor_<number>.tif
+    """
+
+    if output_dir is None:
+        raise ValueError("output_dir must be provided when save_rasters=True")
+
+    if gdal_dsm is None:
+        raise ValueError("gdal_dsm must be provided when save_rasters=True")
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    suffix = f"_{number}" if number is not None else ""
+
+    zip_path = os.path.join(output_dir, f"svfs{suffix}.zip")
+    npz_path = os.path.join(output_dir, f"shadowmats{suffix}.npz")
+    svftotal_path = os.path.join(output_dir, f"SkyViewFactor{suffix}.tif")
+
+    if os.path.isfile(zip_path):
+        os.remove(zip_path)
+
+    rasters_to_save = {
+        "svf.tif": svf,
+        "svfE.tif": svfE,
+        "svfS.tif": svfS,
+        "svfW.tif": svfW,
+        "svfN.tif": svfN,
+        "svfveg.tif": svfveg,
+        "svfEveg.tif": svfEveg,
+        "svfSveg.tif": svfSveg,
+        "svfWveg.tif": svfWveg,
+        "svfNveg.tif": svfNveg,
+        "svfaveg.tif": svfaveg,
+        "svfEaveg.tif": svfEaveg,
+        "svfSaveg.tif": svfSaveg,
+        "svfWaveg.tif": svfWaveg,
+        "svfNaveg.tif": svfNaveg,
+    }
+
+    temporary_tifs = []
+
+    for tif_name, data in rasters_to_save.items():
+        tif_path = os.path.join(output_dir, tif_name)
+        save_raster_like_gdal(gdal_dsm, tif_path, data)
+        temporary_tifs.append(tif_path)
+
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for tif_path in temporary_tifs:
+            zf.write(tif_path, os.path.basename(tif_path))
+
+    for tif_path in temporary_tifs:
+        os.remove(tif_path)
+
+    save_raster_like_gdal(gdal_dsm, svftotal_path, svftotal)
+
+    np.savez_compressed(
+        npz_path,
+        shadowmat=tensor_to_numpy(shmat).astype(np.float32),
+        vegshadowmat=tensor_to_numpy(vegshmat).astype(np.float32),
+        vbshmat=tensor_to_numpy(vbshvegshmat).astype(np.float32),
+    )
+
 def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     """
     Calculate shadow patterns from buildings and vegetation using GPU-accelerated ray tracing.
