@@ -36,6 +36,7 @@ from .calculate_utci import utci_calculator
 from .calculate_wbgt import isobaric_wet_bulb_temperature_from_rh, black_globe_temperature
 import os
 import re
+import zipfile
 # from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
 gdal.UseExceptions()
@@ -157,6 +158,27 @@ def extract_number_from_filename(filename):
     number = filename[13:-4] # change according to the naming of building DSM files
     return number
 
+def _svf_cache_paths_from_building_dsm(building_dsm_path: str, number: str):
+    """
+    Infer base_path/SVF cache paths from the Building_DSM tile path.
+
+    Example:
+        base_path/Building_DSM/Building_DSM_0_0.tif
+
+    Gives:
+        base_path/SVF/SkyViewFactor_0_0.tif
+        base_path/SVF/svfs_0_0.zip
+        base_path/SVF/shadowmats_0_0.npz
+    """
+    building_dsm_dir = os.path.dirname(building_dsm_path)
+    base_path = os.path.dirname(building_dsm_dir)
+    svf_dir = os.path.join(base_path, "SVF")
+
+    svftotal_path = os.path.join(svf_dir, f"SkyViewFactor_{number}.tif")
+    zip_path = os.path.join(svf_dir, f"svfs_{number}.zip")
+    npz_path = os.path.join(svf_dir, f"shadowmats_{number}.npz")
+
+    return base_path, svf_dir, svftotal_path, zip_path, npz_path
 
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file, 
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
