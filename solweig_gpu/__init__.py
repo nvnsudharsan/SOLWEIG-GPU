@@ -15,7 +15,7 @@ __version__ = "1.2.21"
 from .solweig_gpu import (
     thermal_comfort,
     preprocess,
-    create_inputs,
+    build_inputs,
     run_walls_aspect,
     calculate_svf,
     run_utci_tiles,
