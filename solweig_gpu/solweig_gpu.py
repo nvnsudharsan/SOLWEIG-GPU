@@ -166,6 +166,106 @@ def run_walls_aspect(preprocess_dir: str) -> None:
     aspect_dir = os.path.join(preprocess_dir, "aspect")
     run_parallel_processing(building_dsm_dir, walls_dir, aspect_dir)
 
+def calculate_svf(base_path: str, patch_option: int = 2, overwrite: bool = False) -> None:
+    """
+    Calculate standalone Sky View Factor outputs for all raster tiles in a
+    preprocessing directory.
+    """
+    import os
+    import re
+    import torch
+    from tqdm import tqdm
+
+    from .shadow import svf_calculator
+
+    building_dsm_dir = os.path.join(base_path, "Building_DSM")
+    dem_dir = os.path.join(base_path, "DEM")
+    trees_dir = os.path.join(base_path, "Trees")
+    svf_output_dir = os.path.join(base_path, "SVF")
+
+    os.makedirs(svf_output_dir, exist_ok=True)
+
+    for required_dir in [building_dsm_dir, dem_dir, trees_dir]:
+        if not os.path.isdir(required_dir):
+            raise FileNotFoundError(f"Required directory not found: {required_dir}")
+
+    def extract_tile_key(filename: str, prefix: str) -> str | None:
+        """
+        Extract tile key from filenames like:
+            Building_DSM_0_0.tif
+            DEM_0_0.tif
+            Trees_0_0.tif
+        """
+        pattern = rf"^{re.escape(prefix)}_(.+)\.tif$"
+        match = re.match(pattern, filename)
+        if match:
+            return match.group(1)
+        return None
+
+    def map_tiles(folder: str, prefix: str) -> dict[str, str]:
+        tile_map = {}
+
+        for filename in os.listdir(folder):
+            if filename.startswith(".") or not filename.lower().endswith(".tif"):
+                continue
+
+            key = extract_tile_key(filename, prefix)
+
+            if key is not None:
+                tile_map[key] = os.path.join(folder, filename)
+
+        return tile_map
+
+    building_tiles = map_tiles(building_dsm_dir, "Building_DSM")
+    dem_tiles = map_tiles(dem_dir, "DEM")
+    tree_tiles = map_tiles(trees_dir, "Trees")
+
+    common_keys = sorted(
+        set(building_tiles.keys())
+        & set(dem_tiles.keys())
+        & set(tree_tiles.keys())
+    )
+
+    if not common_keys:
+        raise RuntimeError(
+            "No matching SVF tiles found across Building_DSM/, DEM/, and Trees/."
+        )
+
+    missing_dem = sorted(set(building_tiles.keys()) - set(dem_tiles.keys()))
+    missing_trees = sorted(set(building_tiles.keys()) - set(tree_tiles.keys()))
+
+    if missing_dem:
+        print(f"[WARNING] {len(missing_dem)} Building_DSM tiles are missing matching DEM tiles.")
+
+    if missing_trees:
+        print(f"[WARNING] {len(missing_trees)} Building_DSM tiles are missing matching Trees tiles.")
+
+    print(f"[INFO] Found {len(common_keys)} matching SVF tiles.")
+    print(f"[INFO] Writing outputs to: {svf_output_dir}")
+
+    for key in tqdm(common_keys, desc="Calculating standalone SVF", mininterval=1):
+        expected_tif = os.path.join(svf_output_dir, f"SkyViewFactor_{key}.tif")
+        expected_zip = os.path.join(svf_output_dir, f"svfs_{key}.zip")
+        expected_npz = os.path.join(svf_output_dir, f"shadowmats_{key}.npz")
+
+        if (
+            not overwrite
+            and os.path.exists(expected_tif)
+            and os.path.exists(expected_zip)
+            and os.path.exists(expected_npz)
+        ):
+            continue
+
+        svf_results = svf_calculator(patch_option=patch_option, save_rasters=True, building_dsm_path=building_tiles[key],
+            tree_path=tree_tiles[key], dem_path=dem_tiles[key], output_dir=svf_output_dir, number=key,)
+
+        # Do not keep GPU tensors in memory after each tile.
+        del svf_results
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    print("[INFO] Standalone SVF calculation complete.")
 
 def run_utci_tiles(
     base_path: str,
