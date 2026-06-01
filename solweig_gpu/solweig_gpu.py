@@ -457,6 +457,8 @@ def thermal_comfort(
 
     run_walls_aspect(preprocess_dir)
 
+    calculate_svf(preprocess_dir, patch_option=2, overwrite=False,)
+
     run_utci_tiles(
         base_path=base_path,
         preprocess_dir=preprocess_dir,
