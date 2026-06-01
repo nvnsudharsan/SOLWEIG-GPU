@@ -657,17 +657,32 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
             out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
-    if save_svf:
-        out_file_path_op = os.path.join(output_path, f'SVF_{number}.tif')
-        SVF = svftotal.cpu().numpy()
-        SVF = np.array(SVF)
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, 1, gdal.GDT_Float32)
+
+    if save_svf and not svf_cache_available:
+        out_file_path_op = os.path.join(output_path, f"SVF_{number}.tif")
+        SVF = svftotal.detach().cpu().numpy().astype(np.float32)
+
+        out_dataset_op = driver.Create(
+            out_file_path_op,
+            cols,
+            rows,
+            1,
+            gdal.GDT_Float32,
+        )
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
+
         out_band = out_dataset_op.GetRasterBand(1)
         out_band.WriteArray(SVF)
         out_band.FlushCache()
+
         out_dataset_op = None
+    elif save_svf and svf_cache_available:
+        print(
+            f"[INFO] SVF cache already exists for tile {number}; "
+            f"skipping duplicate SVF_{number}.tif write."
+        )
+                    
     if save_kup:
         out_file_path_op = os.path.join(output_path, f'Kup_{number}.tif')
         num_bands_op = Kup_all.shape[0]
