@@ -25,7 +25,22 @@ import torch
 import torch.nn.functional as F
 from scipy.ndimage import rotate
 import time
+import os
+import zipfile
+
 gdal.UseExceptions()
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def load_raster_to_tensor(dem_path, device=device):
+    dataset = gdal.Open(dem_path)
+    if dataset is None:
+        raise FileNotFoundError(f"Could not open raster: {dem_path}")
+
+    band = dataset.GetRasterBand(1)
+    array = band.ReadAsArray().astype(np.float32)
+
+    return torch.tensor(array, device=device), dataset
 
 def ensure_tensor(x, device=None):
     """
@@ -43,6 +58,110 @@ def ensure_tensor(x, device=None):
     if not isinstance(x, torch.Tensor):
         x = torch.tensor(x, device=device)
     return x
+
+def tensor_to_numpy(x):
+    """
+    Move GPU/CPU torch tensor to CPU NumPy array before writing.
+    """
+    if isinstance(x, torch.Tensor):
+        return x.detach().cpu().numpy()
+    return np.asarray(x)
+
+
+def save_raster_like_gdal(gdal_template, output_path, array):
+    """
+    Save a 2D array as GeoTIFF using geotransform/projection
+    from the input DSM raster.
+    """
+    array = tensor_to_numpy(array).astype(np.float32)
+
+    driver = gdal.GetDriverByName("GTiff")
+    rows, cols = array.shape
+
+    out_ds = driver.Create(
+        output_path,
+        cols,
+        rows,
+        1,
+        gdal.GDT_Float32,
+    )
+
+    out_ds.SetGeoTransform(gdal_template.GetGeoTransform())
+    out_ds.SetProjection(gdal_template.GetProjection())
+
+    out_band = out_ds.GetRasterBand(1)
+    out_band.WriteArray(array)
+    out_band.FlushCache()
+
+    out_ds.FlushCache()
+    out_ds = None
+
+
+def save_svf_zip_npz_outputs(output_dir, gdal_dsm, svf, svfE, svfS, svfW, svfN, svfveg, svfEveg, svfSveg, svfWveg, svfNveg, svfaveg, svfEaveg, svfSaveg,
+    svfWaveg, svfNaveg, shmat, vegshmat, vbshvegshmat, svftotal, number=None,):
+    """
+    - svfs.zip containing SVF GeoTIFFs
+    - shadowmats.npz containing shadow matrices
+    - SkyViewFactor.tif or SkyViewFactor_<number>.tif
+    """
+
+    if output_dir is None:
+        raise ValueError("output_dir must be provided when save_rasters=True")
+
+    if gdal_dsm is None:
+        raise ValueError("gdal_dsm must be provided when save_rasters=True")
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    suffix = f"_{number}" if number is not None else ""
+
+    zip_path = os.path.join(output_dir, f"svfs{suffix}.zip")
+    npz_path = os.path.join(output_dir, f"shadowmats{suffix}.npz")
+    svftotal_path = os.path.join(output_dir, f"SkyViewFactor{suffix}.tif")
+
+    if os.path.isfile(zip_path):
+        os.remove(zip_path)
+
+    rasters_to_save = {
+        "svf.tif": svf,
+        "svfE.tif": svfE,
+        "svfS.tif": svfS,
+        "svfW.tif": svfW,
+        "svfN.tif": svfN,
+        "svfveg.tif": svfveg,
+        "svfEveg.tif": svfEveg,
+        "svfSveg.tif": svfSveg,
+        "svfWveg.tif": svfWveg,
+        "svfNveg.tif": svfNveg,
+        "svfaveg.tif": svfaveg,
+        "svfEaveg.tif": svfEaveg,
+        "svfSaveg.tif": svfSaveg,
+        "svfWaveg.tif": svfWaveg,
+        "svfNaveg.tif": svfNaveg,
+    }
+
+    temporary_tifs = []
+
+    for tif_name, data in rasters_to_save.items():
+        tif_path = os.path.join(output_dir, tif_name)
+        save_raster_like_gdal(gdal_dsm, tif_path, data)
+        temporary_tifs.append(tif_path)
+
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for tif_path in temporary_tifs:
+            zf.write(tif_path, os.path.basename(tif_path))
+
+    for tif_path in temporary_tifs:
+        os.remove(tif_path)
+
+    save_raster_like_gdal(gdal_dsm, svftotal_path, svftotal)
+
+    np.savez_compressed(
+        npz_path,
+        shadowmat=tensor_to_numpy(shmat).astype(np.float32),
+        vegshadowmat=tensor_to_numpy(vegshmat).astype(np.float32),
+        vbshmat=tensor_to_numpy(vbshvegshmat).astype(np.float32),
+    )
 
 def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     """
@@ -287,7 +406,8 @@ def create_patches(patch_option):
     return skyvaultalt, skyvaultazi, annulino, skyvaultaltint, patches_in_band, skyvaultaziint, azistart
 
 
-def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
+def svf_calculator(patch_option, amaxvalue=None, a=None, vegdem=None, vegdem2=None, bush=None, scale=None, save_rasters=False,
+    building_dsm_path=None, tree_path=None, dem_path=None, output_dir=None, number=None, gdal_dsm=None,):
     """
     Calculate Sky View Factor (SVF) using GPU-accelerated hemisphere sampling.
     
@@ -317,7 +437,72 @@ def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
         - Higher patch_option gives more accurate but slower results
         - Directional SVFs useful for anisotropic radiation modeling
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    gdal_dsm_local = gdal_dsm
+
+    if save_rasters:
+        if output_dir is None:
+            raise ValueError("When save_rasters=True, output_dir must be provided.")
+
+        # Standalone mode: compute missing SVF inputs from raster paths
+        if any(x is None for x in [amaxvalue, a, vegdem, vegdem2, bush, scale]):
+            if building_dsm_path is None or tree_path is None or dem_path is None:
+                raise ValueError(
+                    "When save_rasters=True and SVF tensors are not provided, "
+                    "building_dsm_path, tree_path, and dem_path must be provided."
+                )
+
+            a, gdal_dsm_local = load_raster_to_tensor(building_dsm_path)
+            temp1, _ = load_raster_to_tensor(tree_path)
+            temp2, _ = load_raster_to_tensor(dem_path)
+
+            geotransform = gdal_dsm_local.GetGeoTransform()
+            scale = 1.0 / geotransform[1]
+
+            temp1[temp1 < 0.0] = 0.0
+
+            # Same logic as compute_utci()
+            vegdem_height = temp1 + temp2
+            vegdem2_height = torch.add(temp1 * 0.25, temp2)
+
+            bush = torch.logical_not(vegdem2_height * vegdem_height) * vegdem_height
+
+            vegdem = temp1 + a
+            vegdem[vegdem == a] = 0.0
+
+            vegdem2 = temp1 * 0.25 + a
+            vegdem2[vegdem2 == a] = 0.0
+
+            amaxvalue = torch.maximum(a.max(), vegdem_height.max())
+
+        else:
+            if gdal_dsm_local is None:
+                if building_dsm_path is not None:
+                    gdal_dsm_local = gdal.Open(building_dsm_path)
+                else:
+                    raise ValueError(
+                        "When save_rasters=True with precomputed tensors, provide "
+                        "either gdal_dsm or building_dsm_path so GeoTIFF metadata can be copied."
+                    )
+
+    else:
+        required = {
+            "amaxvalue": amaxvalue,
+            "a": a,
+            "vegdem": vegdem,
+            "vegdem2": vegdem2,
+            "bush": bush,
+            "scale": scale,
+        }
+
+        missing = [name for name, value in required.items() if value is None]
+
+        if missing:
+            raise ValueError(
+                "When save_rasters=False, these arguments must be provided: "
+                + ", ".join(missing)
+            )
+        
     device = a.device
     rows = a.shape[0]
     cols = a.shape[1]
@@ -425,6 +610,13 @@ def svf_calculator(patch_option,amaxvalue, a, vegdem, vegdem2, bush, scale):
 
     trans = torch.tensor(0.03, device=device)  # Tree transmission hardcoded to 3%
     SVFtotal = svf - (1 - svfveg) * (1 - trans)
+
+    if save_rasters:
+        save_svf_zip_npz_outputs(output_dir=output_dir, gdal_dsm=gdal_dsm_local, svf=svf, svfE=svfE, svfS=svfS, svfW=svfW, svfN=svfN,
+            svfveg=svfveg, svfEveg=svfEveg, svfSveg=svfSveg, svfWveg=svfWveg, svfNveg=svfNveg, svfaveg=svfaveg, svfEaveg=svfEaveg,
+            svfSaveg=svfSaveg, svfWaveg=svfWaveg, svfNaveg=svfNaveg, shmat=shmat, vegshmat=vegshmat, vbshvegshmat=vbshvegshmat,
+            svftotal=SVFtotal, number=number,
+        )
 
     del sh, vegsh,vbshvegsh, last, weight
     torch.cuda.empty_cache()

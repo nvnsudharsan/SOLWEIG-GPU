@@ -33,8 +33,10 @@ from .sun_position import Solweig_2015a_metdata_noload
 from .shadow import svf_calculator, create_patches
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
 from .calculate_utci import utci_calculator
+from .calculate_wbgt import isobaric_wet_bulb_temperature_from_rh, black_globe_temperature
 import os
 import re
+import zipfile
 # from .preprocessor import ppr
 from .walls_aspect import run_parallel_processing
 gdal.UseExceptions()
@@ -156,9 +158,121 @@ def extract_number_from_filename(filename):
     number = filename[13:-4] # change according to the naming of building DSM files
     return number
 
+def _svf_cache_paths_from_building_dsm(building_dsm_path: str, number: str):
+    """
+    Infer base_path/SVF cache paths from the Building_DSM tile path.
 
-def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, met_file, 
-                output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,save_ldown=False,save_shadow=False):
+    Example:
+        base_path/Building_DSM/Building_DSM_0_0.tif
+
+    Gives:
+        base_path/SVF/SkyViewFactor_0_0.tif
+        base_path/SVF/svfs_0_0.zip
+        base_path/SVF/shadowmats_0_0.npz
+    """
+    building_dsm_dir = os.path.dirname(building_dsm_path)
+    base_path = os.path.dirname(building_dsm_dir)
+    svf_dir = os.path.join(base_path, "SVF")
+
+    svftotal_path = os.path.join(svf_dir, f"SkyViewFactor_{number}.tif")
+    zip_path = os.path.join(svf_dir, f"svfs_{number}.zip")
+    npz_path = os.path.join(svf_dir, f"shadowmats_{number}.npz")
+
+    return base_path, svf_dir, svftotal_path, zip_path, npz_path
+
+def _svf_cache_exists(building_dsm_path: str, number: str) -> bool:
+    """
+    Check whether all standalone SVF cache files exist.
+    """
+    _, _, svftotal_path, zip_path, npz_path = _svf_cache_paths_from_building_dsm(
+        building_dsm_path,
+        number,
+    )
+
+    return (
+        os.path.isfile(svftotal_path)
+        and os.path.isfile(zip_path)
+        and os.path.isfile(npz_path)
+    )
+
+def _load_raster_to_tensor_from_path(raster_path: str):
+    """
+    Load a normal GeoTIFF path into a GPU/CPU tensor.
+    """
+    ds = gdal.Open(raster_path)
+    if ds is None:
+        raise FileNotFoundError(f"Could not open raster: {raster_path}")
+
+    arr = ds.GetRasterBand(1).ReadAsArray().astype(np.float32)
+    ds = None
+
+    return torch.tensor(arr, device=device)
+
+
+def _load_raster_to_tensor_from_zip(zip_path: str, internal_tif_name: str):
+    """
+    Load a GeoTIFF inside svfs_*.zip directly using GDAL /vsizip/.
+    """
+    vsi_path = f"/vsizip/{zip_path}/{internal_tif_name}"
+
+    ds = gdal.Open(vsi_path)
+    if ds is None:
+        raise FileNotFoundError(
+            f"Could not open {internal_tif_name} inside ZIP: {zip_path}"
+        )
+
+    arr = ds.GetRasterBand(1).ReadAsArray().astype(np.float32)
+    ds = None
+
+    return torch.tensor(arr, device=device)
+
+
+def load_cached_svf_outputs(building_dsm_path: str, number: str):
+    """
+    Load cached standalone SVF outputs from base_path/SVF onto GPU.
+
+    Expected files:
+        base_path/SVF/SkyViewFactor_<number>.tif
+        base_path/SVF/svfs_<number>.zip
+        base_path/SVF/shadowmats_<number>.npz
+    """
+    _, _, svftotal_path, zip_path, npz_path = _svf_cache_paths_from_building_dsm(
+        building_dsm_path,
+        number,
+    )
+
+    svf = _load_raster_to_tensor_from_zip(zip_path, "svf.tif")
+    svfE = _load_raster_to_tensor_from_zip(zip_path, "svfE.tif")
+    svfS = _load_raster_to_tensor_from_zip(zip_path, "svfS.tif")
+    svfW = _load_raster_to_tensor_from_zip(zip_path, "svfW.tif")
+    svfN = _load_raster_to_tensor_from_zip(zip_path, "svfN.tif")
+
+    svfveg = _load_raster_to_tensor_from_zip(zip_path, "svfveg.tif")
+    svfEveg = _load_raster_to_tensor_from_zip(zip_path, "svfEveg.tif")
+    svfSveg = _load_raster_to_tensor_from_zip(zip_path, "svfSveg.tif")
+    svfWveg = _load_raster_to_tensor_from_zip(zip_path, "svfWveg.tif")
+    svfNveg = _load_raster_to_tensor_from_zip(zip_path, "svfNveg.tif")
+
+    svfaveg = _load_raster_to_tensor_from_zip(zip_path, "svfaveg.tif")
+    svfEaveg = _load_raster_to_tensor_from_zip(zip_path, "svfEaveg.tif")
+    svfSaveg = _load_raster_to_tensor_from_zip(zip_path, "svfSaveg.tif")
+    svfWaveg = _load_raster_to_tensor_from_zip(zip_path, "svfWaveg.tif")
+    svfNaveg = _load_raster_to_tensor_from_zip(zip_path, "svfNaveg.tif")
+
+    svftotal = _load_raster_to_tensor_from_path(svftotal_path)
+
+    with np.load(npz_path) as npz:
+        shmat = torch.tensor(npz["shadowmat"].astype(np.float32), device=device)
+        vegshmat = torch.tensor(npz["vegshadowmat"].astype(np.float32), device=device)
+        vbshvegshmat = torch.tensor(npz["vbshmat"].astype(np.float32), device=device)
+
+    return (
+        svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg,
+        svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal,)
+
+def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file, 
+                output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
+                save_ldown=False,save_shadow=False,save_wbgt=False):
     """
     Compute UTCI and related thermal comfort outputs for a single tile.
     
@@ -172,6 +286,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         walls_path (str): Path to wall height raster
         aspect_path (str): Path to wall aspect raster  
         landcover_path (str): Path to land cover raster (can be None)
+        windcoeff_path (str): Path to wind coefficient raster (can be None)
         met_file (str): Path to meteorological forcing file
         output_path (str): Directory for saving output rasters
         number (str): Tile identifier (e.g., "0_0")
@@ -198,6 +313,18 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     temp2, dataset3 = load_raster_to_tensor(dem_path)
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
+          
+    windcoeff = None
+    dataset6 = None
+    dataset7 = None
+    if windcoeff_path is not None:
+        windcoeff, dataset7 = load_raster_to_tensor(windcoeff_path)
+
+        if windcoeff.shape != a.shape:
+            raise ValueError(
+                f"Wind coefficient raster shape {tuple(windcoeff.shape)} does not match "
+                f"Building DSM shape {tuple(a.shape)}"
+            )
  
     # Added
     landcover = 0
@@ -289,11 +416,15 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     vegdsm[vegdsm == a] = 0
     vegdsm2 = temp1 * 0.25 + a
     vegdsm2[vegdsm2 == a] = 0
+    # fveg = (temp1 > 0).float()
     amaxvalue = torch.maximum(a.max(), vegdem.max())
     buildings = a - temp2
     buildings[buildings < 2.] = 1.
     buildings[buildings >= 2.] = 0.
     valid_mask = (buildings == 1)
+    if windcoeff is None:
+        windcoeff = torch.ones((rows, cols), device=device)
+                    
     Knight = torch.zeros((rows, cols), device=device)
     Tgmap1 = torch.zeros((rows, cols), device=device)
     Tgmap1E = torch.zeros((rows, cols), device=device)
@@ -311,10 +442,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Tstart        = torch.from_numpy(Tstart_np).to(device).float()
         alb_grid      = torch.from_numpy(alb_np).to(device).float()
         emis_grid     = torch.from_numpy(emis_np).to(device).float()
-        TgK_wall      = torch.tensor(float(TgK_wall_np)     , device=device)
-        Tstart_wall   = torch.tensor(float(Tstart_wall_np)  , device=device)
-        TmaxLST       = torch.from_numpy(TmaxLST_np ).to(device).float()
-        TmaxLST_wall  = torch.tensor(float(TmaxLST_wall_np) , device=device)
+        TgK_wall = torch.as_tensor(TgK_wall_np, device=device).float()
+        Tstart_wall = torch.as_tensor(Tstart_wall_np, device=device).float()
+        TmaxLST = torch.as_tensor(TmaxLST_np, device=device).float()
+        TmaxLST_wall = torch.as_tensor(TmaxLST_wall_np, device=device).float()
     else:
         TgK = Knight + 0.37
         Tstart = Knight - 3.41
@@ -344,6 +475,19 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     radI = torch.tensor(met_file[:, 22], device=device)
     P = torch.tensor(met_file[:, 12], device=device)
     Ws = torch.tensor(met_file[:, 9], device=device)
+                    
+    if met_file.shape[1] > 24:
+        uhii = torch.tensor(met_file[:, 24], device=device)
+    else:
+        uhii = torch.zeros(met_file.shape[0], device=device)
+
+    if save_wbgt:
+        Ta_np = (Ta + uhii).cpu().numpy()
+        RH_np = RH.cpu().numpy()
+        P_np = P.cpu().numpy()
+    
+        wbt_np = isobaric_wet_bulb_temperature_from_rh(p=P_np * 1000.0, T=Ta_np + 273.15, rh=RH_np, phase='liquid', method='Romps',limit=True)
+        wbt = torch.tensor(wbt_np, device=device, dtype=Ta.dtype)
     # Prepare leafon based on vegetation type
     if conifer_bool:
         leafon = torch.ones((1, DOY.shape[0]), device=device)
@@ -372,7 +516,28 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     firstdaytime = 1.
     start_time = time.time()
     # Calculate SVF and related parameters (remains unchanged)
-    svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal = svf_calculator(patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale)
+    #svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal = svf_calculator(patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale)
+
+    base_path, svf_cache_dir, svftotal_cache_path, svf_zip_path, svf_npz_path = (_svf_cache_paths_from_building_dsm(building_dsm_path, number))
+    
+    svf_cache_available = _svf_cache_exists(building_dsm_path, number)
+    
+    if svf_cache_available:
+        print(f"[INFO] Loading cached SVF outputs for tile {number} from {svf_cache_dir}")
+
+        (
+        svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg,
+        svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal,) = load_cached_svf_outputs(building_dsm_path, number)
+
+    else:
+        print(f"[INFO] Cached SVF outputs not found for tile {number}. Calculating SVF.")
+
+        (
+        svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg,
+        svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal,) = svf_calculator(
+        patch_option, amaxvalue, a, vegdsm, vegdsm2, bush, scale, save_rasters=True,
+        output_dir=svf_cache_dir, number=number, gdal_dsm=dataset,)
+    
     svfbuveg = svf - (1.0 - svfveg) * (1.0 - transVeg)
     asvf = torch.acos(torch.sqrt(svf))
     diffsh = torch.zeros((rows, cols, shmat.shape[2]), device=device)
@@ -389,6 +554,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Lup_all   = []
     Ldown_all = []
     Shadow_all= []
+    wbgt_all = []
+  
     CI = 1.0
     for i in np.arange(0, Ta.__len__()):
         if landcover == 1:
@@ -415,10 +582,24 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             amaxvalue, bush, Twater, TgK, Tstart, alb_grid, emis_grid, TgK_wall, Tstart_wall, TmaxLST, TmaxLST_wall, first, second, svfalfa, svfbuveg, firstdaytime, timeadd, timestepdec, Tgmap1, Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N,
             CI, TgOut1, diffsh, shmat, vegshmat, vbshvegshmat, anisotropic_sky, asvf, patch_option)
         # Create matrices for meteorological parameters for the current time step
-        Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i]
         RH_mat = torch.zeros((rows, cols), device=device) + RH[i]
         Tmrt_mat = torch.zeros((rows, cols), device=device) + Tmrt
-        va10m_mat = torch.zeros((rows, cols), device=device) + Ws[i]
+        va10m_mat = torch.zeros((rows, cols), device=device) + windcoeff * Ws[i]
+        va10m_mat = torch.clamp(va10m_mat, min=0.15) #WGBT works for u > 0.15 m/s
+        Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i] + uhii[i]
+        #wind_factor = torch.pow(va10m_mat, -0.25)
+        #uhi_term = (2.0 - svf - fveg) * uhii[i] * wind_factor
+        #Ta_mat = Ta_mat + uhi_term
+        
+        if save_wbgt:
+            coef = 6.3 / 0.46821
+            hcg = coef*torch.pow(va10m_mat, 0.6)
+            bgt_mat = black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95)
+            cond = shadow < 0.1
+            wbgt_sun = 0.7 * wbt[i] + 0.3 * bgt_mat
+            wbgt_shade = 0.7 * wbt[i] + 0.2 * bgt_mat + 0.1 * Ta_mat
+            wbgt_mat = torch.where(cond, wbgt_sun, wbgt_shade)
+        
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
         UTCI = torch.full(UTCI_mat.shape, float('nan'), device=device)
         UTCI[valid_mask] = UTCI_mat[valid_mask]
@@ -430,6 +611,9 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Lup_all.append(Lup.cpu().numpy())
         Ldown_all.append(Ldown.cpu().numpy())
         Shadow_all.append(shadow.cpu().numpy())
+        if save_wbgt:    
+            wbgt_all.append(wbgt_mat.cpu().numpy())
+
     # Convert the lists to numpy arrays with shape (time_steps, rows, cols)
     UTCI_all  = np.array(UTCI_all)
     TMRT_all  = np.array(TMRT_all)
@@ -438,6 +622,9 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Lup_all   = np.array(Lup_all)
     Ldown_all = np.array(Ldown_all)
     Shadow_all= np.array(Shadow_all)
+    if save_wbgt:
+        wbgt_all = np.array(wbgt_all)
+                    
     # Write a multi-band GeoTIFF for UTCI (each band corresponds to one time step)
     driver = gdal.GetDriverByName('GTiff')
     out_file_path = os.path.join(output_path, f'UTCI_{number}.tif')
@@ -470,17 +657,32 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
             out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
-    if save_svf:
-        out_file_path_op = os.path.join(output_path, f'SVF_{number}.tif')
-        SVF = svftotal.cpu().numpy()
-        SVF = np.array(SVF)
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, 1, gdal.GDT_Float32)
+
+    if save_svf and not svf_cache_available:
+        out_file_path_op = os.path.join(output_path, f"SVF_{number}.tif")
+        SVF = svftotal.detach().cpu().numpy().astype(np.float32)
+
+        out_dataset_op = driver.Create(
+            out_file_path_op,
+            cols,
+            rows,
+            1,
+            gdal.GDT_Float32,
+        )
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
+
         out_band = out_dataset_op.GetRasterBand(1)
         out_band.WriteArray(SVF)
         out_band.FlushCache()
+
         out_dataset_op = None
+    elif save_svf and svf_cache_available:
+        print(
+            f"[INFO] SVF cache already exists for tile {number}; "
+            f"skipping duplicate SVF_{number}.tif write."
+        )
+                    
     if save_kup:
         out_file_path_op = os.path.join(output_path, f'Kup_{number}.tif')
         num_bands_op = Kup_all.shape[0]
@@ -556,6 +758,21 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
             out_band.SetMetadata({'Time': timestamp})
         out_dataset_op = None
+    if save_wbgt:
+        out_file_path_op = os.path.join(output_path, f'WBGT_{number}.tif')
+        num_bands_op = wbgt_all.shape[0]
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
+        out_dataset_op.SetProjection(dataset.GetProjection())
+        for band in range(num_bands_op):
+            out_band = out_dataset_op.GetRasterBand(band + 1)
+            out_band.WriteArray(wbgt_all[band])
+            out_band.FlushCache()
+            hour = int(hours[band].cpu().item())
+            minute = int(minu[band].cpu().item())
+            timestamp = base_date.replace(hour=hour, minute=minute).isoformat()
+            out_band.SetMetadata({'Time': timestamp})
+        out_dataset_op = None
 
     # Clean up datasets
     dataset = None
@@ -563,6 +780,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     dataset3 = None
     dataset4 = None
     dataset5 = None
+    dataset6 = None
+    dataset7 = None
     end_time = time.time()
     time_taken = end_time - start_time
     print(f"Time taken to execute tile {number}: {time_taken:.2f} seconds")

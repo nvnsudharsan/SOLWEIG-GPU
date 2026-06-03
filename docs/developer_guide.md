@@ -16,9 +16,26 @@ SOLWEIG-GPU is a modular package that separates the different stages of the ther
 -   **Core SOLWEIG Model**: The main radiation and thermal comfort calculation engine, accelerated with PyTorch.
 -   **Interfaces**: Provides both a command-line interface (CLI) and a graphical user interface (GUI) for user interaction.
 
+## Pipeline Stages
+
+The workflow is implemented as three callable stages in `solweig_gpu.solweig_gpu`:
+
+1. **`preprocess(...)`** – Validates rasters, creates tiles, and prepares metfiles (from your met file or ERA5/WRF). Writes to `{base_path}/processed_inputs/` (or a custom `preprocess_dir`). Returns the path to the preprocessing directory.
+
+2. **`run_walls_aspect(preprocess_dir)`** – Computes wall heights and aspects for all tiles. Writes to `{preprocess_dir}/walls/` and `{preprocess_dir}/aspect/`. Call this after `preprocess()`.
+
+3. **`run_utci_tiles(base_path, preprocess_dir, selected_date_str, ...)`** – Runs the SOLWEIG/UTCI computation per tile and writes GeoTIFFs to `{base_path}/output_folder/{tile_key}/`. Optional argument `tile_keys` lets you run only specific tiles (e.g. `["0_0", "1000_0"]`). Call this after `preprocess()` and `run_walls_aspect()`.
+
+The high-level **`thermal_comfort(...)`** function simply calls these three stages in order. You can use `thermal_comfort()` for one-shot runs (same behavior as before), or call the three functions separately when you need to:
+
+- Run preprocessing once and then run UTCI for a subset of tiles.
+- Reuse the same preprocessed tiles with different parameters.
+
+See the [API Reference](api_reference.md) for full parameter lists and the repository’s [REFACTORING.md](../REFACTORING.md) for detailed examples of calling stages separately.
+
 ## Module Interactions
 
-The `solweig_gpu.py` module acts as the main orchestrator, calling the other modules in the correct sequence. The `utci_process.py` module is the core of the computation, bringing together the various components to calculate the final UTCI values.
+The `solweig_gpu.py` module provides the public entry points (`thermal_comfort`, `preprocess`, `run_walls_aspect`, `run_utci_tiles`) and orchestrates the pipeline. The `utci_process.py` module is the core of the computation, bringing together the various components to calculate the final UTCI values.
 
 ## Contributing to SOLWEIG-GPU
 
@@ -32,5 +49,5 @@ We welcome contributions to the SOLWEIG-GPU project. To contribute, please follo
 6.  **Push to Your Branch**: Push your changes to your forked repository.
 7.  **Create a Pull Request**: Open a pull request from your branch to the `main` branch of the original repository.
 
-Please ensure that your pull requests are small and focused on a single feature or bug fix. For the full contributor guide including reporting issues, see [CONTRIBUTING](../CONTRIBUTING.md) in the repository root. This makes it easier to review and merge your contributions.
+Please ensure that your pull requests are small and focused on a single feature or bug fix. For the full contributor guide including reporting issues, see [CONTRIBUTING](../CONTRIBUTING.md) in the repository root.
 

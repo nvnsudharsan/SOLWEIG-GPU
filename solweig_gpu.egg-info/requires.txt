@@ -1,0 +1,17 @@
+torch
+numpy
+scipy
+pandas
+netCDF4
+pytz
+shapely
+timezonefinder
+gdal
+xarray
+tqdm
+PyQt5
+matplotlib
+
+[test]
+pytest
+pytest-cov

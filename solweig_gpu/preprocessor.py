@@ -31,15 +31,163 @@ from timezonefinder import TimezoneFinder
 from scipy.spatial import cKDTree
 import math
 from tqdm import tqdm
-import shutil
+import pytz
 
 gdal.UseExceptions()
+RHO_CP = 1.225 * 1005.0  # air density * Cp
 
 WRF_PATTERNS = [
     re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}_\d{2}_\d{2})$'),  # HH_MM_SS
     re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})$'),  # HH:MM:SS
     re.compile(r'^wrfout_d0([1-9])_(\d{4}-\d{2}-\d{2})_(\d{2})$'),              # HH
 ]
+
+def infer_timezone_from_grid(latitudes, longitudes):
+    """Infer timezone name from the center of the ERA5 grid."""
+    tf = TimezoneFinder()
+
+    if latitudes.ndim == 1 and longitudes.ndim == 1:
+        lat_c = float(latitudes[len(latitudes)//2])
+        lon_c = float(longitudes[len(longitudes)//2])
+    else:
+        i = latitudes.shape[0] // 2
+        j = latitudes.shape[1] // 2
+        lat_c = float(latitudes[i, j])
+        lon_c = float(longitudes[i, j])
+
+    tz_name = tf.timezone_at(lat=lat_c, lng=lon_c)
+    return tz_name or "UTC"
+    
+def utc_times_to_local_naive(times_utc, timezone_name):
+    """
+    Convert UTC timestamps to local naive datetimes for local-day resampling
+    and local-night detection.
+    """
+    t = pd.to_datetime(times_utc, utc=True)
+    t_local = t.tz_convert(timezone_name).tz_localize(None)
+    return t_local.to_numpy()
+
+######################################### 
+# Modified after Andrea Zonato
+def _night_sine_profile(sw_values, amp_values, extension_before=0, extension_after=1):
+    """
+    Build a nighttime UHI profile from SWDOWN in local time:
+    - detect night where SWDOWN <= 0
+    - optionally extend before/after
+    - shape with a sine curve over each night segment
+    """
+    sw_arr  = np.asarray(sw_values, dtype=float)
+    amp_arr = np.asarray(amp_values, dtype=float)
+
+    n = sw_arr.size
+    out = np.zeros(n, dtype=float)
+
+    if n == 0 or amp_arr.shape != sw_arr.shape:
+        return out
+
+    valid = np.isfinite(sw_arr) & np.isfinite(amp_arr)
+
+    # Night starts exactly when SWDOWN <= 0
+    base_night = valid & (sw_arr <= 5.0)
+
+    if not np.any(base_night):
+        return out
+
+    idx = np.flatnonzero(base_night)
+    splits = np.where(np.diff(idx) > 1)[0] + 1
+    raw_segments = [seg for seg in np.split(idx, splits) if seg.size]
+
+    for seg in raw_segments:
+        s = int(max(0, seg[0] - extension_before))
+        e = int(min(n, seg[-1] + 1 + extension_after))
+        seg_ext = np.arange(s, e, dtype=int)
+
+        L = seg_ext.size
+        if L < 2:
+            continue
+
+        seg_amp = amp_arr[seg_ext]
+        seg_amp = seg_amp[np.isfinite(seg_amp)]
+        if seg_amp.size == 0:
+            continue
+
+        A = float(np.mean(seg_amp))
+        if A <= 0:
+            continue
+
+        x = np.linspace(0, np.pi, L)
+        profile = np.sin(x)
+        profile = np.maximum(profile, 0.0)
+
+        out[seg_ext] = A * profile
+
+    return out
+
+def compute_uhi_cycle_from_arrays(times, t2_k, swdown_wm2, u_wind_ms, v_wind_ms):
+    """
+    Compute UHI_CYCLE from arrays already extracted from ERA5.
+
+    Parameters
+    ----------
+    times : 1D array-like of datetimes
+    t2_k : ndarray (time, lat, lon), air temperature in K
+    swdown_wm2 : ndarray (time, lat, lon), shortwave down radiation in W m-2
+    u_wind_ms : ndarray (time, lat, lon), zonal wind speed in m s-1
+    v_wind_ms : ndarray (time, lat, lon), meridional wind speed in m s-1
+
+    Returns
+    -------
+    uhi_cycle : ndarray (time, lat, lon), in K
+    """
+    lat_n = t2_k.shape[1]
+    lon_n = t2_k.shape[2]
+
+    coords = {"time": times, "lat": np.arange(lat_n), "lon": np.arange(lon_n)}
+
+    da_t2 = xr.DataArray(t2_k, dims=("time", "lat", "lon"), coords=coords)
+    da_sw = xr.DataArray(swdown_wm2, dims=("time", "lat", "lon"), coords=coords)
+    da_u = xr.DataArray(u_wind_ms, dims=("time", "lat", "lon"), coords=coords)
+    da_v = xr.DataArray(v_wind_ms, dims=("time", "lat", "lon"), coords=coords)
+
+    # Wind speed magnitude
+    da_wd = np.sqrt(da_u**2 + da_v**2)
+
+    # Daily diagnostics
+    sdown_daily = (da_sw / RHO_CP).resample(time="1D").mean()
+    wd_daily = da_wd.resample(time="1D").mean()
+    tmax_daily = da_t2.resample(time="1D").max()
+    tmin_daily = da_t2.resample(time="1D").min()
+    dtr_daily = tmax_daily - tmin_daily
+
+    numerator = (sdown_daily * dtr_daily**3)
+    numerator = numerator.where(np.isfinite(numerator), 0).clip(min=0)
+
+    # Avoid divide-by-zero / near-zero wind
+    wd_daily_safe = xr.where(wd_daily > 1.0, wd_daily, 1.0)
+
+    uhi_max_daily = (numerator / wd_daily_safe) ** 0.25
+    uhi_max_daily = uhi_max_daily.fillna(0)
+
+    # Expand daily amplitude back to hourly timestamps
+    uhi_max_ts = uhi_max_daily.reindex(time=da_t2.time, method="ffill").fillna(0)
+
+    # Build nighttime UHI cycle
+    uhi_cycle = xr.apply_ufunc(
+        _night_sine_profile,
+        da_sw,
+        uhi_max_ts,
+        input_core_dims=[["time"], ["time"]],
+        output_core_dims=[["time"]],
+        vectorize=True,
+        dask="allowed",
+        kwargs={"extension_before": 0, "extension_after": 0},
+    )
+
+    uhi_cycle = uhi_cycle.transpose("time", "lat", "lon")
+    return uhi_cycle.values.astype(np.float32)
+
+# Modified after Andrea Zonato
+######################################### 
 
 def _match_wrfout(base):
     """
@@ -394,6 +542,143 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
 
     print(f"ERA5 forcing file created: {output_file}  ({len(times)} steps from {py_times[0]} to {py_times[-1]} UTC)")
 
+# If the nightime UHI intensity needs to be included in air temperature calculation
+def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfile.nc"):
+    """
+    Same numeric outputs as your original function, but time is taken from the files
+    and sliced to [start_time, end_time] UTC. Variables written:
+      T2 (t2m, Kelvin), PSFC (sp, Pa), RH2 (%), WIND (m/s), SWDOWN (W/m^2), UHI_CYCLE (K).
+    """
+    start_dt = dt.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_dt   = dt.datetime.strptime(end_time,   "%Y-%m-%d %H:%M:%S")
+
+    # Pad the requested window so UHI_CYCLE can be computed on complete nights
+    pad_hours = 24
+    start_pad = start_dt - dt.timedelta(hours=pad_hours)
+    end_pad   = end_dt   + dt.timedelta(hours=pad_hours)
+
+    instant_file = os.path.join(folder_path, 'data_stream-oper_stepType-instant.nc')
+    accum_file   = os.path.join(folder_path, 'data_stream-oper_stepType-accum.nc')
+
+    ds_instant = _normalize_time_coord(xr.open_dataset(instant_file, decode_times=True))
+    ds_accum   = _normalize_time_coord(xr.open_dataset(accum_file,   decode_times=True))
+
+    # Select padded window for computation
+    ds_instant = ds_instant.sel(time=slice(start_pad, end_pad))
+    ds_accum   = ds_accum.sel(time=slice(start_pad, end_pad))
+
+    if ds_instant.time.size == 0:
+        raise ValueError("No instantaneous timestamps within requested window.")
+    if ds_accum.time.size == 0:
+        raise ValueError("No accumulated timestamps within requested window.")
+
+    common_t = np.intersect1d(ds_instant.time.values, ds_accum.time.values)
+    if common_t.size == 0:
+        raise ValueError("Instantaneous and accumulated streams have no overlapping timestamps.")
+
+    ds_instant = ds_instant.sel(time=common_t)
+    ds_accum   = ds_accum.sel(time=common_t)
+
+    def saturation_vapor_pressure(Tc):
+        return 6.112 * np.exp((17.67 * Tc) / (Tc + 243.5))
+
+    temperatures = ds_instant['t2m'].values
+    dew_points   = ds_instant['d2m'].values
+    surface_pressures = ds_instant['sp'].values
+    u10 = ds_instant['u10'].values
+    v10 = ds_instant['v10'].values
+    wind_speeds = np.sqrt(u10**2 + v10**2)
+
+    shortwave_radiation = (ds_accum['ssrd'].values / 3600.0).astype(np.float32)
+
+    e_temp      = saturation_vapor_pressure(temperatures - 273.15)
+    e_dew_point = saturation_vapor_pressure(dew_points   - 273.15)
+    relative_humidities = 100.0 * (e_dew_point / e_temp)
+    relative_humidities = np.clip(relative_humidities, 0, 100)
+
+    latitudes  = ds_instant['latitude'].values
+    longitudes = ds_instant['longitude'].values
+    if latitudes.ndim == 1 and longitudes.ndim == 1:
+        lon2d, lat2d = np.meshgrid(longitudes, latitudes)
+    else:
+        lat2d = latitudes
+        lon2d = longitudes
+
+    times = ds_instant.time.values  # keep original UTC times for writing output
+
+    tz_name = infer_timezone_from_grid(latitudes, longitudes)
+    times_local = utc_times_to_local_naive(times, tz_name)
+
+    print(f"Using local timezone for UHI_CYCLE: {tz_name}")
+
+    # Compute UHI in local time so daily grouping and night timing are local
+    uhi_cycle = compute_uhi_cycle_from_arrays(times_local, temperatures, shortwave_radiation, u10, v10)
+    
+    times_pd = pd.to_datetime(times)
+
+    keep = (times_pd >= pd.Timestamp(start_dt)) & (times_pd <= pd.Timestamp(end_dt))
+    keep_idx = np.where(keep)[0]
+
+    times = times[keep_idx]
+    temperatures = temperatures[keep_idx, :, :]
+    dew_points = dew_points[keep_idx, :, :]
+    surface_pressures = surface_pressures[keep_idx, :, :]
+    u10 = u10[keep_idx, :, :]
+    v10 = v10[keep_idx, :, :]
+    wind_speeds = wind_speeds[keep_idx, :, :]
+    shortwave_radiation = shortwave_radiation[keep_idx, :, :]
+    relative_humidities = relative_humidities[keep_idx, :, :]
+    uhi_cycle = uhi_cycle[keep_idx, :, :]
+
+    with Dataset(output_file, 'w', format='NETCDF4') as nc:
+        nc.createDimension('time', times.shape[0])
+        nc.createDimension('lat',  lat2d.shape[0])
+        nc.createDimension('lon',  lon2d.shape[1])
+
+        time_var = nc.createVariable('time', 'f8', ('time',))
+        lat_var  = nc.createVariable('lat',  'f4', ('lat', 'lon'))
+        lon_var  = nc.createVariable('lon',  'f4', ('lat', 'lon'))
+
+        t2_var     = nc.createVariable('T2',        'f4', ('time', 'lat', 'lon'), zlib=True)
+        psfc_var   = nc.createVariable('PSFC',      'f4', ('time', 'lat', 'lon'), zlib=True)
+        rh2_var    = nc.createVariable('RH2',       'f4', ('time', 'lat', 'lon'), zlib=True)
+        wind_var   = nc.createVariable('WIND',      'f4', ('time', 'lat', 'lon'), zlib=True)
+        swdown_var = nc.createVariable('SWDOWN',    'f4', ('time', 'lat', 'lon'), zlib=True)
+        uhi_var    = nc.createVariable('UHI_CYCLE', 'f4', ('time', 'lat', 'lon'), zlib=True)
+
+        time_var.units = "hours since 1970-01-01 00:00:00"
+        time_var.calendar = "gregorian"
+        lat_var.units = "degrees_north"
+        lon_var.units = "degrees_east"
+        t2_var.units = "K"
+        psfc_var.units = "Pa"
+        rh2_var.units = "%"
+        wind_var.units = "m/s"
+        swdown_var.units = "W/m^2"
+        uhi_var.units = "K"
+
+        py_times = [np.datetime64(t).astype("datetime64[s]").astype(object) for t in times]
+        time_var[:] = date2num(py_times, units=time_var.units, calendar=time_var.calendar)
+
+        lat_var[:, :] = lat2d.astype('float32')
+        lon_var[:, :] = lon2d.astype('float32')
+
+        t2 = temperatures.astype('float32')
+        sp = surface_pressures.astype('float32')
+        rh = relative_humidities.astype('float32')
+        wind = wind_speeds.astype('float32')
+        swd = shortwave_radiation.astype('float32')
+        uhi = uhi_cycle.astype('float32')
+
+        t2_var[:, :, :]     = t2
+        psfc_var[:, :, :]   = sp
+        rh2_var[:, :, :]    = rh
+        wind_var[:, :, :]   = wind
+        swdown_var[:, :, :] = swd
+        uhi_var[:, :, :]    = uhi
+        
+    print(f"ERA5 forcing file created: {output_file}  ({len(times)} steps from {py_times[0]} to {py_times[-1]} UTC)")
+
     
 # =============================================================================
 #    The function will:
@@ -633,10 +918,8 @@ def _tile_size_m(poly):
     h = _haversine_m(miny, cx, maxy, cx) 
     return w, h
 
-def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, preprocess_dir):
-    """
-    Minimal-edits, curvilinear-safe version of your function.
-    """
+def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, preprocess_dir, use_uhi=True):
+
     metfiles_folder = os.path.join(preprocess_dir, "metfiles")
     os.makedirs(metfiles_folder, exist_ok=True)
     
@@ -650,12 +933,14 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         return
 
     var_map = {
-        "Wind": "WIND",     
+        "Wind": "WIND",
         "RH": "RH2",
-        "Td": "T2",         # K -> °C
-        "press": "PSFC",    # Pa -> kPa
-        "Kdn": "SWDOWN",       
+        "Td": "T2",           # K -> °C
+        "press": "PSFC",      # Pa -> kPa
+        "Kdn": "SWDOWN",
+        "uhii": "UHI_CYCLE"   # optional UHI term
     }
+
     fixed_values = {
         "Q*": -999, "QH": -999, "QE": -999, "Qs": -999, "Qf": -999,
         "snow": -999, "ldown": -999, "fcld": -999, "wuh": -999, "xsmd": -999, "lai_hr": -999,
@@ -668,21 +953,21 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
     time_base_date = nc.num2date(time_var, units=time_units, only_use_cftime_datetimes=False)
     selected_local_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d").date()
 
-    lat2d = np.array(dataset.variables["lat"][:], dtype=float)  
-    lon2d = np.array(dataset.variables["lon"][:], dtype=float)  
+    lat2d = np.array(dataset.variables["lat"][:], dtype=float)
+    lon2d = np.array(dataset.variables["lon"][:], dtype=float)
     ny, nx = lat2d.shape
     pts_flat = np.column_stack([lon2d.ravel(), lat2d.ravel()])
     tree = cKDTree(pts_flat)
-    # ----------------------------------------------------------------------------
-    
+
     columns = [
         'iy', 'id', 'it', 'imin',
         'Q*', 'QH', 'QE', 'Qs', 'Qf',
         'Wind', 'RH', 'Td', 'press',
-        'Kdn','rain', 'snow', 'ldown',
+        'Kdn', 'rain', 'snow', 'ldown',
         'fcld', 'wuh', 'xsmd', 'lai_hr',
-        'Kdiff', 'Kdir', 'Wd'
+        'Kdiff', 'Kdir', 'Wd', 'uhii'
     ]
+
     columns_out = [
         "iy", "id", "it", "imin",
         "Q*", "QH", "QE", "Qs", "Qf",
@@ -697,7 +982,8 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         "lai_hr",
         "Kdiff",
         "Kdir",
-        "Wd"
+        "Wd",
+        "uhii"
     ]
     
     for tif_file in tif_files:
@@ -736,7 +1022,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         min_lon_tif, max_lon_tif = min(lons), max(lons)
         min_lat_tif, max_lat_tif = min(lats), max(lats)
         shape = box(min_lon_tif, min_lat_tif, max_lon_tif, max_lat_tif)
-        shape = Polygon([(x, y) for (x, y) in shape.exterior.coords])  # explicitly polygon
+        shape = Polygon([(x, y) for (x, y) in shape.exterior.coords])
 
         shape_name = os.path.splitext(os.path.basename(tif_file))[0]
         shape_name_clean = re.sub(r'\W+', '_', shape_name).replace("DEM", "metfile", 1)
@@ -759,6 +1045,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
             print(f"No UTC data found for local date {selected_date_str} in {tif_file}.")
             ds_tif = None
             continue
+
         print(f"Processing {len(time_indices)} time steps for {shape_name_clean}")
 
         tile_w_m, tile_h_m = _tile_size_m(shape)
@@ -788,26 +1075,23 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
                 var_name = var_map[key]
                 if var_name in dataset.variables:
                     try:
-                        data_array = dataset.variables[var_name][t, :, :]  # shape (ny, nx)
+                        data_array = dataset.variables[var_name][t, :, :]
                         data_array = np.asanyarray(data_array)
                         if np.ma.isMaskedArray(data_array):
                             data_array = np.where(data_array.mask, np.nan, data_array.data)
 
                         if use_nn:
-                            # nearest neighbor at centroid using KDTree
-                            _, idx_nn = cKDTree(np.column_stack([lon2d.ravel(), lat2d.ravel()])).query([lon_center, lat_center], k=1)
+                            _, idx_nn = tree.query([lon_center, lat_center], k=1)
                             ii, jj = np.unravel_index(idx_nn, (ny, nx))
                             mean_value = float(data_array[ii, jj])
                         else:
                             masked_data = np.where(inside_mask, data_array, np.nan)
                             mean_value = float(np.nanmean(masked_data)) if np.any(~np.isnan(masked_data)) else np.nan
                             if not np.isfinite(mean_value):
-                                # fallback to NN
-                                _, idx_nn = cKDTree(np.column_stack([lon2d.ravel(), lat2d.ravel()])).query([lon_center, lat_center], k=1)
+                                _, idx_nn = tree.query([lon_center, lat_center], k=1)
                                 ii, jj = np.unravel_index(idx_nn, (ny, nx))
                                 mean_value = float(data_array[ii, jj])
 
-                        # Adjust units if needed
                         if key == "Td" and np.isfinite(mean_value):
                             mean_value -= 273.15
                         if key == "press" and np.isfinite(mean_value):
@@ -815,6 +1099,7 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
 
                         if not np.isfinite(mean_value):
                             mean_value = -999
+
                         row.append(mean_value)
 
                     except Exception as e:
@@ -822,23 +1107,61 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
                         row.append(-999)
                 else:
                     row.append(-999)
-            
+
             row.append(fixed_values["rain"])
             row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir", "Wd"]])
+
+            # Add uhii at the end
+            uhii_value = 0.0
+            if use_uhi and (var_map["uhii"] in dataset.variables):
+                try:
+                    data_array = dataset.variables[var_map["uhii"]][t, :, :]
+                    data_array = np.asanyarray(data_array)
+                    if np.ma.isMaskedArray(data_array):
+                        data_array = np.where(data_array.mask, np.nan, data_array.data)
+
+                    if use_nn:
+                        _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                        ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                        uhii_value = float(data_array[ii, jj])
+                    else:
+                        masked_data = np.where(inside_mask, data_array, np.nan)
+                        uhii_value = float(np.nanmean(masked_data)) if np.any(~np.isnan(masked_data)) else np.nan
+                        if not np.isfinite(uhii_value):
+                            _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                            ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                            uhii_value = float(data_array[ii, jj])
+
+                    if not np.isfinite(uhii_value):
+                        uhii_value = 0.0
+
+                except Exception as e:
+                    print(f"Sampling error for UHI_CYCLE at time {t}: {e}")
+                    uhii_value = 0.0
+
+            row.append(uhii_value)
             met_new.append(row)
 
         df = pd.DataFrame(met_new, columns=columns)
         df = df[columns_out]
+
         with open(output_text_file, "w") as f:
             f.write(" ".join(df.columns) + "\n")
             for _, row in df.iterrows():
-                f.write('{:d} {:d} {:d} {:d} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.5f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {: .2f} {: .2f}\n'.format(
-                    int(row["iy"]), int(row["id"]), int(row["it"]), int(row["imin"]),
-                    row["Q*"], row["QH"], row["QE"], row["Qs"], row["Qf"],
-                    row["Wind"], row["RH"], row["Td"], row["press"], row["rain"],
-                    row["Kdn"], row["snow"], row["ldown"], row["fcld"], row["wuh"],
-                    row["xsmd"], row["lai_hr"], row["Kdiff"], row["Kdir"], row["Wd"]
-                ))
+                f.write(
+                    "{:d} {:d} {:d} {:d} "
+                    "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} "
+                    "{:.5f} {:.2f} {:.2f} {:.2f} "
+                    "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f}\n".format(
+                        int(row["iy"]), int(row["id"]), int(row["it"]), int(row["imin"]),
+                        row["Q*"], row["QH"], row["QE"], row["Qs"], row["Qf"],
+                        row["Wind"], row["RH"], row["Td"], row["press"],
+                        row["rain"], row["Kdn"], row["snow"], row["ldown"], row["fcld"],
+                        row["wuh"], row["xsmd"], row["lai_hr"], row["Kdiff"], row["Kdir"],
+                        row["Wd"], row["uhii"]
+                    )
+                )
+
         print(f"Metfile saved: {output_text_file}")
         ds_tif = None
 
@@ -883,9 +1206,11 @@ def create_met_files(base_path, source_met_file, preprocess_dir):
 # user-supplied met file or a netCDF file. Only the parameters required for the chosen
 # method need to be provided.
 # =============================================================================
-def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcover_filename,
-         tile_size, overlap, selected_date_str, use_own_met,start_time=None, end_time=None, data_source_type=None, data_folder=None,
-         own_met_file=None, preprocess_dir=None):
+def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
+         landcover_filename, windcoeff_filename,
+         tile_size, overlap, selected_date_str, use_own_met,
+         start_time=None, end_time=None, data_source_type=None, data_folder=None,
+         own_met_file=None, preprocess_dir=None, use_uhi=True):
     """
     Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.
 
@@ -895,6 +1220,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         dem_filename (str): Filename of DEM raster.
         trees_filename (str): Filename of trees raster.
         landcover_filename (str): Filename of landcover raster or None.
+        windcoeff_filename (str): Filename of wind coefficient raster or None.
         tile_size (int): Tile size in pixels.
         overlap (int): Overlap between tiles in pixels.
         selected_date_str (str): Selected date (YYYY-MM-DD).
@@ -904,50 +1230,61 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         data_source_type (str): Either 'ERA5' or 'wrfout'.
         data_folder (str): Folder containing input NetCDF files.
         own_met_file (str): Path to user-provided met file (used if use_own_met is True).
-        preprocess_dir (str): Directory for preprocessing outputs (pre_processing_outputs folder).
+        preprocess_dir (str): Directory for preprocessing outputs.
+        use_uhi (bool): Whether to use UHI-aware ERA5 preprocessing.
     """
     if preprocess_dir is None:
         preprocess_dir = os.path.join(base_path, "processed_inputs")
     os.makedirs(preprocess_dir, exist_ok=True)
-             
+
     building_dsm_path = os.path.join(base_path, building_dsm_filename)
     dem_path = os.path.join(base_path, dem_filename)
     trees_path = os.path.join(base_path, trees_filename)
+
+    landcover_path = None
+    windcoeff_path = None
+
     if landcover_filename is not None:
         landcover_path = os.path.join(base_path, landcover_filename)
 
+    if windcoeff_filename is not None:
+        windcoeff_path = os.path.join(base_path, windcoeff_filename)
+
     # Check that all rasters have matching dimensions, pixel size, and CRS.
     try:
-        if landcover_filename is not None:
-            check_rasters([building_dsm_path, dem_path, trees_path, landcover_path]) 
-        else:
-            check_rasters([building_dsm_path, dem_path, trees_path])
-            
+        raster_list = [building_dsm_path, dem_path, trees_path]
+
+        if landcover_path is not None:
+            raster_list.append(landcover_path)
+
+        if windcoeff_path is not None:
+            raster_list.append(windcoeff_path)
+
+        check_rasters(raster_list)
+
     except ValueError as error:
         print(error)
         exit(1)
 
-    if landcover_filename is not None:
-        rasters = {
-            "Building_DSM": building_dsm_path,
-            "DEM": dem_path,
-            "Trees": trees_path,
-            "Landcover": landcover_path
-        }
-    else: 
-        rasters = {
-            "Building_DSM": building_dsm_path,
-            "DEM": dem_path,
-            "Trees": trees_path   
-        }  
-        
+    rasters = {
+        "Building_DSM": building_dsm_path,
+        "DEM": dem_path,
+        "Trees": trees_path
+    }
+
+    if landcover_path is not None:
+        rasters["Landcover"] = landcover_path
+
+    if windcoeff_path is not None:
+        rasters["WindCoeff"] = windcoeff_path
+
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")
         create_tiles(raster, tile_size, overlap, tile_type, preprocess_dir)
-    
+
     # For metfiles processing, we use the DEM tiles folder.
     dem_tiles_folder = os.path.join(preprocess_dir, "DEM")
-    
+
     # Choose between own met file or processed NetCDF file.
     if use_own_met:
         if own_met_file is None:
@@ -959,20 +1296,27 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename, landcove
         if data_folder is None or data_source_type is None or start_time is None or end_time is None:
             print("Error: When not using your own met file, please provide data_folder, data_source_type, start_time, and end_time.")
             exit(1)
-            
+
         # Define the name (and path) for the processed NetCDF output.
         processed_nc_file = os.path.join(preprocess_dir, "Outfile.nc")
-        
+
         if data_source_type.lower() == "era5":
-            process_era5_data(start_time, end_time, data_folder, output_file=processed_nc_file)
+            if use_uhi:
+                print("[INFO] Using ERA5 processing with UHI correction")
+                process_era5_data_uhi(start_time, end_time, data_folder, output_file=processed_nc_file)
+            else:
+                print("[INFO] Using standard ERA5 processing (no UHI)")
+                process_era5_data(start_time, end_time, data_folder, output_file=processed_nc_file)
+
         elif data_source_type.lower() == "wrfout":
             process_wrfout_data(start_time, end_time, data_folder, output_file=processed_nc_file)
+
         else:
             print("Error: data_source_type must be either 'ERA5' or 'wrfout'.")
             exit(1)
-        
+
         # Process the generated NetCDF file to create metfiles.
-        process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str, preprocess_dir)
+        process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str, preprocess_dir, use_uhi=use_uhi)
 
 
 

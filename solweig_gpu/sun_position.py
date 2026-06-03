@@ -960,8 +960,8 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
             fifteen = 0.
             sunmaximum = -90.
             sunmax['zenith'] = 90.
-            while sunmaximum <= 90. - sunmax['zenith']:
-                sunmaximum = 90. - sunmax['zenith']
+            while sunmaximum <= 90. - float(np.asarray(sunmax['zenith']).squeeze()):
+                sunmaximum = 90. - float(np.asarray(sunmax['zenith']).squeeze())
                 fifteen = fifteen + 15. / 1440.
                 HM = datetime.timedelta(days=(60*10)/1440.0 + fifteen)
                 YMDHM = YMD + HM
@@ -971,7 +971,8 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
                 time['hour'] = YMDHM.hour
                 time['min'] = YMDHM.minute
                 sunmax = sun_position(time,location)
-        altmax[0, i] = sunmaximum
+        #altmax[0, i] = sunmaximum
+        altmax[0, i] = float(np.asarray(sunmaximum).squeeze()) # Newer version of Numpy needs this
 
         half = datetime.timedelta(days=halftimestepdec)
         H = datetime.timedelta(hours=met[i, 2])
@@ -983,11 +984,13 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
         time['hour'] = YMDHM.hour
         time['min'] = YMDHM.minute
         sun = sun_position(time, location)
-        if (sun['zenith'] > 89.0) & (sun['zenith'] <= 90.0):    
-            sun['zenith'] = 89.0
-        altitude[0, i] = 90. - sun['zenith']
-        zen[0, i] = sun['zenith'] * (np.pi/180.)
-        azimuth[0, i] = sun['azimuth']
+        sun_zenith = float(np.asarray(sun['zenith']).squeeze())
+        sun_azimuth = float(np.asarray(sun['azimuth']).squeeze())
+        if (sun_zenith > 89.0) and (sun_zenith <= 90.0):
+            sun_zenith = 89.0
+        altitude[0, i] = 90. - sun_zenith
+        zen[0, i] = sun_zenith * (np.pi / 180.)
+        azimuth[0, i] = sun_azimuth
 
         # day of year and check for leap year
         if calendar.isleap(time['year']):
