@@ -338,7 +338,7 @@ def run_utci_tiles(
     import os
     import numpy as np
     import torch
-    from .utci_process import compute_utci, map_files_by_key
+    from .utci_process import compute_utci, map_files_by_key, map_windcoeff_files_by_key
 
     base_output_path = os.path.join(base_path, "output_folder")
     input_met = os.path.join(preprocess_dir, "metfiles")
@@ -354,7 +354,7 @@ def run_utci_tiles(
     tree_map = map_files_by_key(tree_dir, ".tif")
     dem_map = map_files_by_key(dem_dir, ".tif")
     landcover_map = map_files_by_key(landcover_dir, ".tif") if os.path.isdir(landcover_dir) else {}
-    windcoeff_map = map_files_by_key(windcoeff_dir, ".tif") if os.path.isdir(windcoeff_dir) else {}
+    windcoeff_map = map_windcoeff_files_by_key(windcoeff_dir, ".tif") if os.path.isdir(windcoeff_dir) else {}
     walls_map = map_files_by_key(walls_dir, ".tif")
     aspect_map = map_files_by_key(aspect_dir, ".tif")
     met_map = map_files_by_key(input_met, ".txt")
@@ -380,7 +380,7 @@ def run_utci_tiles(
         tree_path = tree_map[key]
         dem_path = dem_map[key]
         landcover_path = landcover_map.get(key) if landcover_map else None
-        windcoeff_path = windcoeff_map.get(key) if windcoeff_map else None
+        windcoeff_paths = windcoeff_map.get(key) if windcoeff_map else None
         walls_path = walls_map[key]
         aspect_path = aspect_map[key]
         met_file_path = met_map[key]
@@ -397,7 +397,7 @@ def run_utci_tiles(
             walls_path,
             aspect_path,
             landcover_path,
-            windcoeff_path,
+            windcoeff_paths,
             met_file_data,
             output_folder,
             key,
@@ -444,36 +444,115 @@ def thermal_comfort(
     Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
 
     Args:
-        base_path (str): Base directory for outputs and relative raster paths.
-        selected_date_str (str): Simulation date in format 'YYYY-MM-DD'
-        building_dsm_filename (str): Building+terrain DSM path or filename.
-        dem_filename (str): DEM path or filename.
-        trees_filename (str): Vegetation DSM path or filename.
-        landcover_filename (str, optional): Land cover raster path or filename.
-        windcoeff_filename (str, optional): Wind coefficient raster path or filename.
-        tile_size (int): Tile size in pixels.
-        overlap (int): Overlap between tiles in pixels.
-        use_own_met (bool): Use custom meteorological file.
-        start_time (str, optional): Start datetime 'YYYY-MM-DD HH:MM:SS'
-        end_time (str, optional): End datetime 'YYYY-MM-DD HH:MM:SS'
-        data_source_type (str, optional): 'ERA5' or 'wrfout'
-        data_folder (str, optional): Folder containing ERA5/WRF NetCDF files
-        own_met_file (str, optional): Path to custom meteorological text file
-        use_uhi (bool): If True, use UHI-aware ERA5 processing and propagate
-            UHI_CYCLE into metfiles. If False, disable it and write uhii = 0.0.
-        save_tmrt (bool): Save mean radiant temperature output.
-        save_svf (bool): Save sky view factor output.
-        save_kup (bool): Save upward shortwave radiation.
-        save_kdown (bool): Save downward shortwave radiation.
-        save_lup (bool): Save upward longwave radiation.
-        save_ldown (bool): Save downward longwave radiation.
-        save_shadow (bool): Save shadow maps.
-        save_ta (bool): Save diagnostic Ta field.
-        save_wind (bool): Save diagnostic wind field.
+        base_path:
+            Base directory for outputs and relative raster paths.
+
+        selected_date_str:
+            Simulation date in format 'YYYY-MM-DD'.
+
+        building_dsm_filename:
+            Building+terrain DSM path or filename.
+
+        dem_filename:
+            DEM path or filename.
+
+        trees_filename:
+            Vegetation DSM path or filename.
+
+        landcover_filename:
+            Optional land cover raster path or filename.
+
+        windcoeff_filename:
+            Optional wind coefficient input. Can be:
+
+              - None:
+                    Do not use wind coefficients.
+
+              - Folder path:
+                    Folder containing directional wind coefficient rasters:
+                    WindCoeff_dir000.tif
+                    WindCoeff_dir030.tif
+                    ...
+                    WindCoeff_dir330.tif
+
+              - Glob pattern:
+                    Example: "WindCoeff_dir*.tif"
+
+              - Single legacy raster:
+                    Example: "WindCoeff.tif"
+
+            Relative paths are resolved against base_path.
+
+            If directional wind coefficients are provided, the metfile must contain
+            wind direction column Wd. For ERA5 processing, Wd is generated from
+            u10/v10 as meteorological wind-from direction:
+              0=N, 90=E, 180=S, 270=W.
+
+            During UTCI calculation, the model selects the nearest 30-degree
+            wind coefficient raster for each timestep.
+
+        tile_size:
+            Tile size in pixels.
+
+        overlap:
+            Overlap between tiles in pixels.
+
+        use_own_met:
+            Use custom meteorological file.
+
+        start_time:
+            Start datetime 'YYYY-MM-DD HH:MM:SS'.
+
+        end_time:
+            End datetime 'YYYY-MM-DD HH:MM:SS'.
+
+        data_source_type:
+            'ERA5' or 'wrfout'.
+
+        data_folder:
+            Folder containing ERA5/WRF NetCDF files.
+
+        own_met_file:
+            Path to custom meteorological text file.
+
+        use_uhi:
+            If True, use UHI-aware ERA5 processing and propagate UHI_CYCLE/uhii
+            into generated metfiles. If False, disable it and write uhii = 0.0.
+
+        save_tmrt:
+            Save mean radiant temperature output.
+
+        save_svf:
+            Save sky view factor output.
+
+        save_kup:
+            Save upward shortwave radiation.
+
+        save_kdown:
+            Save downward shortwave radiation.
+
+        save_lup:
+            Save upward longwave radiation.
+
+        save_ldown:
+            Save downward longwave radiation.
+
+        save_shadow:
+            Save shadow maps.
+
+        save_wbgt:
+            Save WBGT output.
 
     Returns:
         None
     """
+    if windcoeff_filename is not None and use_own_met:
+        print(
+            "[INFO] Wind coefficients are enabled. "
+            "Make sure your own met file contains Wd as column 23 "
+            "with meteorological wind-from direction: 0=N, 90=E, 180=S, 270=W."
+        )
+
     preprocess_dir = preprocess(
         base_path=base_path,
         selected_date_str=selected_date_str,
@@ -495,7 +574,11 @@ def thermal_comfort(
 
     run_walls_aspect(preprocess_dir)
 
-    calculate_svf(preprocess_dir, patch_option=2, overwrite=False,)
+    calculate_svf(
+        preprocess_dir,
+        patch_option=2,
+        overwrite=False,
+    )
 
     run_utci_tiles(
         base_path=base_path,
