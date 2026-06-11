@@ -2465,8 +2465,12 @@ def run_create_inputs(
     # Alignment check (raises on mismatch)
     tlog("Checking alignment...")
     to_check = [paths.landuse_ras, paths.tree_ras, paths.dem_ras, paths.dsm_plus_ras, paths.lcz_ras]
-    if paths.wind_coeff_ras.exists():
-        to_check.append(paths.wind_coeff_ras)
+    dir_rasters = sorted(paths.out_dir.glob("WindCoeff_dir*.tif"))
+    if not dir_rasters:
+        tlog("WARNING: no directional WindCoeff_dir*.tif rasters found.")
+    else:
+        tlog(f"Found {len(dir_rasters)} directional wind coefficient rasters.")
+        to_check.extend(dir_rasters)
     cb_fp = paths.out_dir / "WindCoeff_Urban.tif"
     ct_fp = paths.out_dir / "WindCoeff_Vegetation.tif"
     if cb_fp.exists():
@@ -2486,6 +2490,10 @@ def run_create_inputs(
         paths.lcz_ras, paths.veg_ras, paths.wat_ras, paths.bld_ras,
         paths.wind_coeff_ras
     ]
+
+    dir_rasters = sorted(paths.out_dir.glob("WindCoeff_dir*.tif"))
+    final_outputs.extend(dir_rasters)
+  
     if lf_b_fp.exists():
         final_outputs.append(lf_b_fp)
     if cb_fp.exists():
