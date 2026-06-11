@@ -555,6 +555,8 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     u10 = ds_instant['u10'].values
     v10 = ds_instant['v10'].values
     wind_speeds = np.sqrt(u10**2 + v10**2)
+    wind_dirs = (270.0 - np.degrees(np.arctan2(v10, u10))) % 360.0
+    wind_dirs = np.where(wind_speeds > 0.01, wind_dirs, 0.0)
 
     # Hourly totals (J m^-2 per hour) → W m^-2 by /3600
     shortwave_radiation = (ds_accum['ssrd'].values / 3600.0).astype(np.float32)
@@ -592,6 +594,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         psfc_var   = nc.createVariable('PSFC',   'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var    = nc.createVariable('RH2',    'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var   = nc.createVariable('WIND',   'f4', ('time', 'lat', 'lon'), zlib=True)
+        wdir_var   = nc.createVariable('WDIR',   'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var = nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
         # glw_var  = nc.createVariable('GLW',    'f4', ('time', 'lat', 'lon'), zlib=True)
 
@@ -604,6 +607,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         psfc_var.units = "kPa"     # (values are Pa, kept to match your outputs)
         rh2_var.units = "%"
         wind_var.units = "m/s"
+        wdir_var.units = "degrees"
         swdown_var.units = "W/m^2"
         # glw_var.units = "W/m^2"
 
@@ -630,6 +634,12 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
                                     'latitude': ds_instant['latitude'],
                                     'longitude': ds_instant['longitude']}
                            ).transpose('time','latitude','longitude').values.astype('float32')
+        wdir = xr.DataArray(wind_dirs,
+                    dims=('time','latitude','longitude'),
+                    coords={'time': times,
+                            'latitude': ds_instant['latitude'],
+                            'longitude': ds_instant['longitude']}
+                   ).transpose('time','latitude','longitude').values.astype('float32')        
         swd = xr.DataArray(shortwave_radiation,
                            dims=('time','latitude','longitude'),
                            coords={'time': times,
@@ -641,6 +651,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         psfc_var[:, :, :]   = sp
         rh2_var[:, :, :]    = rh
         wind_var[:, :, :]   = wind
+        wdir_var[:, :, :]   = wdir
         swdown_var[:, :, :] = swd
         # glw_var[:, :, :]  = ...
 
@@ -692,6 +703,8 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
     u10 = ds_instant['u10'].values
     v10 = ds_instant['v10'].values
     wind_speeds = np.sqrt(u10**2 + v10**2)
+    wind_dirs = (270.0 - np.degrees(np.arctan2(v10, u10))) % 360.0
+    wind_dirs = np.where(wind_speeds > 0.01, wind_dirs, 0.0).astype(np.float32)
 
     shortwave_radiation = (ds_accum['ssrd'].values / 3600.0).astype(np.float32)
 
@@ -730,6 +743,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
     u10 = u10[keep_idx, :, :]
     v10 = v10[keep_idx, :, :]
     wind_speeds = wind_speeds[keep_idx, :, :]
+    wind_dirs = wind_dirs[keep_idx, :, :]
     shortwave_radiation = shortwave_radiation[keep_idx, :, :]
     relative_humidities = relative_humidities[keep_idx, :, :]
     uhi_cycle = uhi_cycle[keep_idx, :, :]
@@ -747,6 +761,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         psfc_var   = nc.createVariable('PSFC',      'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var    = nc.createVariable('RH2',       'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var   = nc.createVariable('WIND',      'f4', ('time', 'lat', 'lon'), zlib=True)
+        wdir_var   = nc.createVariable('WDIR',      'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var = nc.createVariable('SWDOWN',    'f4', ('time', 'lat', 'lon'), zlib=True)
         uhi_var    = nc.createVariable('UHI_CYCLE', 'f4', ('time', 'lat', 'lon'), zlib=True)
 
@@ -758,6 +773,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         psfc_var.units = "Pa"
         rh2_var.units = "%"
         wind_var.units = "m/s"
+        wdir_var.units = "degrees"
         swdown_var.units = "W/m^2"
         uhi_var.units = "K"
 
@@ -771,6 +787,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         sp = surface_pressures.astype('float32')
         rh = relative_humidities.astype('float32')
         wind = wind_speeds.astype('float32')
+        wdir = wind_dirs.astype('float32')
         swd = shortwave_radiation.astype('float32')
         uhi = uhi_cycle.astype('float32')
 
@@ -778,6 +795,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         psfc_var[:, :, :]   = sp
         rh2_var[:, :, :]    = rh
         wind_var[:, :, :]   = wind
+        wdir_var[:, :, :]   = wdir
         swdown_var[:, :, :] = swd
         uhi_var[:, :, :]    = uhi
         
