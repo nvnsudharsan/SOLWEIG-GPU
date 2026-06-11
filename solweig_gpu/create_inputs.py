@@ -153,7 +153,7 @@ def build_paths(base: Path, city: str) -> Paths:
         dem_ras=out_dir / "DEM.tif",
         dsm_plus_ras=out_dir / "Building_DSM.tif",
         lcz_ras=out_dir / "LCZ.tif",
-        wind_coeff_ras=out_dir / "WindCoeff_dir000.tif",,
+        wind_coeff_ras=out_dir / "WindCoeff_dir000.tif",
     )
 
 # ------------------------------- Config ------------------------------------- #
