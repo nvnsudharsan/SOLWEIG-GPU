@@ -55,6 +55,7 @@ for _mod, _pip in [
 ]:
     _ensure(_mod, _pip)
 import ee
+import os
 import geemap
 import geopandas as gpd
 import numpy as np
@@ -70,8 +71,8 @@ from rasterio.transform import from_origin
 from rasterio.warp import Resampling, reproject
 from shapely.geometry import box
 import xarray as xr
-#from scipy.ndimage import uniform_filter, distance_transform_edt, maximum_filter, gaussian_filter
-from scipy.ndimage import rotate, gaussian_filter, label, find_objects
+from scipy.ndimage import uniform_filter, distance_transform_edt, maximum_filter, gaussian_filter, rotate, label,find_objects
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Force GeoPandas to use Fiona engine for IO to avoid pyogrio/PROJ data issues
 try:
@@ -152,7 +153,7 @@ def build_paths(base: Path, city: str) -> Paths:
         dem_ras=out_dir / "DEM.tif",
         dsm_plus_ras=out_dir / "Building_DSM.tif",
         lcz_ras=out_dir / "LCZ.tif",
-        wind_coeff_ras=out_dir / "WindCoeff.tif",
+        wind_coeff_ras=out_dir / "WindCoeff_dir000.tif",,
     )
 
 # ------------------------------- Config ------------------------------------- #
@@ -1338,7 +1339,7 @@ def _coeff_at_z_buildings(mean_heights, lambdaf,
 # =========================================================
 # Trees: coefficient at z (z_ref == z_eval)
 # =========================================================
-def _coeff_at_z_trees(H_raw, H_mean, lp_t, *,
+def _coeff_at_z_trees(H_raw, H_mean, lp_t=None, *,
                       z_eval=10.0, zref=10.0, z0_ref=0.7,
                       LAI=4.0, a0=0.5, a1=0.2,
                       alpha_min=0.6, alpha_max=3.5,
@@ -1349,7 +1350,10 @@ def _coeff_at_z_trees(H_raw, H_mean, lp_t, *,
         Hm = np.asarray(H_mean, dtype=np.float32)
     else:
         Hm = np.asarray(H_raw, dtype=np.float32)
-    lam_eff = np.clip(np.asarray(lp_t, dtype=np.float32), 0.0, 1.0)
+    if lp_t is None:
+        lam_eff = np.where(np.asarray(H_raw, dtype=np.float32) > 0.0, 1.0, 0.0).astype(np.float32)
+    else:
+        lam_eff = np.clip(np.asarray(lp_t, dtype=np.float32), 0.0, 1.0)
     z = float(z_eval)
 
     clamp_min, clamp_max = clamp
