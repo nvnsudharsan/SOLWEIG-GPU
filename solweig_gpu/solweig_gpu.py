@@ -43,32 +43,69 @@ def preprocess(
     :func:`run_walls_aspect` and :func:`run_utci_tiles` separately.
 
     Args:
-        base_path: Base directory; used to resolve relative raster paths.
-        selected_date_str: Simulation date 'YYYY-MM-DD'.
-        building_dsm_filename, dem_filename, trees_filename, landcover_filename,
+        base_path:
+            Base directory; used to resolve relative raster paths.
+
+        selected_date_str:
+            Simulation date 'YYYY-MM-DD'.
+
+        building_dsm_filename, dem_filename, trees_filename, landcover_filename:
+            Raster paths or filenames. Relative paths are resolved against base_path.
+
         windcoeff_filename:
-            Raster paths or filenames (relative to base_path or absolute).
-        tile_size: Tile size in pixels.
-        overlap: Overlap between tiles in pixels.
-        use_own_met: If True, use own_met_file; else use ERA5/WRF.
-        start_time, end_time: Required for ERA5/WRF (UTC 'YYYY-MM-DD HH:MM:SS').
-        data_source_type: 'ERA5' or 'wrfout' when use_own_met is False.
-        data_folder: Folder with ERA5/WRF NetCDF files when use_own_met is False.
-        own_met_file: Path to custom met file when use_own_met is True.
-        preprocess_dir: Directory for preprocessing outputs. Defaults to
-            ``{base_path}/processed_inputs``.
-        use_uhi: If True, use UHI-aware ERA5 processing and write UHI_CYCLE/uhii
+            Wind coefficient input. Can be:
+              - None: do not use wind coefficients
+              - folder path containing WindCoeff_dir*.tif
+              - glob pattern such as "WindCoeff_dir*.tif"
+              - single legacy wind coefficient raster
+
+            Relative paths are resolved against base_path.
+
+            For directional wind coefficients, the expected files are:
+              WindCoeff_dir000.tif
+              WindCoeff_dir030.tif
+              ...
+              WindCoeff_dir330.tif
+
+        tile_size:
+            Tile size in pixels.
+
+        overlap:
+            Overlap between tiles in pixels.
+
+        use_own_met:
+            If True, use own_met_file; else use ERA5/WRF.
+
+        start_time, end_time:
+            Required for ERA5/WRF, in UTC format 'YYYY-MM-DD HH:MM:SS'.
+
+        data_source_type:
+            'ERA5' or 'wrfout' when use_own_met is False.
+
+        data_folder:
+            Folder with ERA5/WRF NetCDF files when use_own_met is False.
+
+        own_met_file:
+            Path to custom met file when use_own_met is True.
+
+        preprocess_dir:
+            Directory for preprocessing outputs. Defaults to
+            '{base_path}/processed_inputs'.
+
+        use_uhi:
+            If True, use UHI-aware ERA5 processing and write UHI_CYCLE/uhii
             into generated metfiles when available. If False, use standard ERA5
             processing and write uhii = 0.0.
 
     Returns:
-        The path to the preprocessing directory (tiles and metfiles written there).
+        The path to the preprocessing directory.
     """
     import os
     from .preprocessor import ppr
 
     if preprocess_dir is None:
         preprocess_dir = os.path.join(base_path, "processed_inputs")
+
     os.makedirs(preprocess_dir, exist_ok=True)
 
     ppr(
@@ -90,6 +127,7 @@ def preprocess(
         preprocess_dir=preprocess_dir,
         use_uhi=use_uhi,
     )
+
     return preprocess_dir
 
 
