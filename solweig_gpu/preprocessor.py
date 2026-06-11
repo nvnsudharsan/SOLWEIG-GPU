@@ -1060,7 +1060,8 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         "Td": "T2",           # K -> °C
         "press": "PSFC",      # Pa -> kPa
         "Kdn": "SWDOWN",
-        "uhii": "UHI_CYCLE"   # optional UHI term
+        "Wd": "WDIR",         # meteorological wind direction, wind FROM direction
+        "uhii": "UHI_CYCLE"
     }
 
     fixed_values = {
@@ -1231,7 +1232,42 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
                     row.append(-999)
 
             row.append(fixed_values["rain"])
-            row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir", "Wd"]])
+            row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir"]])
+            
+            wd_value = -999.0
+            var_name = var_map["Wd"]
+
+            if var_name in dataset.variables:
+                try:
+                    data_array = dataset.variables[var_name][t, :, :]
+                    data_array = np.asanyarray(data_array)
+
+                    if np.ma.isMaskedArray(data_array):
+                        data_array = np.where(data_array.mask, np.nan, data_array.data)
+
+                    if use_nn:
+                        _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                        ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                        wd_value = float(data_array[ii, jj])
+                    else:
+                        masked_data = np.where(inside_mask, data_array, np.nan)
+                        wd_value = float(np.nanmean(masked_data)) if np.any(~np.isnan(masked_data)) else np.nan
+
+                        if not np.isfinite(wd_value):
+                            _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                            ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                            wd_value = float(data_array[ii, jj])
+
+                    if np.isfinite(wd_value):
+                        wd_value = wd_value % 360.0
+                    else:
+                        wd_value = -999.0
+
+                except Exception as e:
+                    print(f"Sampling error for {var_name} at time {t}: {e}")
+                    wd_value = -999.0
+
+            row.append(wd_value)
 
             # Add uhii at the end
             uhii_value = 0.0
