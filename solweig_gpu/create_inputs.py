@@ -1793,24 +1793,19 @@ def _save_like_meta(meta_ref, out_fp, arr):
             dst.write(arr, 1)
 
 # =================== Main computation (z = 10 m) =================== #
-def compute_wind_coeff(paths, win_m=100.0, smooth_m=250.0, hmin_b=1.0, hmin_t=1.0,
+def compute_wind_coeff(paths, hmin_b=1.0, hmin_t=1.0,
                        z_eval=10.0, zref=10.0, z0_ref=0.7,
-                       # Vegetation alpha parameters (kept for _coeff_at_z_trees)
                        LAI_t=2.0, a0_t=0.5, a1_t=0.4,
                        alpha_min_t=0.2, alpha_max_t=2.5,
-                       coeff_min=0.01, coeff_max=1.00, lp_min_open=0.02):
+                       coeff_min=0.1, coeff_max=1.00, lp_min_open=0.02):
     """
-    Build wind reduction coefficients at height `z_eval` using *moving* windows:
-      • λp and H_mean computed with sliding uniform windows of ~100 m;
-      • C_buildings and C_trees computed separately;
-      • each set to 1 where its own λp ≤ 0.02;
-      • total coefficient = C_buildings × C_trees;
-      • each component is smoothed separately with a *moving* Gaussian window equivalent to ~200 m (configurable via smooth_m; ±3σ ≈ smooth_m), then multiplied to obtain the total.
+    Computes directional wind reduction coefficients for 12 wind-from directions.
+    Each output raster combines building wake and tree wake effects.
+    Building footprint pixels are set to NaN.
+    Directions follow meteorological convention:
+    0° = wind from north, 90° = wind from east.
     """
-    import numpy as np
-    import rasterio
-
-    # 1) Load aligned rasters
+    print("[compute_wind_coeff] start")
     if not paths.bld_ras.exists() or not paths.tree_ras.exists():
         return
 
@@ -1818,123 +1813,137 @@ def compute_wind_coeff(paths, win_m=100.0, smooth_m=250.0, hmin_b=1.0, hmin_t=1.
         B = src_b.read(1, masked=True).filled(np.nan).astype(np.float32)
         transform = src_b.transform
         meta_ref = src_b.profile
+    print(f"[compute_wind_coeff] buildings raster loaded: shape={B.shape}")
     with rasterio.open(paths.tree_ras) as src_t:
         T = src_t.read(1, masked=True).filled(np.nan).astype(np.float32)
         if src_t.shape != B.shape:
             raise ValueError("Trees raster shape differs from Buildings raster")
+    print(f"[compute_wind_coeff] trees raster loaded: shape={T.shape}")
 
-    # pixel size → window (odd integer)
     px = abs(transform.a)
-    ws = max(1, int(round(win_m / max(px, 1e-6))))
-    if ws % 2 == 0:
-        ws += 1
+    print(f"[compute_wind_coeff] pixel size = {px:.3f} m")
 
-    # 2) Basic masks and cutoff by minimal heights
     Hb = np.where(np.isfinite(B) & (B >= hmin_b), B, 0.0)
-    Ht = np.where(np.isfinite(T) & (T >= hmin_t), T, 0.0)
+    Ht_raw = np.where(np.isfinite(T) & (T > 0), T, 0.0).astype(np.float32)
+
+    Ht = Ht_raw
     Mb = Hb > 0
-    Mt = Ht > 0
+    Mt_wake = Ht_raw > 0
 
-    # 3) Moving-window stats (λp, H_mean) for buildings and trees
-    lp_b, Hb_mean = _win_stats(Mb, Hb, ws)
-    lp_t, Ht_mean = _win_stats(Mt, Ht, ws)
+    coeff_min_internal = 0.01
+    print(f"[compute_wind_coeff] masks: Mb={int(Mb.sum())} Mt={int(Mt_wake.sum())}")
 
-    # 4) Frontal index for buildings (λf) from edges
-    lf_b = _lambdaf_edges(Mb, Hb_mean, ws, px)
 
-    # 5) Coefficients at z (inside/outside handled inside the functions)
-    Cb = _coeff_at_z_buildings(
-        Hb_mean,lf_b,
-        z_eval=z_eval, zref=zref, z0_ref=z0_ref,
-        lp_min_open=lp_min_open, clamp=(coeff_min, coeff_max), H_raw_local=Hb,
-    ).astype(np.float32)
+    try:
+        from scipy.ndimage import grey_erosion
+    except Exception:
+        grey_erosion = None
 
-    Ct = _coeff_at_z_trees(
-        H_raw=Ht, H_mean=Ht_mean, lp_t=lp_t,
+    print("[compute_wind_coeff] computing Ct_local")
+    Ct_local = _coeff_at_z_trees(
+        H_raw=Ht, H_mean=Ht,
         z_eval=z_eval, zref=zref, z0_ref=z0_ref,
         LAI=LAI_t, a0=a0_t, a1=a1_t,
         alpha_min=alpha_min_t, alpha_max=alpha_max_t,
         hmin=hmin_t, lp_min_open=lp_min_open,
         clamp=(coeff_min, coeff_max),
     ).astype(np.float32)
+    Ct_base = np.where(Mt_wake, Ct_local, 1.0).astype(np.float32)
+    Ct_base = np.clip(Ct_base, coeff_min_internal, coeff_max)
 
-    # 6) Set C=1 where λp ≤ 0.02 (individually for each layer)
-    Cb = np.where(lp_b > lp_min_open, Cb, 1.0).astype(np.float32)
-    Ct = np.where(lp_t > lp_min_open, Ct, 1.0).astype(np.float32)
+    tree_footprint = None
+    Ct_for_wake = Ct_base.copy()
+    if np.any(Mt_wake) and grey_erosion is not None:
+        r_pix = max(1, int(round(10.0 / max(px, 1e-6))))
+        y, x = np.ogrid[-r_pix:r_pix+1, -r_pix:r_pix+1]
+        tree_footprint = (x * x + y * y) <= (r_pix * r_pix)
+        Ct_for_wake = np.where(
+            Mt_wake,
+            np.minimum(Ct_for_wake, grey_erosion(Ct_base, footprint=tree_footprint, mode="nearest")),
+            Ct_for_wake,
+        )
+    Ct_for_wake = np.clip(Ct_for_wake, coeff_min_internal, coeff_max)
+    print("[compute_wind_coeff] Ct_for_wake prepared")
+    directions = [i * 30 for i in range(12)]
+    print(f"[compute_wind_coeff] directions = {directions} (0°=N, 90°=E)")
 
-    # 6.a) Local override for trees with a window of ~10 m
-    # Calculate λp and H_mean on a small moving window (≈10 m) and recombine Ct on this scale.
-    ws10 = max(1, int(round(10.0 / max(px, 1e-6))))
-    if ws10 % 2 == 0:
-        ws10 += 1
-
-    lp_t_10, Ht_mean_10 = _win_stats(Mt, Ht, ws10)
-    Ct_10 = _coeff_at_z_trees(
-        H_raw=Ht, H_mean=Ht_mean_10, lp_t=lp_t_10,
-        z_eval=z_eval, zref=zref, z0_ref=z0_ref,
-        LAI=LAI_t, a0=a0_t, a1=a1_t,
-        alpha_min=alpha_min_t, alpha_max=alpha_max_t,
-        hmin=hmin_t, lp_min_open=lp_min_open,
-        clamp=(coeff_min, coeff_max),
-    ).astype(np.float32)
-    # Also apply here the rule lp<=threshold -> 1.0
-    Ct_10 = np.where(lp_t_10 > lp_min_open, Ct_10, 1.0).astype(np.float32)
-
-    # Where the 10 m value is < 1, replace it in the main field
-    Ct = np.where(Ct_10 < Ct, Ct_10, Ct).astype(np.float32)
-
-    
-
-    # 8) Gaussian smoothing
-    #    Apply *anchor-preserving* smoothing ONLY to the trees coefficient (Ct),
-    #    while smoothing buildings (Cb) with a standard Gaussian (no anchors).
-    #    Then, smooth the total coefficient again at the end.
-    #    Window equivalence: ±3σ ≈ smooth_m ⇒ σ_px = (smooth_m/px)/6.
-    sigma_px = max(1, (smooth_m / max(px, 1e-6)) / 6.0)
-
-    def _gauss_preserve(arr, anchor_mask):
-        """Gaussian smoothing with exact preservation at anchor pixels.
-        Implementation: filter (values*weights) and (weights) separately, with large
-        weights (e.g., 1e6) on anchors. After filtering, enforce original values on anchors.
-        """
-        valid = np.isfinite(arr)
-        if not np.any(valid):
-            return arr
-        w = valid.astype(np.float32)
-        w_anchor = (anchor_mask & valid).astype(np.float32) * 1e6
-        w = w + w_anchor
-        num0 = np.where(valid, arr, 0.0).astype(np.float32) * w
-        num = gaussian_filter(num0, sigma=0.5*sigma_px, mode="nearest")
-        den = gaussian_filter(w,    sigma=0.5*sigma_px, mode="nearest")
-        with np.errstate(invalid="ignore", divide="ignore"):
-            out = np.where(den > 1e-6, num / den, arr)
-        out = np.where(anchor_mask, arr, out)
-        return np.clip(out.astype(np.float32), coeff_min, coeff_max)
-
-    
-    # Buildings: standard Gaussian smoothing (no anchors)
-    Cb_s =  _gauss_preserve(Cb, Mb)
-
-    # Trees: anchor-preserving smoothing
-    Ct_s = _gauss_preserve(Ct, Mt)
-
-    # 8.b) Total coefficient = product of smoothed components
-    Ctot = np.clip(Cb_s * Ct_s, coeff_min, coeff_max).astype(np.float32)
-
-    # 8.c) Smooth the total again (light additional smoothing with same σ)
-    Ctot = gaussian_filter(Ctot.astype(np.float32), sigma=2*sigma_px, mode="nearest")
-    Ctot = np.clip(Ctot.astype(np.float32), coeff_min, coeff_max)
-
-    # 9) Saving: components and total
-    def _save_like(ref_meta, out_fp, arr):
-        m = ref_meta.copy(); m.update(dtype="float32", count=1, compress="lzw", nodata=np.nan)
-        with rasterio.open(out_fp, "w", **m) as dst:
-            dst.write(arr.astype(np.float32), 1)
+    # Pre-cast arrays to avoid repeated conversions inside jobs
+    Mb_u8 = Mb.astype(np.uint8)
+    Hb_f32 = Hb.astype(np.float32)
+    Mt_u8 = Mt_wake.astype(np.uint8)
+    Ht_f32 = Ht.astype(np.float32)
+    Ct_wake_f32 = Ct_for_wake.astype(np.float32)
 
     ensure_dir(paths.out_dir)
-    _save_like(meta_ref, paths.out_dir / "WindCoeff_Urban.tif", Cb)
-    _save_like(meta_ref, paths.out_dir / "WindCoeff_Vegetation.tif", Ct)
-    _save_like(meta_ref, paths.wind_coeff_ras, Ctot)
+    tlog("[WindCoeff] Computing directional coefficients")
+
+    def _smooth_combined(arr):
+        sm6 = _gaussian_smooth(arr, mask_nan=Mb, px_size=px, window_m=6.0)
+        sm6 = np.where(np.isnan(arr), np.nan, sm6)
+        sm6[Mb] = np.nan
+
+        sm40 = _gaussian_smooth(sm6, mask_nan=Mb, px_size=px, window_m=40.0)
+        sm40 = np.where(np.isnan(sm6), np.nan, sm40)
+        sm40[Mb] = np.nan
+
+        sm40 = np.clip(sm40, coeff_min_internal, coeff_max)
+        return sm40.astype(np.float32)
+
+    def _process_direction(ang):
+        print(f"[compute_wind_coeff] ▶ direction {ang:03d}: start")
+        # Rotate so that wind-from-angle aligns to coming from the north (top→bottom)
+        alpha_dir = float(ang)
+        print(f"[compute_wind_coeff] ▶ direction {ang:03d}: rotating inputs")
+        b_mask_rot = _rotate_full_extent(Mb_u8, alpha_dir, order=0, mode="constant", cval=0.0).astype(bool)
+        b_height_rot = _rotate_full_extent(Hb_f32, alpha_dir, order=1, mode="nearest", cval=0.0,
+                                          target_shape=b_mask_rot.shape, fill_value=0.0).astype(np.float32)
+        t_mask_rot = _rotate_full_extent(Mt_u8, alpha_dir, order=0, mode="constant", cval=0.0).astype(bool)
+        t_height_rot = _rotate_full_extent(Ht_f32, alpha_dir, order=1, mode="nearest", cval=0.0,
+                                          target_shape=t_mask_rot.shape, fill_value=0.0).astype(np.float32)
+        t_base_rot = _rotate_full_extent(Ct_wake_f32, alpha_dir, order=1, mode="nearest", cval=1.0,
+                                       target_shape=t_mask_rot.shape, fill_value=1.0).astype(np.float32)
+
+        print(f"[compute_wind_coeff] ▶ direction {ang:03d}: computing wakes")
+        Cbuilding = _building_wake_lr_from_rot(b_mask_rot, b_height_rot, px, alpha_dir, Mb.shape)
+        Cbuilding = np.clip(Cbuilding.astype(np.float32), coeff_min_internal, coeff_max)
+        Cbuilding[Mb] = np.nan
+
+        Ctree = _trees_wake_lr_from_rot(t_mask_rot, t_height_rot, t_base_rot, px, alpha_dir, Mt_wake.shape)
+        if tree_footprint is not None and grey_erosion is not None:
+            local_min = grey_erosion(Ctree, footprint=tree_footprint, mode="nearest")
+            Ctree = np.where(Mt_wake, np.minimum(Ctree, local_min), Ctree)
+        Ctree = np.clip(Ctree, coeff_min_internal, coeff_max)
+
+        print(f"[compute_wind_coeff] ▶ direction {ang:03d}: combining & smoothing")
+        Ccombined = np.where(
+            np.isnan(Cbuilding),
+            np.nan,
+            np.clip(Ctree * Cbuilding, coeff_min_internal, coeff_max),
+        ).astype(np.float32)
+        Ccombined_nan = _smooth_combined(Ccombined)
+        print(f"[compute_wind_coeff] ▶ direction {ang:03d}: done")
+        return Ccombined_nan
+
+    cpu_total = os.cpu_count() or 1
+    max_workers = max(1, min(len(directions), cpu_total))
+    print(f"[compute_wind_coeff] using {max_workers} worker(s) out of {cpu_total} CPU(s)")
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_map = {}
+        for ang in directions:
+            print(f"[compute_wind_coeff] submitting direction {ang:03d}")
+            future = executor.submit(_process_direction, ang)
+            future_map[future] = ang
+        for future in as_completed(future_map):
+            ang = future_map[future]
+            try:
+                result_arr = future.result()
+                final_arr = np.clip(result_arr.astype(np.float32), coeff_min, coeff_max)
+                out_total = paths.out_dir / f"WindCoeff_dir{ang:03d}.tif"
+                _save_like_meta(meta_ref, out_total, final_arr)
+                print(f"[compute_wind_coeff] ✓ direction {ang:03d} completed → {out_total}")
+            except Exception as err:
+                raise RuntimeError(f"Wind coefficient direction {ang:03d} failed") from err
 
 def _read_vector_or_warn(vector_fp, friendly_name):
     if not vector_fp.exists():
