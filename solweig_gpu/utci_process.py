@@ -158,6 +158,59 @@ def extract_number_from_filename(filename):
     number = filename[13:-4] # change according to the naming of building DSM files
     return number
 
+def map_windcoeff_files_by_key(directory, extension=".tif"):
+    """
+    Map directional wind coefficient tiles by tile key.
+
+    Expected filenames:
+      WindCoeff_dir000_0_0.tif
+      WindCoeff_dir030_0_0.tif
+      ...
+      WindCoeff_dir330_0_0.tif
+
+    Returns:
+      {
+        "0_0": {
+            0:   "/.../WindCoeff_dir000_0_0.tif",
+            30:  "/.../WindCoeff_dir030_0_0.tif",
+            ...
+            330: "/.../WindCoeff_dir330_0_0.tif",
+        },
+        "0_1000": {...}
+      }
+    """
+    if not os.path.isdir(directory):
+        return {}
+
+    files = get_matching_files(directory, extension)
+    mapping = {}
+
+    pattern = re.compile(r"^WindCoeff_dir(\d{3})_(-?\d+)_(-?\d+)\.tif$")
+
+    for f in files:
+        m = pattern.match(f)
+        if not m:
+            continue
+
+        direction = int(m.group(1)) % 360
+        key = f"{m.group(2)}_{m.group(3)}"
+
+        mapping.setdefault(key, {})[direction] = os.path.join(directory, f)
+
+    return mapping
+    
+def nearest_wind_dir_30(wd):
+    """
+    Round meteorological wind direction to nearest 30-degree bin.
+
+    wd is wind FROM direction:
+      0=N, 90=E, 180=S, 270=W
+    """
+    if not np.isfinite(wd) or wd < 0:
+        return None
+
+    return int((np.floor(((wd % 360.0) + 15.0) / 30.0) * 30.0) % 360.0)
+
 def _svf_cache_paths_from_building_dsm(building_dsm_path: str, number: str):
     """
     Infer base_path/SVF cache paths from the Building_DSM tile path.
