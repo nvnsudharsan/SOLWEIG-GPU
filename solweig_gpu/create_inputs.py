@@ -70,7 +70,8 @@ from rasterio.transform import from_origin
 from rasterio.warp import Resampling, reproject
 from shapely.geometry import box
 import xarray as xr
-from scipy.ndimage import uniform_filter, distance_transform_edt, maximum_filter, gaussian_filter
+#from scipy.ndimage import uniform_filter, distance_transform_edt, maximum_filter, gaussian_filter
+from scipy.ndimage import rotate, gaussian_filter, label, find_objects
 
 # Force GeoPandas to use Fiona engine for IO to avoid pyogrio/PROJ data issues
 try:
