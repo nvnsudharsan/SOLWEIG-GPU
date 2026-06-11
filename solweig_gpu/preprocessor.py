@@ -279,44 +279,92 @@ def check_rasters(files):
 # =============================================================================
 # Function to tile a raster file into smaller chunks.
 # =============================================================================
-def create_tiles(infile, tilesize, overlap, tile_type, preprocess_dir):
+def _resolve_path(base_path, path_or_name):
+    if path_or_name is None:
+        return None
+    if os.path.isabs(path_or_name):
+        return path_or_name
+    return os.path.join(base_path, path_or_name)
+
+
+def find_windcoeff_files(base_path, windcoeff_filename):
     """
-    Tile a raster file into smaller chunks.
-
-    Parameters:
-        infile (str): Path to input raster.
-        tilesize (int): Size of each tile in pixels.
-        overlap (int): Number of pixels to overlap between tiles.
-        tile_type (str): Label to use for naming output tiles.
-        preprocess_dir (str): Directory to save tiles in the pre_processing_outputs folder.
-
-    Raises:
-        FileNotFoundError: If the input file is not found.
-        ValueError: If the overlap is not within the valid range.
+    windcoeff_filename can be:
+      - None: no wind coefficient
+      - folder path: read WindCoeff_dir*.tif inside it
+      - single file path: old behavior / fallback
+      - glob pattern: e.g. 'WindCoeff_dir*.tif'
     """
-    ds = gdal.Open(infile)
+    if windcoeff_filename is None:
+        return []
 
+    wind_path = _resolve_path(base_path, windcoeff_filename)
+
+    if os.path.isdir(wind_path):
+        files = sorted(glob.glob(os.path.join(wind_path, "WindCoeff_dir*.tif")))
+    elif any(ch in wind_path for ch in ["*", "?", "["]):
+        files = sorted(glob.glob(wind_path))
+    elif os.path.isfile(wind_path):
+        files = [wind_path]
+    else:
+        files = []
+
+    if not files:
+        raise FileNotFoundError(f"No wind coefficient files found from: {wind_path}")
+
+    dir_files = [
+        f for f in files
+        if re.search(r"WindCoeff_dir\d{3}\.tif$", os.path.basename(f))
+    ]
+
+    if dir_files:
+        files = sorted(dir_files)
+
+        found_dirs = []
+        for f in files:
+            m = re.search(r"WindCoeff_dir(\d{3})\.tif$", os.path.basename(f))
+            if m:
+                found_dirs.append(int(m.group(1)))
+
+        expected_dirs = list(range(0, 360, 30))
+        missing = sorted(set(expected_dirs) - set(found_dirs))
+
+        if missing:
+            raise FileNotFoundError(
+                "Missing directional wind coefficient rasters: "
+                + ", ".join(f"WindCoeff_dir{d:03d}.tif" for d in missing)
+            )
+
+    return files
+
+
+def create_tiles_to_folder(infile, tilesize, overlap, out_folder, tile_prefix, clear_folder=False):
+    """
+    Tile a raster into a specified folder using a specified filename prefix.
+
+    Example output:
+      out_folder/WindCoeff_dir030_0_0.tif
+    """
     if overlap < 0 or overlap >= tilesize:
         raise ValueError("overlap must be 0 ≤ overlap < tilesize")
-    
+
+    ds = gdal.Open(infile)
     if ds is None:
         raise FileNotFoundError(f"Could not open {infile}")
 
     width = ds.RasterXSize
     height = ds.RasterYSize
 
-    out_folder = os.path.join(preprocess_dir, tile_type)
-    if not os.path.exists(out_folder):
-        os.makedirs(out_folder)
-    else:
+    if clear_folder and os.path.exists(out_folder):
         shutil.rmtree(out_folder)
-        os.makedirs(out_folder)
+
+    os.makedirs(out_folder, exist_ok=True)
 
     if tilesize >= width and tilesize >= height:
-        outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
-        options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
+        outfile = os.path.join(out_folder, f"{tile_prefix}_0_0.tif")
+        options = gdal.TranslateOptions(format="GTiff", srcWin=[0, 0, width, height])
         gdal.Translate(outfile, ds, options=options)
-        print(f"Created single tile (original file): {outfile}")
+        print(f"Created single tile: {outfile}")
         ds = None
         return
 
@@ -324,12 +372,68 @@ def create_tiles(infile, tilesize, overlap, tile_type, preprocess_dir):
         for j in range(0, height, tilesize):
             tile_width = min(tilesize + overlap, width - i)
             tile_height = min(tilesize + overlap, height - j)
-            outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
-            options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
+
+            outfile = os.path.join(out_folder, f"{tile_prefix}_{i}_{j}.tif")
+            options = gdal.TranslateOptions(
+                format="GTiff",
+                srcWin=[i, j, tile_width, tile_height]
+            )
             gdal.Translate(outfile, ds, options=options)
             print(f"Created tile: {outfile}")
-   
+
     ds = None
+
+
+def create_windcoeff_tiles(windcoeff_files, tilesize, overlap, preprocess_dir):
+    """
+    Tile all directional wind coefficient rasters into one folder:
+
+      preprocess_dir/WindCoeff/WindCoeff_dir000_i_j.tif
+      preprocess_dir/WindCoeff/WindCoeff_dir030_i_j.tif
+      ...
+    """
+    if not windcoeff_files:
+        print("No wind coefficient rasters provided. Skipping wind coefficient tiling.")
+        return
+
+    out_folder = os.path.join(preprocess_dir, "WindCoeff")
+
+    if os.path.exists(out_folder):
+        shutil.rmtree(out_folder)
+    os.makedirs(out_folder, exist_ok=True)
+
+    for wind_fp in windcoeff_files:
+        tile_prefix = os.path.splitext(os.path.basename(wind_fp))[0]
+
+        print(f"Creating wind coefficient tiles for {tile_prefix}...")
+        create_tiles_to_folder(
+            infile=wind_fp,
+            tilesize=tilesize,
+            overlap=overlap,
+            out_folder=out_folder,
+            tile_prefix=tile_prefix,
+            clear_folder=False
+        )
+
+def create_tiles(infile, tilesize, overlap, tile_type, preprocess_dir):
+    """
+    Tile a raster file into smaller chunks.
+
+    Normal rasters are written as:
+      preprocess_dir/DEM/DEM_i_j.tif
+      preprocess_dir/Trees/Trees_i_j.tif
+      etc.
+    """
+    out_folder = os.path.join(preprocess_dir, tile_type)
+
+    create_tiles_to_folder(
+        infile=infile,
+        tilesize=tilesize,
+        overlap=overlap,
+        out_folder=out_folder,
+        tile_prefix=tile_type,
+        clear_folder=True
+    )
 
 # =============================================================================
 # The function expects two files in folder_path:
@@ -1242,13 +1346,13 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
     trees_path = os.path.join(base_path, trees_filename)
 
     landcover_path = None
-    windcoeff_path = None
+    landcover_path = None
+    windcoeff_files = []
 
     if landcover_filename is not None:
-        landcover_path = os.path.join(base_path, landcover_filename)
+        landcover_path = _resolve_path(base_path, landcover_filename)
 
-    if windcoeff_filename is not None:
-        windcoeff_path = os.path.join(base_path, windcoeff_filename)
+    windcoeff_files = find_windcoeff_files(base_path, windcoeff_filename)
 
     # Check that all rasters have matching dimensions, pixel size, and CRS.
     try:
@@ -1257,8 +1361,9 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         if landcover_path is not None:
             raster_list.append(landcover_path)
 
-        if windcoeff_path is not None:
-            raster_list.append(windcoeff_path)
+        # Check all directional wind coefficient rasters too
+        if windcoeff_files:
+            raster_list.extend(windcoeff_files)
 
         check_rasters(raster_list)
 
@@ -1275,12 +1380,16 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
     if landcover_path is not None:
         rasters["Landcover"] = landcover_path
 
-    if windcoeff_path is not None:
-        rasters["WindCoeff"] = windcoeff_path
-
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")
         create_tiles(raster, tile_size, overlap, tile_type, preprocess_dir)
+
+    # Directional wind coefficient rasters are handled separately
+    # so the 12 files do not overwrite each other.
+    if windcoeff_files:
+        create_windcoeff_tiles(windcoeff_files, tile_size, overlap, preprocess_dir)
+    else:
+        print("Wind coefficient not used; skipping WindCoeff tiles.")
 
     # For metfiles processing, we use the DEM tiles folder.
     dem_tiles_folder = os.path.join(preprocess_dir, "DEM")
