@@ -271,7 +271,7 @@ def load_cached_svf_outputs(building_dsm_path: str, number: str):
         svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, svftotal,)
 
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file,
-                output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
+                output_path,number,selected_date_str,trunk_path=None,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
                 save_ldown=False,save_shadow=False,save_wbgt=False,save_ta=False,save_wind=False):
     """
     Compute UTCI and related thermal comfort outputs for a single tile.
@@ -281,8 +281,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     
     Args:
         building_dsm_path (str): Path to Building DSM raster
-        tree_path (str): Path to tree/vegetation DSM raster
+        tree_path (str): Path to tree/vegetation canopy DSM raster (height in m agl)
         dem_path (str): Path to Digital Elevation Model raster
+        trunk_path (str): Path to trunk-zone DSM raster (height in m agl, same grid
+            as the DSM). If None, the trunk zone is derived as 25% of the canopy height.
         walls_path (str): Path to wall height raster
         aspect_path (str): Path to wall aspect raster  
         landcover_path (str): Path to land cover raster (can be None)
@@ -313,6 +315,11 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     a, dataset = load_raster_to_tensor(building_dsm_path)
     temp1, dataset2 = load_raster_to_tensor(tree_path)
     temp2, dataset3 = load_raster_to_tensor(dem_path)
+
+    trunk = None
+    if trunk_path is not None:
+        trunk, _ = load_raster_to_tensor(trunk_path)
+        trunk[trunk < 0.] = 0.
     walls, dataset4 = load_raster_to_tensor(walls_path)
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
           
@@ -411,12 +418,13 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     print(f"[INFO] Timezone: {timezone_name}, UTC offset: {utc} hours")
     YYYY, altitude, azimuth, zen, jday, leafon, dectime, altmax = Solweig_2015a_metdata_noload(met_file, location, utc)
     temp1[temp1 < 0.] = 0.
+    trunk_height = trunk if trunk is not None else temp1 * 0.25
     vegdem = temp1 + temp2
-    vegdem2 = torch.add(temp1 * 0.25, temp2)
+    vegdem2 = trunk_height + temp2
     bush = torch.logical_not(vegdem2 * vegdem) * vegdem
     vegdsm = temp1 + a
     vegdsm[vegdsm == a] = 0
-    vegdsm2 = temp1 * 0.25 + a
+    vegdsm2 = trunk_height + a
     vegdsm2[vegdsm2 == a] = 0
     # fveg = (temp1 > 0).float()
     amaxvalue = torch.maximum(a.max(), vegdem.max())
