@@ -8,6 +8,7 @@ tiling, and meteorological data extraction.
 import unittest
 import numpy as np
 import os
+import shutil
 import tempfile
 from osgeo import gdal, osr
 import datetime
@@ -126,6 +127,85 @@ class TestDatetimeExtraction(unittest.TestCase):
         
         with self.assertRaises(ValueError):
             extract_datetime_strict('invalid_filename.nc')
+
+
+class TestPreprocessorTrunkZone(unittest.TestCase):
+    """Test that ppr tiles an optional trunk-zone DSM raster."""
+
+    def setUp(self):
+        self.base_path = tempfile.mkdtemp()
+        for name in ('Building_DSM.tif', 'DEM.tif', 'Trees.tif', 'TrunkZone.tif'):
+            self._create_raster(os.path.join(self.base_path, name))
+
+        self.metfile = os.path.join(self.base_path, 'met.txt')
+        with open(self.metfile, 'w') as f:
+            f.write('iy id it imin Q* QH QE Qs Qf Wind RH Td press rain Kdn snow ldown fcld wuh xsmd lai_hr Kdiff Kdir Wd\n')
+            for h in range(24):
+                f.write(f"2020 200 {h} 0 -999 -999 -999 -999 -999 1.0 50 20 100 0 0 -999 -999 -999 -999 -999 -999 -999 -999 -999\n")
+
+    def tearDown(self):
+        shutil.rmtree(self.base_path, ignore_errors=True)
+
+    def _create_raster(self, path, width=50, height=50, pixel_size=1.0):
+        driver = gdal.GetDriverByName('GTiff')
+        ds = driver.Create(path, width, height, 1, gdal.GDT_Float32)
+        ds.SetGeoTransform((0, pixel_size, 0, 0, 0, -pixel_size))
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32614)
+        ds.SetProjection(srs.ExportToWkt())
+        ds.GetRasterBand(1).WriteArray(np.ones((height, width), dtype=np.float32) * 10)
+        ds.FlushCache()
+        ds = None
+        return path
+
+    def test_trunkzone_tiles_created(self):
+        """A provided trunk-zone DSM should be validated and tiled alongside the DSM."""
+        from solweig_gpu.preprocessor import ppr
+
+        preprocess_dir = os.path.join(self.base_path, 'processed_inputs')
+        ppr(
+            base_path=self.base_path,
+            building_dsm_filename='Building_DSM.tif',
+            dem_filename='DEM.tif',
+            trees_filename='Trees.tif',
+            landcover_filename=None,
+            windcoeff_filename=None,
+            tile_size=3600,
+            overlap=20,
+            selected_date_str='2020-07-18',
+            use_own_met=True,
+            own_met_file=self.metfile,
+            preprocess_dir=preprocess_dir,
+            trunkzone_filename='TrunkZone.tif',
+        )
+
+        trunkzone_dir = os.path.join(preprocess_dir, 'TrunkZone')
+        self.assertTrue(os.path.isdir(trunkzone_dir))
+        tiles = [f for f in os.listdir(trunkzone_dir) if f.endswith('.tif')]
+        self.assertTrue(len(tiles) >= 1)
+
+    def test_no_trunkzone_dir_when_not_provided(self):
+        """Without a trunk-zone DSM, no TrunkZone tiles should be created."""
+        from solweig_gpu.preprocessor import ppr
+
+        preprocess_dir = os.path.join(self.base_path, 'processed_inputs')
+        ppr(
+            base_path=self.base_path,
+            building_dsm_filename='Building_DSM.tif',
+            dem_filename='DEM.tif',
+            trees_filename='Trees.tif',
+            landcover_filename=None,
+            windcoeff_filename=None,
+            tile_size=3600,
+            overlap=20,
+            selected_date_str='2020-07-18',
+            use_own_met=True,
+            own_met_file=self.metfile,
+            preprocess_dir=preprocess_dir,
+            trunkzone_filename=None,
+        )
+
+        self.assertFalse(os.path.isdir(os.path.join(preprocess_dir, 'TrunkZone')))
 
 
 if __name__ == '__main__':
