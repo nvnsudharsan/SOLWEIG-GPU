@@ -1848,68 +1848,30 @@ def run_create_inputs(
     met_out = paths.out_dir / f"era5_{city}_{year_start}_{year_end}.nc"
     download_and_embed_era5(met_out, b.bbox_osm, year_start, year_end, paths.data_dir)
 
-    # Compute wind coefficient AFTER meteorology, using ERA5 Z0 mean if available
-    z0_ref_value = 0.03
-    try:
-        if met_out.exists():
-            with xr.open_dataset(met_out) as dsm:
-                if "Z0" in dsm.variables:
-                    z0_candidate = float(dsm["Z0"].mean().values)
-                    if np.isfinite(z0_candidate) and z0_candidate > 0:
-                        z0_ref_value = z0_candidate
-                        tlog(f"Using ERA5 Z0 mean as z0_ref: {z0_ref_value:.4f} m")
-                    else:
-                        tlog("Z0 present but invalid; using default z0_ref = 0.03 m")
-                else:
-                    tlog("Z0 not found in meteo file; using default z0_ref = 0.03 m")
-    except Exception as e:
-        tlog(f"WARNING: could not read Z0 from meteo file; using default z0_ref. Error: {e}")
-
-    # Wind coefficient raster (now that z0_ref is known)
-    try:
-        compute_wind_coeff(paths, z0_ref=z0_ref_value)
-    except Exception as e:
-        tlog(f"WARNING: WindCoeff computation failed: {e}")
-
-    # Alignment check (raises on mismatch)
     tlog("Checking alignment...")
-    to_check = [paths.landuse_ras, paths.tree_ras, paths.dem_ras, paths.dsm_plus_ras, paths.lcz_ras]
-    dir_rasters = sorted(paths.out_dir.glob("WindCoeff_dir*.tif"))
-    if not dir_rasters:
-        tlog("WARNING: no directional WindCoeff_dir*.tif rasters found.")
-    else:
-        tlog(f"Found {len(dir_rasters)} directional wind coefficient rasters.")
-        to_check.extend(dir_rasters)
-    cb_fp = paths.out_dir / "WindCoeff_Urban.tif"
-    ct_fp = paths.out_dir / "WindCoeff_Vegetation.tif"
-    if cb_fp.exists():
-        to_check.append(cb_fp)
-    if ct_fp.exists():
-        to_check.append(ct_fp)
-    lf_b_fp = paths.out_dir / "LambdaF_Buildings.tif"
-    if lf_b_fp.exists():
-        to_check.append(lf_b_fp)
+    to_check = [
+        paths.landuse_ras,
+        paths.tree_ras,
+        paths.dem_ras,
+        paths.dsm_plus_ras,
+        paths.lcz_ras,
+    ]
     check_raster_alignment(to_check)
+  
     tlog("All rasters aligned (CRS, resolution, extents, dimensions).")
 
   
     # Final report
     final_outputs = [
-        paths.landuse_ras, paths.tree_ras, paths.dem_ras, paths.dsm_plus_ras,
-        paths.lcz_ras, paths.veg_ras, paths.wat_ras, paths.bld_ras,
-        paths.wind_coeff_ras
-    ]
-
-    dir_rasters = sorted(paths.out_dir.glob("WindCoeff_dir*.tif"))
-    final_outputs.extend(dir_rasters)
-  
-    if lf_b_fp.exists():
-        final_outputs.append(lf_b_fp)
-    if cb_fp.exists():
-        final_outputs.append(cb_fp)
-    if ct_fp.exists():
-        final_outputs.append(ct_fp)
-    final_report_table(final_outputs)
+    paths.landuse_ras,
+    paths.tree_ras,
+    paths.dem_ras,
+    paths.dsm_plus_ras,
+    paths.lcz_ras,
+    paths.veg_ras,
+    paths.wat_ras,
+    paths.bld_ras,
+    met_out,]
 
     tlog("Completed successfully.")
     return str(paths.out_dir)
