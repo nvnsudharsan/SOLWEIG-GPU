@@ -14,8 +14,10 @@ from typing import Optional, List
 
 # Lazy imports used below to avoid loading heavy deps at import time.
 
+from pathlib import Path
+from typing import Optional, List, Union
 
-from typing import Optional, List
+PathLike = Union[str, Path]
 
 def preprocess(
     base_path: str,
@@ -184,6 +186,62 @@ def build_inputs(
         resolution=resolution,
     )
 
+def build_wind_ext_coeff(
+    input_dir: PathLike,
+    *,
+    directions: Sequence[int] = tuple(range(0, 360, 30)),
+    z0_ref: float = 0.03,
+    hmin_b: float = 1.0,
+    hmin_t: float = 1.0,
+    z_eval: float = 10.0,
+    zref: float = 10.0,
+    LAI_t: float = 2.0,
+    a0_t: float = 0.5,
+    a1_t: float = 0.4,
+    alpha_min_t: float = 0.2,
+    alpha_max_t: float = 2.5,
+    coeff_min: float = 0.1,
+    coeff_max: float = 1.0,
+    lp_min_open: float = 0.02,
+    max_workers: Optional[int] = None,
+) -> str:
+    """
+    Build full-domain wind-extension coefficient rasters for SOLWEIG-GPU.
+
+    The function takes only the processed SOLWEIG input directory. It searches
+    that directory for the building raster, tree raster, and ERA5/met NetCDF file,
+    then writes full-domain WindCoeff_dir*.tif rasters into the same directory.
+
+    Expected files in input_dir:
+        Buildings.tif or Building_DSM.tif
+        Trees.tif
+        era5_*.nc
+
+    Returns:
+        Path to the input/output directory.
+    """
+    from .wind_ext_coeff import calculate_wind_ext_coeff
+
+    calculate_wind_ext_coeff(
+        input_dir=input_dir,
+        directions=directions,
+        z0_ref=z0_ref,
+        hmin_b=hmin_b,
+        hmin_t=hmin_t,
+        z_eval=z_eval,
+        zref=zref,
+        LAI_t=LAI_t,
+        a0_t=a0_t,
+        a1_t=a1_t,
+        alpha_min_t=alpha_min_t,
+        alpha_max_t=alpha_max_t,
+        coeff_min=coeff_min,
+        coeff_max=coeff_max,
+        lp_min_open=lp_min_open,
+        max_workers=max_workers,
+    )
+
+    return str(Path(input_dir))
 
 def run_walls_aspect(preprocess_dir: str) -> None:
     """
