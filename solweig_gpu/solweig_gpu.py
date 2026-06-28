@@ -15,7 +15,7 @@ from typing import Optional, List
 # Lazy imports used below to avoid loading heavy deps at import time.
 
 from pathlib import Path
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Sequence
 
 PathLike = Union[str, Path]
 
