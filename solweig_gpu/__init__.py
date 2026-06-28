@@ -16,6 +16,7 @@ from .solweig_gpu import (
     thermal_comfort,
     preprocess,
     build_inputs,
+    build_wind_ext_coeff,
     run_walls_aspect,
     calculate_svf,
     run_utci_tiles,
