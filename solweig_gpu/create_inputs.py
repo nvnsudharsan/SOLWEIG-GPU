@@ -1826,28 +1826,6 @@ def run_create_inputs(
     tlog("Completed successfully.")
     return str(paths.out_dir)
 
-##### Running the input downloader script
-#import os
-#from solweig_gpu import run_create_inputs
-
-#os.environ["EE_PROJECT"] = "XXXXXXXXX"  # your own GEE/GCP project ID
-
-#base_path = run_create_inputs(
-#    lat=30.2857,
-#    lon=-97.7396,
-#    city="Austin",
-#    km_buffer=3,
-#    km_reduced_lat=1,
-#    km_reduced_lon=1,
-#    year_start=2024,
-#    year_end=2025,
-#    base_folder="/",
-#    resolution=2,
-#)
-#print("SOLWEIG input folder:", base_path)
-########
-
-
 def main():
     ap = argparse.ArgumentParser(description="Build all static/forcing inputs for the SOLWEIG GPU pipeline.")
     ap.add_argument("--lat", type=float, default=DEFAULT_LAT)
