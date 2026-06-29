@@ -140,8 +140,6 @@ def build_inputs(
     km_buffer: float = 8.0,
     km_reduced_lat: float = 3.0,
     km_reduced_lon: float = 1.0,
-    year_start: int = 2024,
-    year_end: int = 2025,
     base_folder: Optional[str] = None,
     resolution: float = 2.0,
 ) -> str:
@@ -180,8 +178,6 @@ def build_inputs(
         km_buffer=km_buffer,
         km_reduced_lat=km_reduced_lat,
         km_reduced_lon=km_reduced_lon,
-        year_start=year_start,
-        year_end=year_end,
         base_folder=base_folder,
         resolution=resolution,
     )
