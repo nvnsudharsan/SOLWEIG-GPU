@@ -1728,7 +1728,7 @@ def run_create_inputs(
     ensure_dir(paths.out_dir)
 
     # Clean old TIFs in out_dir before rebuilding assets, but keep existing vector rasters
-    keep_rasters = {paths.veg_ras.resolve(), paths.wat_ras.resolve(), paths.bld_ras.resolve()}
+    keep_rasters = {paths.bld_ras.resolve()}
     for tif in paths.out_dir.glob("*.tif"):
         try:
             if tif.resolve() in keep_rasters and tif.stat().st_size > 0:
@@ -1746,7 +1746,7 @@ def run_create_inputs(
     safe_initialize_ee()
 
     # Build vectors from OSM/GBA only if not already present
-    vector_outputs = [paths.veg_fp, paths.wat_fp, paths.imprv_fp, paths.bld_fp]
+    vector_outputs = [paths.bld_fp]
     if all(fp.exists() and fp.stat().st_size > 0 for fp in vector_outputs):
         tlog("OSM/GBA vectors already exist; skipping fetch.")
     else:
@@ -1757,7 +1757,6 @@ def run_create_inputs(
     download_worldcover(paths.esa_tif, b.bbox4326)
     download_tree_dsm(paths.tree_tif, paths.tree_tiles, b.bbox4326)
     download_dem(paths.dem_tif, b.bbox_utm, b.crs_utm, b.bbox4326)
-    download_lcz(paths.lcz_tif, b.bbox4326)
 
     # Build the reference analysis grid (SOLWEIG domain) in UTM
     grid = compute_reference_grid(b.bbox_utm_solweig, resolution)
@@ -1767,17 +1766,14 @@ def run_create_inputs(
     _resample_to_grid(paths.esa_tif,  paths.landuse_ras, b.crs_utm, grid.transform, grid.width, grid.height, Resampling.nearest)
     _resample_to_grid(paths.tree_tif, paths.tree_ras,    b.crs_utm, grid.transform, grid.width, grid.height, Resampling.bilinear)
     _resample_to_grid(paths.dem_tif,  paths.dem_ras,     b.crs_utm, grid.transform, grid.width, grid.height, Resampling.bilinear)
-    _resample_to_grid(paths.lcz_tif,  paths.lcz_ras,     b.crs_utm, grid.transform, grid.width, grid.height, Resampling.nearest)
 
     # Vector → raster: vegetation, water, and buildings (with height attribute)
-    vector_raster_outputs = [paths.veg_ras, paths.wat_ras, paths.bld_ras]
+    vector_raster_outputs = [paths.bld_ras]
     if all(fp.exists() and fp.stat().st_size > 0 for fp in vector_raster_outputs):
-        tlog("Rasterizing vectors skipped (raster outputs already present).")
+        tlog("Rasterizing building vector skipped (raster output already present).")
     else:
-        tlog("Rasterizing vectors...")
-        rasterize_vector_checked(paths.veg_fp,  paths.veg_ras,  2,             grid.transform, grid.width, grid.height, b.crs_utm, "vegetation")
-        rasterize_vector_checked(paths.wat_fp,  paths.wat_ras,  3,             grid.transform, grid.width, grid.height, b.crs_utm, "water")
-        rasterize_vector_checked(paths.bld_fp,  paths.bld_ras,  "HEIGHT_ROOF", grid.transform, grid.width, grid.height, b.crs_utm, "buildings", dtype="float32")
+        tlog("Rasterizing building vector...")
+        rasterize_vector_checked(paths.bld_fp, paths.bld_ras, "HEIGHT_ROOF", grid.transform, grid.width, grid.height, b.crs_utm, "buildings", dtype="float32")
 
     # Reclassify only the Landuse output
     reclassify_esa_worldcover_inplace(paths.landuse_ras, paths.bld_ras )
@@ -1807,17 +1803,12 @@ def run_create_inputs(
         paths.dsm_plus_ras
     )
 
-    # Meteorology: ERA5 via Earth Engine
-    met_out = paths.out_dir / f"era5_{city}_{year_start}_{year_end}.nc"
-    download_and_embed_era5(met_out, b.bbox_osm, year_start, year_end, paths.data_dir)
-
     tlog("Checking alignment...")
     to_check = [
         paths.landuse_ras,
         paths.tree_ras,
         paths.dem_ras,
         paths.dsm_plus_ras,
-        paths.lcz_ras,
     ]
     check_raster_alignment(to_check)
   
@@ -1830,11 +1821,7 @@ def run_create_inputs(
     paths.tree_ras,
     paths.dem_ras,
     paths.dsm_plus_ras,
-    paths.lcz_ras,
-    paths.veg_ras,
-    paths.wat_ras,
-    paths.bld_ras,
-    met_out,]
+    paths.bld_ras,]
 
     tlog("Completed successfully.")
     return str(paths.out_dir)
