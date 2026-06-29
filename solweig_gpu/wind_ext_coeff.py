@@ -183,10 +183,39 @@ def _rotate_full_extent(
 ) -> np.ndarray:
     """Rotate array keeping full extent; optionally center-crop/pad to target_shape."""
     arr = np.asarray(arr)
+
+    # Fast path for cardinal angles.
+    a = int(round(angle)) % 360
+    if abs(angle - round(angle)) < 1e-9 and a in (0, 90, 180, 270):
+        if a == 0:
+            rotated = arr
+        elif a == 90:
+            rotated = np.rot90(arr, 1)
+        elif a == 180:
+            rotated = np.rot90(arr, 2)
+        else:  # 270
+            rotated = np.rot90(arr, 3)
+
+        rotated = np.ascontiguousarray(rotated)
+
+        if target_shape is None:
+            return rotated
+
+        return _center_crop_or_pad(
+            rotated,
+            target_shape,
+            fill_value=cval if fill_value is None else fill_value,
+        )
+
     rotated = rotate(arr, angle, reshape=True, order=order, mode=mode, cval=cval)
+
     if target_shape is None:
         return rotated
-    return _center_crop_or_pad(rotated, target_shape, fill_value=cval if fill_value is None else fill_value)
+
+    return _center_crop_or_pad(
+        rotated,
+        target_shape,
+        fill_value=cval if fill_value is None else fill_value,)
 
 
 def _coeff_at_z_trees(
@@ -550,7 +579,7 @@ def _save_like_meta(meta_ref, out_fp: Path, arr: np.ndarray) -> None:
         "dtype": "float32",
         "count": 1,
         "compress": "zstd",
-        "zstd_level": 15,
+        "zstd_level": 3,
         "tiled": True,
         "blockxsize": min(meta_ref.get("width", 256), 256),
         "blockysize": min(meta_ref.get("height", 256), 256),
@@ -567,7 +596,7 @@ def _save_like_meta(meta_ref, out_fp: Path, arr: np.ndarray) -> None:
             "count": 1,
             "compress": "deflate",
             "predictor": 3,
-            "zlevel": 9,
+            "zlevel": 3,
             "tiled": True,
             "blockxsize": min(meta_ref.get("width", 256), 256),
             "blockysize": min(meta_ref.get("height", 256), 256),
@@ -687,17 +716,46 @@ def _compute_wind_full_domain(
     Ht_f32 = Ht.astype(np.float32)
     Ct_wake_f32 = Ct_for_wake.astype(np.float32)
 
+    valid_smooth_mask = (~Mb).astype(bool)
+
+    sigma6 = max(6.0 / (2.0 * max(px, 1e-6)), 0.5)
+    sigma40 = max(40.0 / (2.0 * max(px, 1e-6)), 0.5)
+
+    smooth_weight6 = gaussian_filter(
+        valid_smooth_mask.astype(np.float32),
+        sigma=sigma6,
+        mode="nearest",
+    ).astype(np.float32)
+
+    smooth_weight40 = gaussian_filter(
+        valid_smooth_mask.astype(np.float32),
+        sigma=sigma40,
+        mode="nearest",
+    ).astype(np.float32)
+
+
     def _smooth_combined(arr):
-        sm6 = _gaussian_smooth(arr, mask_nan=Mb, px_size=px, window_m=6.0)
+        arr = arr.astype(np.float32, copy=False)
+
+        data6 = np.where(valid_smooth_mask & np.isfinite(arr), arr, 0.0).astype(np.float32)
+        sm6_num = gaussian_filter(data6, sigma=sigma6, mode="nearest").astype(np.float32)
+
+        with np.errstate(invalid="ignore", divide="ignore"):
+            sm6 = np.where(smooth_weight6 > 1e-6, sm6_num / smooth_weight6, np.nan)
+
         sm6 = np.where(np.isnan(arr), np.nan, sm6)
         sm6[Mb] = np.nan
 
-        sm40 = _gaussian_smooth(sm6, mask_nan=Mb, px_size=px, window_m=40.0)
+        data40 = np.where(valid_smooth_mask & np.isfinite(sm6), sm6, 0.0).astype(np.float32)
+        sm40_num = gaussian_filter(data40, sigma=sigma40, mode="nearest").astype(np.float32)
+
+        with np.errstate(invalid="ignore", divide="ignore"):
+            sm40 = np.where(smooth_weight40 > 1e-6, sm40_num / smooth_weight40, np.nan)
+
         sm40 = np.where(np.isnan(sm6), np.nan, sm40)
         sm40[Mb] = np.nan
 
-        sm40 = np.clip(sm40, coeff_min_internal, coeff_max)
-        return sm40.astype(np.float32)
+        return np.clip(sm40, coeff_min_internal, coeff_max).astype(np.float32)
 
     def _process_direction(ang: int) -> Tuple[int, np.ndarray]:
         alpha_dir = float(ang)
