@@ -13,6 +13,7 @@ from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import rasterio
+from rasterio.warp import transform as rio_transform
 from scipy.ndimage import gaussian_filter, grey_erosion, label, find_objects, rotate
 
 
@@ -104,51 +105,146 @@ def _find_tree_raster(input_dir: Path) -> Path:
     )
 
 
-def _find_met_file(input_dir: Path) -> Path:
-    """Find the ERA5/met NetCDF file."""
-    return _find_first_file(
-        input_dir,
-        patterns=[
-            "era5_*.nc",
-            "ERA5_*.nc",
-            "*era5*.nc",
-            "*ERA5*.nc",
-            "*.nc",
-        ],
-        label="ERA5/met NetCDF file",
+def _find_era5_fsr_file(era5_dir: Path) -> Path:
+    """Find the required ERA5 instant NetCDF file in the ERA5 directory."""
+    met_path = era5_dir / "data_stream-oper_stepType-instant.nc"
+    if met_path.is_file():
+        return met_path
+
+    available = ", ".join(sorted(p.name for p in era5_dir.iterdir() if p.is_file()))
+    raise FileNotFoundError(
+        f"Could not find data_stream-oper_stepType-instant.nc in {era5_dir}. "
+        f"Files found: {available or 'none'}"
     )
 
 
-def _read_z0_from_met(met_path: Path, fallback: float) -> float:
+def _building_raster_midpoint_lonlat(building_fp: Path) -> Tuple[float, float]:
     """
-    Read mean Z0 from the meteorology file.
+    Return the midpoint of the building raster bounds as lon/lat in EPSG:4326.
 
-    This does not care about time. It simply averages Z0 over all dimensions.
+    The midpoint is computed from the raster bounds, then transformed from the
+    raster CRS to geographic lon/lat. This avoids assuming the raster is already
+    in latitude/longitude coordinates.
+    """
+    with rasterio.open(building_fp) as src:
+        if src.crs is None:
+            raise ValueError(
+                f"Building raster has no CRS, so its midpoint cannot be converted to lon/lat: {building_fp}"
+            )
+
+        bounds = src.bounds
+        x_mid = 0.5 * (bounds.left + bounds.right)
+        y_mid = 0.5 * (bounds.bottom + bounds.top)
+
+        if src.crs.to_string().upper() in {"EPSG:4326", "WGS84"} or src.crs.to_epsg() == 4326:
+            lon, lat = x_mid, y_mid
+        else:
+            lon_vals, lat_vals = rio_transform(src.crs, "EPSG:4326", [x_mid], [y_mid])
+            lon, lat = lon_vals[0], lat_vals[0]
+
+    return float(lon), float(lat)
+
+
+def _coord_name(ds, candidates: Sequence[str], label: str) -> str:
+    """Return the first matching coordinate/dimension name from common candidates."""
+    for name in candidates:
+        if name in ds.coords or name in ds.dims or name in ds.variables:
+            return name
+
+    available = sorted(set(ds.coords) | set(ds.dims) | set(ds.variables))
+    raise KeyError(
+        f"Could not identify {label} coordinate. Tried {list(candidates)}. "
+        f"Available names: {available}"
+    )
+
+
+def _era5_target_lon(lon: float, lon_values: np.ndarray) -> float:
+    """Convert target longitude to match the longitude convention of the ERA5 file."""
+    lon_values = np.asarray(lon_values, dtype=np.float64)
+    finite = lon_values[np.isfinite(lon_values)]
+    if finite.size == 0:
+        return float(lon)
+
+    lon_min = float(np.nanmin(finite))
+    lon_max = float(np.nanmax(finite))
+
+    if lon_min >= 0.0 and lon < 0.0:
+        return float(lon + 360.0)
+    if lon_max <= 180.0 and lon > 180.0:
+        return float(lon - 360.0)
+    return float(lon)
+
+
+def _read_z0_from_fsr_at_raster_midpoint(
+    met_path: Path,
+    building_fp: Path,
+    fallback: float,
+) -> float:
+    """
+    Read fsr at the first time and nearest ERA5 grid point to the building raster midpoint.
+
+    The returned fsr value is used as z0_ref in meters. If fsr is missing or the
+    extracted value is invalid, the supplied fallback roughness length is used.
     """
     z0_ref = float(fallback)
     try:
         import xarray as xr
 
+        lon, lat = _building_raster_midpoint_lonlat(building_fp)
+
         with xr.open_dataset(met_path) as ds:
-            if "Z0" not in ds.variables:
-                _tlog(f"[WindCoeff] Z0 not found in {met_path.name}; using z0_ref={z0_ref}")
+            if "fsr" not in ds.variables:
+                _tlog(f"[WindCoeff] fsr not found in {met_path.name}; using z0_ref={z0_ref}")
                 return z0_ref
 
-            z0_candidate = float(ds["Z0"].mean(skipna=True).values)
-            if np.isfinite(z0_candidate) and z0_candidate > 0:
-                z0_ref = z0_candidate
-                _tlog(f"[WindCoeff] using mean Z0 from {met_path.name}: {z0_ref:.4f} m")
+            lat_name = _coord_name(ds, ("latitude", "lat", "y"), "latitude")
+            lon_name = _coord_name(ds, ("longitude", "lon", "x"), "longitude")
+
+            da = ds["fsr"]
+
+            # Use the first time value. ERA5 files often use valid_time, but keep
+            # this generic for files using time.
+            for time_name in ("valid_time", "time"):
+                if time_name in da.dims:
+                    da = da.isel({time_name: 0})
+                    break
             else:
-                _tlog(f"[WindCoeff] invalid Z0 in {met_path.name}; using z0_ref={z0_ref}")
+                # If a different time-like dimension exists, use its first value.
+                for dim in list(da.dims):
+                    if dim in ds.coords and np.issubdtype(ds[dim].dtype, np.datetime64):
+                        da = da.isel({dim: 0})
+                        break
+
+            # If any non-spatial dimensions remain, select their first element.
+            extra_dims = [dim for dim in da.dims if dim not in (lat_name, lon_name)]
+            if extra_dims:
+                da = da.isel({dim: 0 for dim in extra_dims})
+
+            target_lon = _era5_target_lon(lon, ds[lon_name].values)
+            selected = da.sel({lat_name: lat, lon_name: target_lon}, method="nearest")
+            z0_candidate = float(selected.values)
+
+            if np.isfinite(z0_candidate) and z0_candidate > 0.0:
+                z0_ref = z0_candidate
+
+                nearest_lat = float(selected[lat_name].values) if lat_name in selected.coords else float("nan")
+                nearest_lon = float(selected[lon_name].values) if lon_name in selected.coords else float("nan")
+                _tlog(
+                    "[WindCoeff] using fsr as z0_ref from "
+                    f"{met_path.name}: {z0_ref:.4f} m "
+                    f"at raster midpoint lon={lon:.6f}, lat={lat:.6f}; "
+                    f"nearest ERA5 lon={nearest_lon:.6f}, lat={nearest_lat:.6f}"
+                )
+            else:
+                _tlog(f"[WindCoeff] invalid fsr in {met_path.name}; using z0_ref={z0_ref}")
 
     except Exception as exc:
         _tlog(
-            f"[WindCoeff] WARNING: could not read Z0 from {met_path.name}; "
+            f"[WindCoeff] WARNING: could not read fsr from {met_path.name}; "
             f"using z0_ref={z0_ref}. Error: {exc}"
         )
 
     return z0_ref
-
 
 def _center_crop_or_pad(arr: np.ndarray, target_shape: Tuple[int, int], fill_value=0.0) -> np.ndarray:
     """Center-crop or pad a 2-D array to the requested shape."""
@@ -835,6 +931,7 @@ def _compute_wind_full_domain(
 
 def calculate_wind_ext_coeff(
     input_dir: PathLike,
+    era5_dir: PathLike,
     *,
     directions: Sequence[int] = tuple(range(0, 360, 30)),
     z0_ref: float = 0.03,
@@ -858,21 +955,30 @@ def calculate_wind_ext_coeff(
     Parameters
     ----------
     input_dir
-        Directory containing the processed SOLWEIG inputs. The function searches
-        only this directory, not subdirectories. It expects:
+        Directory containing the processed SOLWEIG raster inputs. The function
+        searches only this directory, not subdirectories. It expects:
 
             Buildings.tif or Building_DSM.tif
             Trees.tif
-            era5_*.nc
 
-        The output rasters are written into the same directory.
+        The output rasters are written into this same directory.
+
+    era5_dir
+        Directory containing the ERA5 instant NetCDF file named exactly:
+
+            data_stream-oper_stepType-instant.nc
+
+        The function reads variable ``fsr`` from the first time step at the
+        nearest ERA5 grid cell to the midpoint of the building raster. That
+        extracted ``fsr`` value is used as the reference roughness length
+        ``z0_ref`` in meters.
 
     directions
         Wind-from directions in degrees. Default is 12 directions every 30 degrees.
 
     z0_ref
-        Fallback reference roughness length. If the ERA5/met file contains Z0,
-        the mean Z0 over all dimensions is used instead.
+        Fallback reference roughness length in meters. This is used only if fsr
+        cannot be read or the extracted fsr value is invalid.
 
     hmin_b, hmin_t
         Minimum building/tree height thresholds in meters.
@@ -898,19 +1004,28 @@ def calculate_wind_ext_coeff(
         Written WindCoeff_dir*.tif files.
     """
     input_dir = Path(input_dir)
+    era5_dir = Path(era5_dir)
+
     if not input_dir.is_dir():
         raise NotADirectoryError(f"input_dir must be a directory: {input_dir}")
+    if not era5_dir.is_dir():
+        raise NotADirectoryError(f"era5_dir must be a directory: {era5_dir}")
 
     building_fp = _find_building_raster(input_dir)
     tree_fp = _find_tree_raster(input_dir)
-    met_fp = _find_met_file(input_dir)
+    met_fp = _find_era5_fsr_file(era5_dir)
 
     _tlog(f"[WindCoeff] input_dir: {input_dir}")
+    _tlog(f"[WindCoeff] era5_dir: {era5_dir}")
     _tlog(f"[WindCoeff] building raster: {building_fp.name}")
     _tlog(f"[WindCoeff] tree raster: {tree_fp.name}")
-    _tlog(f"[WindCoeff] met file: {met_fp.name}")
+    _tlog(f"[WindCoeff] ERA5 fsr file: {met_fp.name}")
 
-    z0_ref = _read_z0_from_met(met_fp, fallback=z0_ref)
+    z0_ref = _read_z0_from_fsr_at_raster_midpoint(
+        met_path=met_fp,
+        building_fp=building_fp,
+        fallback=z0_ref,
+    )
 
     return _compute_wind_full_domain(
         building_fp=building_fp,
