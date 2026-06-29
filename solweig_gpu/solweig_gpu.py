@@ -188,6 +188,7 @@ def build_inputs(
 
 def build_wind_ext_coeff(
     input_dir: PathLike,
+    era5_dir: PathLike,
     *,
     directions: Sequence[int] = tuple(range(0, 360, 30)),
     z0_ref: float = 0.03,
@@ -208,22 +209,35 @@ def build_wind_ext_coeff(
     """
     Build full-domain wind-extension coefficient rasters for SOLWEIG-GPU.
 
-    The function takes only the processed SOLWEIG input directory. It searches
-    that directory for the building raster, tree raster, and ERA5/met NetCDF file,
-    then writes full-domain WindCoeff_dir*.tif rasters into the same directory.
+    Parameters
+    ----------
+    input_dir
+        Directory containing the processed SOLWEIG raster inputs. The function
+        searches this directory for:
 
-    Expected files in input_dir:
-        Buildings.tif or Building_DSM.tif
-        Trees.tif
-        era5_*.nc
+            Buildings.tif or Building_DSM.tif
+            Trees.tif
 
-    Returns:
+        The output WindCoeff_dir*.tif rasters are written into this same directory.
+
+    era5_dir
+        Directory containing the ERA5 NetCDF file:
+
+            data_stream-oper_stepType-instant.nc
+
+        The function extracts fsr at the midpoint of the building raster and
+        averages it over all available times to use as the roughness length z0.
+
+    Returns
+    -------
+    str
         Path to the input/output directory.
     """
     from .wind_ext_coeff import calculate_wind_ext_coeff
 
     calculate_wind_ext_coeff(
         input_dir=input_dir,
+        era5_dir=era5_dir,
         directions=directions,
         z0_ref=z0_ref,
         hmin_b=hmin_b,
