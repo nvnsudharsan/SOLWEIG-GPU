@@ -782,43 +782,6 @@ def build_vectors_from_osm_gba(paths: Paths, bbox4326):
         gdf = _get_osm_polygons(bbox4326, tags)
         return _clip_polygons(gdf, poly_clip)
 
-    # Vegetation
-    gdf_green = _load_cached(paths.veg_fp, "OSM Vegetation")
-    if gdf_green is None or gdf_green.empty:
-        gdf_green = osm_polygons(OSM_TAGS_GREEN)
-        if gdf_green is not None and not gdf_green.empty:
-            gdf_green.to_file(paths.veg_fp, driver="GeoJSON")
-            tlog(f"OSM Vegetation: {len(gdf_green)} polys")
-
-    # Water (polygon-only)
-    gdf_water = _load_cached(paths.wat_fp, "OSM Water")
-    if gdf_water is None or gdf_water.empty:
-        try:
-            gdfw = _get_osm_polygons(bbox4326, OSM_TAGS_WATER)
-            if gdfw is not None and not gdfw.empty:
-                if gdfw.crs is None:
-                    gdfw = gdfw.set_crs("EPSG:4326")
-                gdfw = gdfw[gdfw.geom_type.isin(["Polygon", "MultiPolygon"])].copy()
-                gdf_water = _clip_polygons(gdfw, poly_clip)
-                if gdf_water is not None and not gdf_water.empty:
-                    gdf_water.to_file(paths.wat_fp, driver="GeoJSON")
-                    tlog(f"OSM Water: {len(gdf_water)} polys")
-        except Exception as e:
-            tlog(f"OSM water download failed: {e}")
-
-    # Impervious
-    imprv = _load_cached(paths.imprv_fp, "OSM Impervious")
-    if imprv is None or imprv.empty:
-        imprv_frames = []
-        for tg in (OSM_TAGS_IMPERVIOUS_ASPHALT, OSM_TAGS_IMPERVIOUS_PARKING):
-            g = osm_polygons(tg)
-            if g is not None and not g.empty:
-                imprv_frames.append(g[["geometry"]])
-        if imprv_frames:
-            imprv = gpd.GeoDataFrame(pd.concat(imprv_frames, ignore_index=True), crs="EPSG:4326")
-            imprv.to_file(paths.imprv_fp, driver="GeoJSON")
-            tlog(f"OSM Impervious: {len(imprv)} polys")
-
     # Buildings: prefer GBA WFS tiles, fallback to OSM buildings
     gdf_bld = _load_cached(paths.bld_fp, "Buildings")
     if gdf_bld is None or gdf_bld.empty:
