@@ -1672,8 +1672,6 @@ def run_create_inputs(
     km_buffer: float = DEFAULT_KM_BUFFER,
     km_reduced_lat: float = DEFAULT_KM_REDUCED_LAT,
     km_reduced_lon: float = DEFAULT_KM_REDUCED_LON,
-    year_start: int = DEFAULT_YEAR_START,
-    year_end: int = DEFAULT_YEAR_END,
     base_folder: str = None,
     resolution: float = DEFAULT_RES_M,
 ):
@@ -1697,8 +1695,6 @@ def run_create_inputs(
         Half-size of initial bounding box in km.
     km_reduced_lat, km_reduced_lon : float
         Shrink (N/S and E/W) from bbox for SOLWEIG domain in km.
-    year_start, year_end : int
-        Start/end year for meteorology (inclusive).
     base_folder : str, optional
         Workspace root. Defaults to DEFAULT_BASE (script directory or fixed path).
     resolution : float
@@ -1834,8 +1830,6 @@ def main():
     ap.add_argument("--km-buffer", type=float, default=DEFAULT_KM_BUFFER, help="Half-size of initial bbox in km")
     ap.add_argument("--km-reduced-lat", type=float, default=DEFAULT_KM_REDUCED_LAT, help="Shrink (N/S) from bbox for SOLWEIG in km")
     ap.add_argument("--km-reduced-lon", type=float, default=DEFAULT_KM_REDUCED_LON, help="Shrink (E/W) from bbox for SOLWEIG in km")
-    ap.add_argument("--year-start", type=int, default=DEFAULT_YEAR_START, help="Start year for meteorology (inclusive)")
-    ap.add_argument("--year-end", type=int, default=DEFAULT_YEAR_END, help="End year for meteorology (inclusive)")
     ap.add_argument("--base-folder", type=str, default=DEFAULT_BASE, help="Workspace base folder")
     ap.add_argument("--resolution", type=float, default=DEFAULT_RES_M, help="Reference grid resolution (meters)")
     args = ap.parse_args()
