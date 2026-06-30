@@ -882,7 +882,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     total_hours = int((end_time - start_time).total_seconds() // 3600) + 1
     time_array = [start_time + timedelta(hours=i) for i in range(total_hours)]
     
-    t2_list, wind_list, rh2_list, tsk_list = [], [], [], []
+    t2_list, wind_list, wdir_list, rh2_list, tsk_list = [], [], [], [], []
     swdown_list, glw_list, psfc_list = [], [], []
     lat, lon = None, None
     
@@ -900,11 +900,38 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
             #glw_list.append(ds['GLW'].values)          # Downwelling longwave radiation (W/m^2)
             psfc_list.append(psfc)
             
-            # Calculate wind speed from U10 and V10 components at 10 m.
+            # Calculate wind speed and wind direction from U10/V10.
+            # For WRF projected grids, rotate grid-relative winds to Earth-relative winds first.
             u10 = ds['U10'].values
             v10 = ds['V10'].values
-            wind_speed = np.sqrt(u10**2 + v10**2)
+            
+            if ('COSALPHA' in ds.variables) and ('SINALPHA' in ds.variables):
+                cosalpha = ds['COSALPHA'].values
+                sinalpha = ds['SINALPHA'].values
+            
+                # COSALPHA/SINALPHA may be either 2D or 3D depending on the file.
+                # Make them broadcastable to U10/V10 shape: (Time, south_north, west_east)
+                if cosalpha.ndim == 2:
+                    cosalpha = cosalpha[None, :, :]
+                    sinalpha = sinalpha[None, :, :]
+            
+                u10_earth = u10 * cosalpha - v10 * sinalpha
+                v10_earth = v10 * cosalpha + u10 * sinalpha
+            else:
+                # Fallback: use raw U10/V10 directly.
+                # This is okay only if they are already Earth-relative or grid rotation is negligible.
+                u10_earth = u10
+                v10_earth = v10
+            
+            wind_speed = np.sqrt(u10_earth**2 + v10_earth**2)
+            
+            # Meteorological wind direction:
+            # degrees clockwise from true north, direction FROM which wind blows.
+            wind_dir = (270.0 - np.degrees(np.arctan2(v10_earth, u10_earth))) % 360.0
+            wind_dir = np.where(wind_speed > 0.01, wind_dir, 0.0)
+            
             wind_list.append(wind_speed)
+            wdir_list.append(wind_dir)
             
             # Calculate relative humidity using the helper function.
             rh2 = calculate_rh(t2, q2, psfc)
@@ -917,6 +944,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     
     t2_array      = np.concatenate(t2_list, axis=0)
     wind_array    = np.concatenate(wind_list, axis=0)
+    wdir_array    = np.concatenate(wdir_list, axis=0)
     rh2_array     = np.concatenate(rh2_list, axis=0)
     tsk_array     = np.concatenate(tsk_list, axis=0)
     swdown_array  = np.concatenate(swdown_list, axis=0)
@@ -935,6 +963,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         
         t2_var    = nc.createVariable('T2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var  = nc.createVariable('WIND', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        wdir_var  = nc.createVariable('WDIR', 'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         tsk_var   = nc.createVariable('TSK', 'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
@@ -948,6 +977,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         
         t2_var.units = "K"
         wind_var.units = "m/s"
+        wdir_var.units = "degrees"
         rh2_var.units = "%"
         tsk_var.units = "K"
         swdown_var.units = "W/m^2"
@@ -960,6 +990,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         
         t2_var[:, :, :]    = t2_array
         wind_var[:, :, :]  = wind_array
+        wdir_var[:, :, :]  = wdir_array
         rh2_var[:, :, :]   = rh2_array
         tsk_var[:, :, :]   = tsk_array
         swdown_var[:, :, :] = swdown_array
