@@ -212,7 +212,7 @@ preprocess(
     dem_filename="DEM.tif",
     trees_filename="Trees.tif",
     landcover_filename="Landuse.tif",        # Use None if land cover is not used
-    windcoeff_folder="/path/to/solweig/input", # Use None if wind coefficients are not used
+    windcoeff_folder="/path/to/solweig/input", # Use None if wind coefficients are not used. Expects data_stream-oper_stepType-instant.nc in data_folder
     tile_size=400,
     overlap=0,
     use_own_met=False,
