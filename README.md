@@ -159,9 +159,139 @@ Please refer to the sample dataset to familiarize yourself with the expected inp
 
 ---
 
-### Examples with the provided sample data
+### Examples
 
-#### Example 1: WRF
+#### Data download (optional)
+
+Download the required data for SOLWEIG-GPU from near-globally available urban datasets. Google Earth Engine must be authenticated before this process.
+
+```python
+import os
+from solweig_gpu import build_inputs
+
+os.environ["EE_PROJECT"] = "your-gee-project-id"  # Your own GEE/GCP project ID
+
+base_path = build_inputs(
+    lat=latitude,
+    lon=longitude,
+    city="City name",
+    km_buffer=2,        # Kilometers from the central lat-lon to set the download extent
+    km_reduced_lat=1,
+    km_reduced_lon=1,
+    base_folder="/path/to/save/inputs",
+    resolution=2,       # Spatial resolution of the generated rasters in meters
+)
+
+print("SOLWEIG input folder:", base_path)
+```
+
+#### Compute direction-based wind coefficients (optional)
+
+This requires ERA5 data with the variable `Forecasted surface roughness`.
+
+```python
+from solweig_gpu import build_wind_ext_coeff
+
+build_wind_ext_coeff(
+    "/path/to/solweig/input",                            # Base path where input rasters are present
+    "/path/to/era5/data_stream-oper_stepType-instant.nc"  # ERA5 instantaneous file
+)
+```
+
+#### Example 1: Modular way of running the model with ERA5
+
+##### Step 1: Preprocess and create inputs in the required format
+
+```python
+from solweig_gpu import preprocess
+
+preprocess(
+    base_path="/path/to/solweig/input",
+    selected_date_str="2020-08-13",
+    building_dsm_filename="Building_DSM.tif",
+    dem_filename="DEM.tif",
+    trees_filename="Trees.tif",
+    landcover_filename="Landuse.tif",        # Use None if land cover is not used
+    windcoeff_folder="/path/to/solweig/input", # Use None if wind coefficients are not used
+    tile_size=400,
+    overlap=0,
+    use_own_met=False,
+    start_time="2020-08-13 06:00:00",
+    end_time="2020-08-14 05:00:00",
+    data_source_type="ERA5",
+    data_folder="/path/to/era5",
+    own_met_file=None,
+    preprocess_dir="/path/to/solweig/input",
+    use_uhi=True,  # Use only with ERA5. Calculates diagnostic urban heat island intensity.
+)
+```
+
+##### Step 2: Calculate wall height and aspect
+
+```python
+from solweig_gpu import run_walls_aspect
+
+run_walls_aspect("/path/to/solweig/input")
+```
+
+##### Step 3: Calculate the sky-view factor
+
+```python
+from solweig_gpu import calculate_svf
+
+calculate_svf(
+    base_path="/path/to/solweig/input",
+    patch_option=2,
+    overwrite=False,
+)
+```
+
+##### Step 4: Run the SOLWEIG-GPU model
+
+```python
+from solweig_gpu import run_utci_tiles
+
+run_utci_tiles(
+    base_path="/path/to/solweig/input",
+    preprocess_dir="/path/to/solweig/input",
+    selected_date_str="2020-08-13",
+    save_tmrt=True,
+    save_svf=False,
+    save_kup=False,
+    save_kdown=False,
+    save_lup=False,
+    save_ldown=False,
+    save_shadow=False,
+    save_wbgt=False,
+)
+```
+
+#### Example 2: Run the model end-to-end with ERA5
+
+```python
+from solweig_gpu import thermal_comfort
+
+thermal_comfort(
+    base_path="/path/to/solweig/input",
+    selected_date_str="2020-08-13",
+    building_dsm_filename="Building_DSM.tif",
+    dem_filename="DEM.tif",
+    trees_filename="Trees.tif",
+    landcover_filename="Landuse.tif",  # Use None if land cover is not used
+    ERA_5_z0_find=True,                 # False if wind coefficients are not used
+    tile_size=400,
+    overlap=0,
+    use_own_met=False,
+    start_time="2020-08-13 06:00:00",
+    end_time="2020-08-14 05:00:00",
+    data_source_type="ERA5",
+    data_folder="/path/to/era5",
+    use_uhi=True,
+    save_wbgt=True,
+)
+```
+
+#### Example: WRF
 
 ```python
 from solweig_gpu import thermal_comfort
@@ -192,11 +322,11 @@ thermal_comfort(
 ```
 
 * The model simulation date is `2020-08-13`
-* The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are the start and end times of wrfout in UTC. In local time, it is `2020-08-13 01:00:00` to `2020-08-13 23:00:00` (Austin, TX). UTC to local time conversion will be done   internally.
+* The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are the start and end times of wrfout in UTC. In local time, it is `2020-08-13 01:00:00` to `2020-08-13 23:00:00` (Austin, TX). UTC to local time conversion will be done internally.
 * The tile_size depends on the RAM of the GPU, but can be set to 1000 in the example.
 * overlap is set to 100 pixels, meaning the raster size will be 1100*1100 pixels. The additional 100 pixels are for shadow transfer between the tiles.
 
-#### Example 2: ERA5
+#### Example: Own File
 
 ```python
 from solweig_gpu import thermal_comfort
@@ -207,48 +337,16 @@ thermal_comfort(
     building_dsm_filename='Building_DSM.tif',
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
-    landcover_filename = None,
-    tile_size =1000,
-    overlap = 100,
-    use_own_met=False,
-    own_met_file='/path/to/met.txt',  #Placeholder as use_own_met=False
-    start_time='2020-08-13 06:00:00',
-    end_time=  '2020-08-13 23:00:00',
-    data_source_type='ERA5',
-    data_folder='/path/to/era5_or_wrfout',
-    save_tmrt=False, #True if you want to save TMRT, likewise below
-    save_svf=False,
-    save_kup=False,
-    save_kdown=False,
-    save_lup=False,
-    save_ldown=False,
-    save_shadow=False
-)
-```
-
-* For the ERA-5, the sample data provided is from `2020-08-13 06:00:00 UTC` to `2020-08-13 23:00:00 UTC`. So the simulation will run from `2020-08-13 01:00:00` to `2020-08-13 18:00:00` local time (Austin, TX)
-* Ony when ERA-5 data is used, the model can set the datetime automatically. For example, if the ERA-5 data are from `2020-08-13 00:00:00 UTC` to `2020-08-14 23:00:00 UTC` and the selected simulation date is `2020-08-13` along with start time of `2020-08-13 06:00:00 UTC` and end time of `2020-08-14 05:00:00 UTC`, the model will automatically process the data for the selected datetime provided there are ERA-5 data for those datetimes.
-
-#### Example 3: Own File
-
-```python
-from solweig_gpu import thermal_comfort
-thermal_comfort(
-    base_path='/path/to/input',
-    selected_date_str='2020-08-13',
-    building_dsm_filename='Building_DSM.tif',
-    dem_filename='DEM.tif',
-    trees_filename='Trees.tif',
-    landcover_filename = None,
-    tile_size =1000,
-    overlap = 100,
-    use_own_met= True,
+    landcover_filename=None,
+    tile_size=1000,
+    overlap=100,
+    use_own_met=True,
     own_met_file='/path/to/met.txt',
-    start_time='2020-08-13 06:00:00', # Placeholder
-    end_time=  '2020-08-13 23:00:00', # Placeholder
-    data_source_type='ERA5', # Placeholder
+    start_time='2020-08-13 06:00:00',  # Placeholder
+    end_time='2020-08-13 23:00:00',    # Placeholder
+    data_source_type='ERA5',           # Placeholder
     data_folder='/path/to/era5_or_wrfout', # Placeholder
-    save_tmrt=False, #True if you want to save TMRT, likewise below
+    save_tmrt=False,  # True if you want to save TMRT, likewise below
     save_svf=False,
     save_kup=False,
     save_kdown=False,
