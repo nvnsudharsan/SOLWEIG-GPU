@@ -614,13 +614,6 @@ def thermal_comfort(
     Returns:
         None
     """
-    if windcoeff_filename is not None and use_own_met:
-        print(
-            "[INFO] Wind coefficients are enabled. "
-            "Make sure your own met file contains Wd as column 23 "
-            "with meteorological wind-from direction: 0=N, 90=E, 180=S, 270=W."
-        )
-
     if ERA_5_z0_find:
         try:
             build_wind_ext_coeff(base_path, data_folder)
