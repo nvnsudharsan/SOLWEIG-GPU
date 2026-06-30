@@ -76,7 +76,7 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 - Surface pressure  
 - 10-meter U and V wind components  
 - Downwelling shortwave radiation (accumulated)  
-- Forecasted surface roughness  
+- Forecasted surface roughness (if wind extinction coefficients are to be calculated) 
 
 ---
 
@@ -370,6 +370,7 @@ thermal_comfort(
 - Keep `use_own_met=True` and provide the meteorological file through `own_met_file`.
 - Keep `use_uhi=False` for user-provided meteorological files.
 - If `ERA_5_z0_find=True`, SOLWEIG-GPU expects the ERA5 file `data_stream-oper_stepType-instant.nc` in `data_folder`. Because this example does not use ERA5 forcing, the safer default is `ERA_5_z0_find=False`.
+- If `ERA_5_z0_find=True`, wind directions should be available for each time step in the meteorological `.txt` file.
 
 ### Note for Windows Users
 On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
