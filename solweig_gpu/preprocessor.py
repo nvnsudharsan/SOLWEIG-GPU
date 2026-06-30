@@ -877,6 +877,11 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
 
     # Sort by timestamp, then by domain number for stable ordering
     wrf_files_sorted = sorted(wrf_files, key=lambda f: extract_datetime_strict(f))
+
+    wrf_files_sorted = [f for f in wrf_files_sorted if start_time <= extract_datetime_strict(f) <= end_time]
+
+    if not wrf_files_sorted:
+        raise ValueError("No WRF files found within requested time window.")
     
     # Generate the time array for the simulation period (hourly frequency)
     total_hours = int((end_time - start_time).total_seconds() // 3600) + 1
