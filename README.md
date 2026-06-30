@@ -379,28 +379,23 @@ import multiprocessing as mp
 
 def main():
     thermal_comfort(
-        base_path='/path/to/input',
-        selected_date_str="2020-08-13",
-        building_dsm_filename="Building_DSM.tif",
-        dem_filename="DEM.tif",
-        trees_filename="Trees.tif",
-        landcover_filename="Landcover.tif",
-        tile_size=1000,
-        overlap=100,
-        use_own_met=False,
-        own_met_file='/path/to/met.txt',  # placeholder; ignored when use_own_met=False
-        start_time="2020-08-13 06:00:00",
-        end_time="2020-08-14 05:00:00",
-        data_source_type="era5",
-        data_folder='/path/to/era5_or_wrfout',
-        save_tmrt=False,
-        save_svf=False,
-        save_kup=False,
-        save_kdown=False,
-        save_lup=False,
-        save_ldown=False,
-        save_shadow=False,
-    )
+    base_path="/path/to/solweig/input",
+    selected_date_str="2020-08-13",
+    building_dsm_filename="Building_DSM.tif",
+    dem_filename="DEM.tif",
+    trees_filename="Trees.tif",
+    landcover_filename="Landuse.tif",  # Use None if land cover is not used
+    ERA_5_z0_find=True,  # If True, expects data_stream-oper_stepType-instant.nc in data_folder
+    tile_size=400,
+    overlap=0,
+    use_own_met=False,
+    start_time="2020-08-13 06:00:00",
+    end_time="2020-08-14 05:00:00",
+    data_source_type="ERA5",
+    data_folder="/path/to/era5",
+    use_uhi=True,
+    save_wbgt=True,
+)
 
 if __name__ == "__main__":
     mp.freeze_support()
