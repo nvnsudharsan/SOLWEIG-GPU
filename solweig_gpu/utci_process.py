@@ -158,6 +158,59 @@ def extract_number_from_filename(filename):
     number = filename[13:-4] # change according to the naming of building DSM files
     return number
 
+def map_windcoeff_files_by_key(directory, extension=".tif"):
+    """
+    Map directional wind coefficient tiles by tile key.
+
+    Expected filenames:
+      WindCoeff_dir000_0_0.tif
+      WindCoeff_dir030_0_0.tif
+      ...
+      WindCoeff_dir330_0_0.tif
+
+    Returns:
+      {
+        "0_0": {
+            0:   "/.../WindCoeff_dir000_0_0.tif",
+            30:  "/.../WindCoeff_dir030_0_0.tif",
+            ...
+            330: "/.../WindCoeff_dir330_0_0.tif",
+        },
+        "0_1000": {...}
+      }
+    """
+    if not os.path.isdir(directory):
+        return {}
+
+    files = get_matching_files(directory, extension)
+    mapping = {}
+
+    pattern = re.compile(r"^WindCoeff_dir(\d{3})_(-?\d+)_(-?\d+)\.tif$")
+
+    for f in files:
+        m = pattern.match(f)
+        if not m:
+            continue
+
+        direction = int(m.group(1)) % 360
+        key = f"{m.group(2)}_{m.group(3)}"
+
+        mapping.setdefault(key, {})[direction] = os.path.join(directory, f)
+
+    return mapping
+    
+def nearest_wind_dir_30(wd):
+    """
+    Round meteorological wind direction to nearest 30-degree bin.
+
+    wd is wind FROM direction:
+      0=N, 90=E, 180=S, 270=W
+    """
+    if not np.isfinite(wd) or wd < 0:
+        return None
+
+    return int((np.floor(((wd % 360.0) + 15.0) / 30.0) * 30.0) % 360.0)
+
 def _svf_cache_paths_from_building_dsm(building_dsm_path: str, number: str):
     """
     Infer base_path/SVF cache paths from the Building_DSM tile path.
@@ -317,9 +370,39 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     dirwalls, dataset5 = load_raster_to_tensor(aspect_path)
           
     windcoeff = None
+    windcoeff_by_dir = None
     dataset6 = None
     dataset7 = None
-    if windcoeff_path is not None:
+
+    # windcoeff_path can now be:
+    #   None              -> no wind coefficient
+    #   str               -> legacy single WindCoeff tile
+    #   dict[int, str]    -> directional wind coefficient tiles for this tile
+    if isinstance(windcoeff_path, dict):
+        expected_dirs = list(range(0, 360, 30))
+        missing_dirs = [d for d in expected_dirs if d not in windcoeff_path]
+
+        if missing_dirs:
+            raise FileNotFoundError(
+                f"Tile {number} is missing directional wind coefficient files: "
+                + ", ".join(f"WindCoeff_dir{d:03d}_{number}.tif" for d in missing_dirs)
+            )
+
+        windcoeff_by_dir = {}
+
+        for d in expected_dirs:
+            coeff_tensor, _ = load_raster_to_tensor(windcoeff_path[d])
+
+            if coeff_tensor.shape != a.shape:
+                raise ValueError(
+                    f"Wind coefficient raster shape {tuple(coeff_tensor.shape)} for direction {d:03d} "
+                    f"does not match Building DSM shape {tuple(a.shape)}"
+                )
+
+            windcoeff_by_dir[d] = coeff_tensor
+
+    elif windcoeff_path is not None:
+        # Legacy single-raster mode
         windcoeff, dataset7 = load_raster_to_tensor(windcoeff_path)
 
         if windcoeff.shape != a.shape:
@@ -424,7 +507,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     buildings[buildings < 2.] = 1.
     buildings[buildings >= 2.] = 0.
     valid_mask = (buildings == 1)
-    if windcoeff is None:
+    if windcoeff is None and windcoeff_by_dir is None:
         windcoeff = torch.ones((rows, cols), device=device)
                     
     Knight = torch.zeros((rows, cols), device=device)
@@ -477,7 +560,12 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     radI = torch.tensor(met_file[:, 22], device=device)
     P = torch.tensor(met_file[:, 12], device=device)
     Ws = torch.tensor(met_file[:, 9], device=device)
-                    
+
+    if met_file.shape[1] > 23:
+        Wdirection = torch.tensor(met_file[:, 23], device=device)
+    else:
+        Wdirection = torch.full((met_file.shape[0],), -999.0, device=device)
+
     if met_file.shape[1] > 24:
         uhii = torch.tensor(met_file[:, 24], device=device)
     else:
@@ -588,7 +676,18 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         # Create matrices for meteorological parameters for the current time step
         RH_mat = torch.zeros((rows, cols), device=device) + RH[i]
         Tmrt_mat = torch.zeros((rows, cols), device=device) + Tmrt
-        va10m_mat = torch.zeros((rows, cols), device=device) + windcoeff * Ws[i]
+        if windcoeff_by_dir is not None:
+            wd_i = float(Wdirection[i].detach().cpu().item())
+            dir_bin = nearest_wind_dir_30(wd_i)
+
+            if dir_bin is None:
+                coeff_i = torch.ones((rows, cols), device=device)
+            else:
+                coeff_i = windcoeff_by_dir[dir_bin]
+        else:
+            coeff_i = windcoeff
+
+        va10m_mat = coeff_i * Ws[i]
         va10m_mat = torch.clamp(va10m_mat, min=0.15) #WGBT works for u > 0.15 m/s
         Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i] + uhii[i]
         #wind_factor = torch.pow(va10m_mat, -0.25)

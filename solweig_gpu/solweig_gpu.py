@@ -14,8 +14,10 @@ from typing import Optional, List
 
 # Lazy imports used below to avoid loading heavy deps at import time.
 
+from pathlib import Path
+from typing import Optional, List, Union, Sequence
 
-from typing import Optional, List
+PathLike = Union[str, Path]
 
 def preprocess(
     base_path: str,
@@ -24,7 +26,7 @@ def preprocess(
     dem_filename: str = 'DEM.tif',
     trees_filename: str = 'Trees.tif',
     landcover_filename: Optional[str] = None,
-    windcoeff_filename: Optional[str] = None,
+    windcoeff_folder: Optional[str] = None,
     tile_size: int = 3600,
     overlap: int = 20,
     use_own_met: bool = True,
@@ -43,32 +45,69 @@ def preprocess(
     :func:`run_walls_aspect` and :func:`run_utci_tiles` separately.
 
     Args:
-        base_path: Base directory; used to resolve relative raster paths.
-        selected_date_str: Simulation date 'YYYY-MM-DD'.
-        building_dsm_filename, dem_filename, trees_filename, landcover_filename,
+        base_path:
+            Base directory; used to resolve relative raster paths.
+
+        selected_date_str:
+            Simulation date 'YYYY-MM-DD'.
+
+        building_dsm_filename, dem_filename, trees_filename, landcover_filename:
+            Raster paths or filenames. Relative paths are resolved against base_path.
+
         windcoeff_filename:
-            Raster paths or filenames (relative to base_path or absolute).
-        tile_size: Tile size in pixels.
-        overlap: Overlap between tiles in pixels.
-        use_own_met: If True, use own_met_file; else use ERA5/WRF.
-        start_time, end_time: Required for ERA5/WRF (UTC 'YYYY-MM-DD HH:MM:SS').
-        data_source_type: 'ERA5' or 'wrfout' when use_own_met is False.
-        data_folder: Folder with ERA5/WRF NetCDF files when use_own_met is False.
-        own_met_file: Path to custom met file when use_own_met is True.
-        preprocess_dir: Directory for preprocessing outputs. Defaults to
-            ``{base_path}/processed_inputs``.
-        use_uhi: If True, use UHI-aware ERA5 processing and write UHI_CYCLE/uhii
+            Wind coefficient input. Can be:
+              - None: do not use wind coefficients
+              - folder path containing WindCoeff_dir*.tif
+              - glob pattern such as "WindCoeff_dir*.tif"
+              - single legacy wind coefficient raster
+
+            Relative paths are resolved against base_path.
+
+            For directional wind coefficients, the expected files are:
+              WindCoeff_dir000.tif
+              WindCoeff_dir030.tif
+              ...
+              WindCoeff_dir330.tif
+
+        tile_size:
+            Tile size in pixels.
+
+        overlap:
+            Overlap between tiles in pixels.
+
+        use_own_met:
+            If True, use own_met_file; else use ERA5/WRF.
+
+        start_time, end_time:
+            Required for ERA5/WRF, in UTC format 'YYYY-MM-DD HH:MM:SS'.
+
+        data_source_type:
+            'ERA5' or 'wrfout' when use_own_met is False.
+
+        data_folder:
+            Folder with ERA5/WRF NetCDF files when use_own_met is False.
+
+        own_met_file:
+            Path to custom met file when use_own_met is True.
+
+        preprocess_dir:
+            Directory for preprocessing outputs. Defaults to
+            '{base_path}/processed_inputs'.
+
+        use_uhi:
+            If True, use UHI-aware ERA5 processing and write UHI_CYCLE/uhii
             into generated metfiles when available. If False, use standard ERA5
             processing and write uhii = 0.0.
 
     Returns:
-        The path to the preprocessing directory (tiles and metfiles written there).
+        The path to the preprocessing directory.
     """
     import os
     from .preprocessor import ppr
 
     if preprocess_dir is None:
         preprocess_dir = os.path.join(base_path, "processed_inputs")
+
     os.makedirs(preprocess_dir, exist_ok=True)
 
     ppr(
@@ -77,7 +116,7 @@ def preprocess(
         dem_filename,
         trees_filename,
         landcover_filename,
-        windcoeff_filename,
+        windcoeff_folder,
         tile_size,
         overlap,
         selected_date_str,
@@ -90,6 +129,7 @@ def preprocess(
         preprocess_dir=preprocess_dir,
         use_uhi=use_uhi,
     )
+
     return preprocess_dir
 
 
@@ -100,8 +140,6 @@ def build_inputs(
     km_buffer: float = 8.0,
     km_reduced_lat: float = 3.0,
     km_reduced_lon: float = 1.0,
-    year_start: int = 2024,
-    year_end: int = 2025,
     base_folder: Optional[str] = None,
     resolution: float = 2.0,
 ) -> str:
@@ -140,12 +178,80 @@ def build_inputs(
         km_buffer=km_buffer,
         km_reduced_lat=km_reduced_lat,
         km_reduced_lon=km_reduced_lon,
-        year_start=year_start,
-        year_end=year_end,
         base_folder=base_folder,
         resolution=resolution,
     )
 
+def build_wind_ext_coeff(
+    input_dir: PathLike,
+    era5_dir: PathLike,
+    *,
+    directions: Sequence[int] = tuple(range(0, 360, 30)),
+    z0_ref: float = 0.03,
+    hmin_b: float = 1.0,
+    hmin_t: float = 1.0,
+    z_eval: float = 10.0,
+    zref: float = 10.0,
+    LAI_t: float = 2.0,
+    a0_t: float = 0.5,
+    a1_t: float = 0.4,
+    alpha_min_t: float = 0.2,
+    alpha_max_t: float = 2.5,
+    coeff_min: float = 0.1,
+    coeff_max: float = 1.0,
+    lp_min_open: float = 0.02,
+    max_workers: Optional[int] = None,
+) -> str:
+    """
+    Build full-domain wind-extension coefficient rasters for SOLWEIG-GPU.
+
+    Parameters
+    ----------
+    input_dir
+        Directory containing the processed SOLWEIG raster inputs. The function
+        searches this directory for:
+
+            Buildings.tif or Building_DSM.tif
+            Trees.tif
+
+        The output WindCoeff_dir*.tif rasters are written into this same directory.
+
+    era5_dir
+        Directory containing the ERA5 NetCDF file:
+
+            data_stream-oper_stepType-instant.nc
+
+        The function extracts fsr at the midpoint of the building raster and
+        averages it over all available times to use as the roughness length z0.
+
+    Returns
+    -------
+    str
+        Path to the input/output directory.
+    """
+    from .wind_ext_coeff import calculate_wind_ext_coeff
+
+    calculate_wind_ext_coeff(
+        input_dir=input_dir,
+        era5_dir=era5_dir,
+        directions=directions,
+        z0_ref=z0_ref,
+        hmin_b=hmin_b,
+        hmin_t=hmin_t,
+        z_eval=z_eval,
+        zref=zref,
+        LAI_t=LAI_t,
+        a0_t=a0_t,
+        a1_t=a1_t,
+        alpha_min_t=alpha_min_t,
+        alpha_max_t=alpha_max_t,
+        coeff_min=coeff_min,
+        coeff_max=coeff_max,
+        lp_min_open=lp_min_open,
+        max_workers=max_workers,
+    )
+
+    return str(Path(input_dir))
 
 def run_walls_aspect(preprocess_dir: str) -> None:
     """
@@ -302,7 +408,7 @@ def run_utci_tiles(
     import os
     import numpy as np
     import torch
-    from .utci_process import compute_utci, map_files_by_key
+    from .utci_process import compute_utci, map_files_by_key, map_windcoeff_files_by_key
 
     base_output_path = os.path.join(base_path, "output_folder")
     input_met = os.path.join(preprocess_dir, "metfiles")
@@ -318,7 +424,7 @@ def run_utci_tiles(
     tree_map = map_files_by_key(tree_dir, ".tif")
     dem_map = map_files_by_key(dem_dir, ".tif")
     landcover_map = map_files_by_key(landcover_dir, ".tif") if os.path.isdir(landcover_dir) else {}
-    windcoeff_map = map_files_by_key(windcoeff_dir, ".tif") if os.path.isdir(windcoeff_dir) else {}
+    windcoeff_map = map_windcoeff_files_by_key(windcoeff_dir, ".tif") if os.path.isdir(windcoeff_dir) else {}
     walls_map = map_files_by_key(walls_dir, ".tif")
     aspect_map = map_files_by_key(aspect_dir, ".tif")
     met_map = map_files_by_key(input_met, ".txt")
@@ -344,7 +450,7 @@ def run_utci_tiles(
         tree_path = tree_map[key]
         dem_path = dem_map[key]
         landcover_path = landcover_map.get(key) if landcover_map else None
-        windcoeff_path = windcoeff_map.get(key) if windcoeff_map else None
+        windcoeff_paths = windcoeff_map.get(key) if windcoeff_map else None
         walls_path = walls_map[key]
         aspect_path = aspect_map[key]
         met_file_path = met_map[key]
@@ -361,7 +467,7 @@ def run_utci_tiles(
             walls_path,
             aspect_path,
             landcover_path,
-            windcoeff_path,
+            windcoeff_paths,
             met_file_data,
             output_folder,
             key,
@@ -387,7 +493,7 @@ def thermal_comfort(
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
     landcover_filename: Optional[str] = None,
-    windcoeff_filename: Optional[str] = None,
+    ERA_5_z0_find = True,
     tile_size=3600,
     overlap=20,
     use_own_met=True,
@@ -412,36 +518,117 @@ def thermal_comfort(
     Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
 
     Args:
-        base_path (str): Base directory for outputs and relative raster paths.
-        selected_date_str (str): Simulation date in format 'YYYY-MM-DD'
-        building_dsm_filename (str): Building+terrain DSM path or filename.
-        dem_filename (str): DEM path or filename.
-        trees_filename (str): Vegetation DSM path or filename.
-        landcover_filename (str, optional): Land cover raster path or filename.
-        windcoeff_filename (str, optional): Wind coefficient raster path or filename.
-        tile_size (int): Tile size in pixels.
-        overlap (int): Overlap between tiles in pixels.
-        use_own_met (bool): Use custom meteorological file.
-        start_time (str, optional): Start datetime 'YYYY-MM-DD HH:MM:SS'
-        end_time (str, optional): End datetime 'YYYY-MM-DD HH:MM:SS'
-        data_source_type (str, optional): 'ERA5' or 'wrfout'
-        data_folder (str, optional): Folder containing ERA5/WRF NetCDF files
-        own_met_file (str, optional): Path to custom meteorological text file
-        use_uhi (bool): If True, use UHI-aware ERA5 processing and propagate
-            UHI_CYCLE into metfiles. If False, disable it and write uhii = 0.0.
-        save_tmrt (bool): Save mean radiant temperature output.
-        save_svf (bool): Save sky view factor output.
-        save_kup (bool): Save upward shortwave radiation.
-        save_kdown (bool): Save downward shortwave radiation.
-        save_lup (bool): Save upward longwave radiation.
-        save_ldown (bool): Save downward longwave radiation.
-        save_shadow (bool): Save shadow maps.
-        save_ta (bool): Save diagnostic Ta field.
-        save_wind (bool): Save diagnostic wind field.
+        base_path:
+            Base directory for outputs and relative raster paths.
+
+        selected_date_str:
+            Simulation date in format 'YYYY-MM-DD'.
+
+        building_dsm_filename:
+            Building+terrain DSM path or filename.
+
+        dem_filename:
+            DEM path or filename.
+
+        trees_filename:
+            Vegetation DSM path or filename.
+
+        landcover_filename:
+            Optional land cover raster path or filename.
+
+        windcoeff_filename:
+            Optional wind coefficient input. Can be:
+
+              - None:
+                    Do not use wind coefficients.
+
+              - Folder path:
+                    Folder containing directional wind coefficient rasters:
+                    WindCoeff_dir000.tif
+                    WindCoeff_dir030.tif
+                    ...
+                    WindCoeff_dir330.tif
+
+              - Glob pattern:
+                    Example: "WindCoeff_dir*.tif"
+
+              - Single legacy raster:
+                    Example: "WindCoeff.tif"
+
+            Relative paths are resolved against base_path.
+
+            If directional wind coefficients are provided, the metfile must contain
+            wind direction column Wd. For ERA5 processing, Wd is generated from
+            u10/v10 as meteorological wind-from direction:
+              0=N, 90=E, 180=S, 270=W.
+
+            During UTCI calculation, the model selects the nearest 30-degree
+            wind coefficient raster for each timestep.
+
+        tile_size:
+            Tile size in pixels.
+
+        overlap:
+            Overlap between tiles in pixels.
+
+        use_own_met:
+            Use custom meteorological file.
+
+        start_time:
+            Start datetime 'YYYY-MM-DD HH:MM:SS'.
+
+        end_time:
+            End datetime 'YYYY-MM-DD HH:MM:SS'.
+
+        data_source_type:
+            'ERA5' or 'wrfout'.
+
+        data_folder:
+            Folder containing ERA5/WRF NetCDF files.
+
+        own_met_file:
+            Path to custom meteorological text file.
+
+        use_uhi:
+            If True, use UHI-aware ERA5 processing and propagate UHI_CYCLE/uhii
+            into generated metfiles. If False, disable it and write uhii = 0.0.
+
+        save_tmrt:
+            Save mean radiant temperature output.
+
+        save_svf:
+            Save sky view factor output.
+
+        save_kup:
+            Save upward shortwave radiation.
+
+        save_kdown:
+            Save downward shortwave radiation.
+
+        save_lup:
+            Save upward longwave radiation.
+
+        save_ldown:
+            Save downward longwave radiation.
+
+        save_shadow:
+            Save shadow maps.
+
+        save_wbgt:
+            Save WBGT output.
 
     Returns:
         None
     """
+    if ERA_5_z0_find:
+        try:
+            build_wind_ext_coeff(base_path, data_folder)
+            windcoeff_folder = base_path
+        except:
+            print('Could not find ERA-5 file with roughness length')
+    else:
+        windcoeff_folder = None
+        
     preprocess_dir = preprocess(
         base_path=base_path,
         selected_date_str=selected_date_str,
@@ -449,7 +636,7 @@ def thermal_comfort(
         dem_filename=dem_filename,
         trees_filename=trees_filename,
         landcover_filename=landcover_filename,
-        windcoeff_filename=windcoeff_filename,
+        windcoeff_folder=windcoeff_folder,
         tile_size=tile_size,
         overlap=overlap,
         use_own_met=use_own_met,
@@ -463,7 +650,11 @@ def thermal_comfort(
 
     run_walls_aspect(preprocess_dir)
 
-    calculate_svf(preprocess_dir, patch_option=2, overwrite=False,)
+    calculate_svf(
+        preprocess_dir,
+        patch_option=2,
+        overwrite=False,
+    )
 
     run_utci_tiles(
         base_path=base_path,

@@ -279,44 +279,92 @@ def check_rasters(files):
 # =============================================================================
 # Function to tile a raster file into smaller chunks.
 # =============================================================================
-def create_tiles(infile, tilesize, overlap, tile_type, preprocess_dir):
+def _resolve_path(base_path, path_or_name):
+    if path_or_name is None:
+        return None
+    if os.path.isabs(path_or_name):
+        return path_or_name
+    return os.path.join(base_path, path_or_name)
+
+
+def find_windcoeff_files(base_path, windcoeff_filename):
     """
-    Tile a raster file into smaller chunks.
-
-    Parameters:
-        infile (str): Path to input raster.
-        tilesize (int): Size of each tile in pixels.
-        overlap (int): Number of pixels to overlap between tiles.
-        tile_type (str): Label to use for naming output tiles.
-        preprocess_dir (str): Directory to save tiles in the pre_processing_outputs folder.
-
-    Raises:
-        FileNotFoundError: If the input file is not found.
-        ValueError: If the overlap is not within the valid range.
+    windcoeff_filename can be:
+      - None: no wind coefficient
+      - folder path: read WindCoeff_dir*.tif inside it
+      - single file path: old behavior / fallback
+      - glob pattern: e.g. 'WindCoeff_dir*.tif'
     """
-    ds = gdal.Open(infile)
+    if windcoeff_filename is None:
+        return []
 
+    wind_path = _resolve_path(base_path, windcoeff_filename)
+
+    if os.path.isdir(wind_path):
+        files = sorted(glob.glob(os.path.join(wind_path, "WindCoeff_dir*.tif")))
+    elif any(ch in wind_path for ch in ["*", "?", "["]):
+        files = sorted(glob.glob(wind_path))
+    elif os.path.isfile(wind_path):
+        files = [wind_path]
+    else:
+        files = []
+
+    if not files:
+        raise FileNotFoundError(f"No wind coefficient files found from: {wind_path}")
+
+    dir_files = [
+        f for f in files
+        if re.search(r"WindCoeff_dir\d{3}\.tif$", os.path.basename(f))
+    ]
+
+    if dir_files:
+        files = sorted(dir_files)
+
+        found_dirs = []
+        for f in files:
+            m = re.search(r"WindCoeff_dir(\d{3})\.tif$", os.path.basename(f))
+            if m:
+                found_dirs.append(int(m.group(1)))
+
+        expected_dirs = list(range(0, 360, 30))
+        missing = sorted(set(expected_dirs) - set(found_dirs))
+
+        if missing:
+            raise FileNotFoundError(
+                "Missing directional wind coefficient rasters: "
+                + ", ".join(f"WindCoeff_dir{d:03d}.tif" for d in missing)
+            )
+
+    return files
+
+
+def create_tiles_to_folder(infile, tilesize, overlap, out_folder, tile_prefix, clear_folder=False):
+    """
+    Tile a raster into a specified folder using a specified filename prefix.
+
+    Example output:
+      out_folder/WindCoeff_dir030_0_0.tif
+    """
     if overlap < 0 or overlap >= tilesize:
         raise ValueError("overlap must be 0 ≤ overlap < tilesize")
-    
+
+    ds = gdal.Open(infile)
     if ds is None:
         raise FileNotFoundError(f"Could not open {infile}")
 
     width = ds.RasterXSize
     height = ds.RasterYSize
 
-    out_folder = os.path.join(preprocess_dir, tile_type)
-    if not os.path.exists(out_folder):
-        os.makedirs(out_folder)
-    else:
+    if clear_folder and os.path.exists(out_folder):
         shutil.rmtree(out_folder)
-        os.makedirs(out_folder)
+
+    os.makedirs(out_folder, exist_ok=True)
 
     if tilesize >= width and tilesize >= height:
-        outfile = os.path.join(out_folder, f"{tile_type}_0_0.tif")
-        options = gdal.TranslateOptions(format='GTiff', srcWin=[0, 0, width, height])
+        outfile = os.path.join(out_folder, f"{tile_prefix}_0_0.tif")
+        options = gdal.TranslateOptions(format="GTiff", srcWin=[0, 0, width, height])
         gdal.Translate(outfile, ds, options=options)
-        print(f"Created single tile (original file): {outfile}")
+        print(f"Created single tile: {outfile}")
         ds = None
         return
 
@@ -324,12 +372,68 @@ def create_tiles(infile, tilesize, overlap, tile_type, preprocess_dir):
         for j in range(0, height, tilesize):
             tile_width = min(tilesize + overlap, width - i)
             tile_height = min(tilesize + overlap, height - j)
-            outfile = os.path.join(out_folder, f"{tile_type}_{i}_{j}.tif")
-            options = gdal.TranslateOptions(format='GTiff', srcWin=[i, j, tile_width, tile_height])
+
+            outfile = os.path.join(out_folder, f"{tile_prefix}_{i}_{j}.tif")
+            options = gdal.TranslateOptions(
+                format="GTiff",
+                srcWin=[i, j, tile_width, tile_height]
+            )
             gdal.Translate(outfile, ds, options=options)
             print(f"Created tile: {outfile}")
-   
+
     ds = None
+
+
+def create_windcoeff_tiles(windcoeff_files, tilesize, overlap, preprocess_dir):
+    """
+    Tile all directional wind coefficient rasters into one folder:
+
+      preprocess_dir/WindCoeff/WindCoeff_dir000_i_j.tif
+      preprocess_dir/WindCoeff/WindCoeff_dir030_i_j.tif
+      ...
+    """
+    if not windcoeff_files:
+        print("No wind coefficient rasters provided. Skipping wind coefficient tiling.")
+        return
+
+    out_folder = os.path.join(preprocess_dir, "WindCoeff")
+
+    if os.path.exists(out_folder):
+        shutil.rmtree(out_folder)
+    os.makedirs(out_folder, exist_ok=True)
+
+    for wind_fp in windcoeff_files:
+        tile_prefix = os.path.splitext(os.path.basename(wind_fp))[0]
+
+        print(f"Creating wind coefficient tiles for {tile_prefix}...")
+        create_tiles_to_folder(
+            infile=wind_fp,
+            tilesize=tilesize,
+            overlap=overlap,
+            out_folder=out_folder,
+            tile_prefix=tile_prefix,
+            clear_folder=False
+        )
+
+def create_tiles(infile, tilesize, overlap, tile_type, preprocess_dir):
+    """
+    Tile a raster file into smaller chunks.
+
+    Normal rasters are written as:
+      preprocess_dir/DEM/DEM_i_j.tif
+      preprocess_dir/Trees/Trees_i_j.tif
+      etc.
+    """
+    out_folder = os.path.join(preprocess_dir, tile_type)
+
+    create_tiles_to_folder(
+        infile=infile,
+        tilesize=tilesize,
+        overlap=overlap,
+        out_folder=out_folder,
+        tile_prefix=tile_type,
+        clear_folder=True
+    )
 
 # =============================================================================
 # The function expects two files in folder_path:
@@ -451,6 +555,8 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
     u10 = ds_instant['u10'].values
     v10 = ds_instant['v10'].values
     wind_speeds = np.sqrt(u10**2 + v10**2)
+    wind_dirs = (270.0 - np.degrees(np.arctan2(v10, u10))) % 360.0
+    wind_dirs = np.where(wind_speeds > 0.01, wind_dirs, 0.0)
 
     # Hourly totals (J m^-2 per hour) → W m^-2 by /3600
     shortwave_radiation = (ds_accum['ssrd'].values / 3600.0).astype(np.float32)
@@ -488,6 +594,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         psfc_var   = nc.createVariable('PSFC',   'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var    = nc.createVariable('RH2',    'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var   = nc.createVariable('WIND',   'f4', ('time', 'lat', 'lon'), zlib=True)
+        wdir_var   = nc.createVariable('WDIR',   'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var = nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
         # glw_var  = nc.createVariable('GLW',    'f4', ('time', 'lat', 'lon'), zlib=True)
 
@@ -500,6 +607,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         psfc_var.units = "kPa"     # (values are Pa, kept to match your outputs)
         rh2_var.units = "%"
         wind_var.units = "m/s"
+        wdir_var.units = "degrees"
         swdown_var.units = "W/m^2"
         # glw_var.units = "W/m^2"
 
@@ -526,6 +634,12 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
                                     'latitude': ds_instant['latitude'],
                                     'longitude': ds_instant['longitude']}
                            ).transpose('time','latitude','longitude').values.astype('float32')
+        wdir = xr.DataArray(wind_dirs,
+                    dims=('time','latitude','longitude'),
+                    coords={'time': times,
+                            'latitude': ds_instant['latitude'],
+                            'longitude': ds_instant['longitude']}
+                   ).transpose('time','latitude','longitude').values.astype('float32')        
         swd = xr.DataArray(shortwave_radiation,
                            dims=('time','latitude','longitude'),
                            coords={'time': times,
@@ -537,6 +651,7 @@ def process_era5_data(start_time, end_time, folder_path, output_file="Outfile.nc
         psfc_var[:, :, :]   = sp
         rh2_var[:, :, :]    = rh
         wind_var[:, :, :]   = wind
+        wdir_var[:, :, :]   = wdir
         swdown_var[:, :, :] = swd
         # glw_var[:, :, :]  = ...
 
@@ -588,6 +703,8 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
     u10 = ds_instant['u10'].values
     v10 = ds_instant['v10'].values
     wind_speeds = np.sqrt(u10**2 + v10**2)
+    wind_dirs = (270.0 - np.degrees(np.arctan2(v10, u10))) % 360.0
+    wind_dirs = np.where(wind_speeds > 0.01, wind_dirs, 0.0).astype(np.float32)
 
     shortwave_radiation = (ds_accum['ssrd'].values / 3600.0).astype(np.float32)
 
@@ -626,6 +743,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
     u10 = u10[keep_idx, :, :]
     v10 = v10[keep_idx, :, :]
     wind_speeds = wind_speeds[keep_idx, :, :]
+    wind_dirs = wind_dirs[keep_idx, :, :]
     shortwave_radiation = shortwave_radiation[keep_idx, :, :]
     relative_humidities = relative_humidities[keep_idx, :, :]
     uhi_cycle = uhi_cycle[keep_idx, :, :]
@@ -643,6 +761,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         psfc_var   = nc.createVariable('PSFC',      'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var    = nc.createVariable('RH2',       'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var   = nc.createVariable('WIND',      'f4', ('time', 'lat', 'lon'), zlib=True)
+        wdir_var   = nc.createVariable('WDIR',      'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var = nc.createVariable('SWDOWN',    'f4', ('time', 'lat', 'lon'), zlib=True)
         uhi_var    = nc.createVariable('UHI_CYCLE', 'f4', ('time', 'lat', 'lon'), zlib=True)
 
@@ -654,6 +773,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         psfc_var.units = "Pa"
         rh2_var.units = "%"
         wind_var.units = "m/s"
+        wdir_var.units = "degrees"
         swdown_var.units = "W/m^2"
         uhi_var.units = "K"
 
@@ -667,6 +787,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         sp = surface_pressures.astype('float32')
         rh = relative_humidities.astype('float32')
         wind = wind_speeds.astype('float32')
+        wdir = wind_dirs.astype('float32')
         swd = shortwave_radiation.astype('float32')
         uhi = uhi_cycle.astype('float32')
 
@@ -674,6 +795,7 @@ def process_era5_data_uhi(start_time, end_time, folder_path, output_file="Outfil
         psfc_var[:, :, :]   = sp
         rh2_var[:, :, :]    = rh
         wind_var[:, :, :]   = wind
+        wdir_var[:, :, :]   = wdir
         swdown_var[:, :, :] = swd
         uhi_var[:, :, :]    = uhi
         
@@ -755,12 +877,17 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
 
     # Sort by timestamp, then by domain number for stable ordering
     wrf_files_sorted = sorted(wrf_files, key=lambda f: extract_datetime_strict(f))
+
+    wrf_files_sorted = [f for f in wrf_files_sorted if start_time <= extract_datetime_strict(f) <= end_time]
+
+    if not wrf_files_sorted:
+        raise ValueError("No WRF files found within requested time window.")
     
     # Generate the time array for the simulation period (hourly frequency)
     total_hours = int((end_time - start_time).total_seconds() // 3600) + 1
     time_array = [start_time + timedelta(hours=i) for i in range(total_hours)]
     
-    t2_list, wind_list, rh2_list, tsk_list = [], [], [], []
+    t2_list, wind_list, wdir_list, rh2_list, tsk_list = [], [], [], [], []
     swdown_list, glw_list, psfc_list = [], [], []
     lat, lon = None, None
     
@@ -778,11 +905,38 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
             #glw_list.append(ds['GLW'].values)          # Downwelling longwave radiation (W/m^2)
             psfc_list.append(psfc)
             
-            # Calculate wind speed from U10 and V10 components at 10 m.
+            # Calculate wind speed and wind direction from U10/V10.
+            # For WRF projected grids, rotate grid-relative winds to Earth-relative winds first.
             u10 = ds['U10'].values
             v10 = ds['V10'].values
-            wind_speed = np.sqrt(u10**2 + v10**2)
+            
+            if ('COSALPHA' in ds.variables) and ('SINALPHA' in ds.variables):
+                cosalpha = ds['COSALPHA'].values
+                sinalpha = ds['SINALPHA'].values
+            
+                # COSALPHA/SINALPHA may be either 2D or 3D depending on the file.
+                # Make them broadcastable to U10/V10 shape: (Time, south_north, west_east)
+                if cosalpha.ndim == 2:
+                    cosalpha = cosalpha[None, :, :]
+                    sinalpha = sinalpha[None, :, :]
+            
+                u10_earth = u10 * cosalpha - v10 * sinalpha
+                v10_earth = v10 * cosalpha + u10 * sinalpha
+            else:
+                # Fallback: use raw U10/V10 directly.
+                # This is okay only if they are already Earth-relative or grid rotation is negligible.
+                u10_earth = u10
+                v10_earth = v10
+            
+            wind_speed = np.sqrt(u10_earth**2 + v10_earth**2)
+            
+            # Meteorological wind direction:
+            # degrees clockwise from true north, direction FROM which wind blows.
+            wind_dir = (270.0 - np.degrees(np.arctan2(v10_earth, u10_earth))) % 360.0
+            wind_dir = np.where(wind_speed > 0.01, wind_dir, 0.0)
+            
             wind_list.append(wind_speed)
+            wdir_list.append(wind_dir)
             
             # Calculate relative humidity using the helper function.
             rh2 = calculate_rh(t2, q2, psfc)
@@ -795,6 +949,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     
     t2_array      = np.concatenate(t2_list, axis=0)
     wind_array    = np.concatenate(wind_list, axis=0)
+    wdir_array    = np.concatenate(wdir_list, axis=0)
     rh2_array     = np.concatenate(rh2_list, axis=0)
     tsk_array     = np.concatenate(tsk_list, axis=0)
     swdown_array  = np.concatenate(swdown_list, axis=0)
@@ -813,6 +968,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         
         t2_var    = nc.createVariable('T2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         wind_var  = nc.createVariable('WIND', 'f4', ('time', 'lat', 'lon'), zlib=True)
+        wdir_var  = nc.createVariable('WDIR', 'f4', ('time', 'lat', 'lon'), zlib=True)
         rh2_var   = nc.createVariable('RH2', 'f4', ('time', 'lat', 'lon'), zlib=True)
         tsk_var   = nc.createVariable('TSK', 'f4', ('time', 'lat', 'lon'), zlib=True)
         swdown_var= nc.createVariable('SWDOWN', 'f4', ('time', 'lat', 'lon'), zlib=True)
@@ -826,6 +982,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         
         t2_var.units = "K"
         wind_var.units = "m/s"
+        wdir_var.units = "degrees"
         rh2_var.units = "%"
         tsk_var.units = "K"
         swdown_var.units = "W/m^2"
@@ -838,6 +995,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
         
         t2_var[:, :, :]    = t2_array
         wind_var[:, :, :]  = wind_array
+        wdir_var[:, :, :]  = wdir_array
         rh2_var[:, :, :]   = rh2_array
         tsk_var[:, :, :]   = tsk_array
         swdown_var[:, :, :] = swdown_array
@@ -938,7 +1096,8 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
         "Td": "T2",           # K -> °C
         "press": "PSFC",      # Pa -> kPa
         "Kdn": "SWDOWN",
-        "uhii": "UHI_CYCLE"   # optional UHI term
+        "Wd": "WDIR",         # meteorological wind direction, wind FROM direction
+        "uhii": "UHI_CYCLE"
     }
 
     fixed_values = {
@@ -1109,7 +1268,42 @@ def process_metfiles(netcdf_file, raster_folder, base_path, selected_date_str, p
                     row.append(-999)
 
             row.append(fixed_values["rain"])
-            row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir", "Wd"]])
+            row.extend([fixed_values[key] for key in ["snow", "ldown", "fcld", "wuh", "xsmd", "lai_hr", "Kdiff", "Kdir"]])
+            
+            wd_value = -999.0
+            var_name = var_map["Wd"]
+
+            if var_name in dataset.variables:
+                try:
+                    data_array = dataset.variables[var_name][t, :, :]
+                    data_array = np.asanyarray(data_array)
+
+                    if np.ma.isMaskedArray(data_array):
+                        data_array = np.where(data_array.mask, np.nan, data_array.data)
+
+                    if use_nn:
+                        _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                        ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                        wd_value = float(data_array[ii, jj])
+                    else:
+                        masked_data = np.where(inside_mask, data_array, np.nan)
+                        wd_value = float(np.nanmean(masked_data)) if np.any(~np.isnan(masked_data)) else np.nan
+
+                        if not np.isfinite(wd_value):
+                            _, idx_nn = tree.query([lon_center, lat_center], k=1)
+                            ii, jj = np.unravel_index(idx_nn, (ny, nx))
+                            wd_value = float(data_array[ii, jj])
+
+                    if np.isfinite(wd_value):
+                        wd_value = wd_value % 360.0
+                    else:
+                        wd_value = -999.0
+
+                except Exception as e:
+                    print(f"Sampling error for {var_name} at time {t}: {e}")
+                    wd_value = -999.0
+
+            row.append(wd_value)
 
             # Add uhii at the end
             uhii_value = 0.0
@@ -1242,13 +1436,13 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
     trees_path = os.path.join(base_path, trees_filename)
 
     landcover_path = None
-    windcoeff_path = None
+    landcover_path = None
+    windcoeff_files = []
 
     if landcover_filename is not None:
-        landcover_path = os.path.join(base_path, landcover_filename)
+        landcover_path = _resolve_path(base_path, landcover_filename)
 
-    if windcoeff_filename is not None:
-        windcoeff_path = os.path.join(base_path, windcoeff_filename)
+    windcoeff_files = find_windcoeff_files(base_path, windcoeff_filename)
 
     # Check that all rasters have matching dimensions, pixel size, and CRS.
     try:
@@ -1257,8 +1451,9 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         if landcover_path is not None:
             raster_list.append(landcover_path)
 
-        if windcoeff_path is not None:
-            raster_list.append(windcoeff_path)
+        # Check all directional wind coefficient rasters too
+        if windcoeff_files:
+            raster_list.extend(windcoeff_files)
 
         check_rasters(raster_list)
 
@@ -1275,12 +1470,16 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
     if landcover_path is not None:
         rasters["Landcover"] = landcover_path
 
-    if windcoeff_path is not None:
-        rasters["WindCoeff"] = windcoeff_path
-
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")
         create_tiles(raster, tile_size, overlap, tile_type, preprocess_dir)
+
+    # Directional wind coefficient rasters are handled separately
+    # so the 12 files do not overwrite each other.
+    if windcoeff_files:
+        create_windcoeff_tiles(windcoeff_files, tile_size, overlap, preprocess_dir)
+    else:
+        print("Wind coefficient not used; skipping WindCoeff tiles.")
 
     # For metfiles processing, we use the DEM tiles folder.
     dem_tiles_folder = os.path.join(preprocess_dir, "DEM")
