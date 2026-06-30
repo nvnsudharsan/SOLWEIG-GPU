@@ -21,6 +21,8 @@
 
 **Cite this work as** Kamath, H. G., Sudharsan, N., Singh, M., Wallenberg, N., Lindberg, F., & Niyogi, D. (2026). SOLWEIG-GPU: GPU-Accelerated Thermal Comfort Modeling Framework for Urban Digital Twins. Journal of Open Source Software, 11(118), 9535. https://doi.org/10.21105/joss.09535
 
+Zonato, A., Kamath, H.G., Sudharsan, N., Monaco, L., Kittner, J., Wolf, L., Demuzere, M.A., Middel, A., Bechtel, B. and Milelli, M., 2026. GLIDE-SOL: A GPU-accelerated Global Lightweight Infrastructure for Diagnostic Environmental Modeling with SOLWEIG. EGUsphere, 2026, pp.1-30.
+
 **SOLWEIG** was originally developed by Dr. Fredrik Lindberg's group. Journal reference: Lindberg, F., Holmer, B. & Thorsson, S. SOLWEIG 1.0 – Modelling spatial variations of 3D radiant fluxes and mean radiant temperature in complex urban settings. *Int J Biometeorol* 52, 697–713 (2008). https://doi.org/10.1007/s00484-008-0162-7
 
 **SOLWEIG GPU** code is an extension of the original **SOLWEIG** Python model that is part of the Urban Multi-scale Environmental Predictor (UMEP). GitHub code: https://github.com/UMEP-dev/UMEP  
