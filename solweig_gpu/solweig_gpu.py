@@ -623,9 +623,12 @@ def thermal_comfort(
 
     if ERA_5_z0_find:
         try:
-            build_wind_ext_coeff(base_path, r'C:\Users\hk25639\Desktop\Andrea\Test\ERA-5', data_folder)
+            build_wind_ext_coeff(base_path, data_folder)
+            windcoeff_folder = base_path
         except:
             print('Could not find ERA-5 file with roughness length')
+    else:
+        windcoeff_folder = None
         
     preprocess_dir = preprocess(
         base_path=base_path,
