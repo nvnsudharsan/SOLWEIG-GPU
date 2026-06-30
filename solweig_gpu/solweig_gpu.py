@@ -489,7 +489,7 @@ def thermal_comfort(
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
     landcover_filename: Optional[str] = None,
-    windcoeff_folder: Optional[str] = None,
+    ERA_5_z0_find = True,
     tile_size=3600,
     overlap=20,
     use_own_met=True,
@@ -621,6 +621,12 @@ def thermal_comfort(
             "with meteorological wind-from direction: 0=N, 90=E, 180=S, 270=W."
         )
 
+    if ERA_5_z0_find:
+        try:
+            build_wind_ext_coeff(base_path, r'C:\Users\hk25639\Desktop\Andrea\Test\ERA-5', data_folder)
+        except:
+            print('Could not find ERA-5 file with roughness length')
+        
     preprocess_dir = preprocess(
         base_path=base_path,
         selected_date_str=selected_date_str,
