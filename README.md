@@ -331,7 +331,7 @@ thermal_comfort(
 - The start and end dates provided to the model are `2020-08-13 06:00:00 UTC` and `2020-08-14 05:00:00 UTC`, respectively. These are the start and end times of the WRF output in UTC. In local time, this corresponds to `2020-08-13 01:00:00` to `2020-08-13 23:00:00` for Austin, TX. UTC to local time conversion is handled internally.
 - The `tile_size` depends on the RAM available on the GPU. The value can be reduced for lower-memory GPUs.
 - The `overlap` controls the additional pixels used for shadow transfer between neighboring tiles. For example, with `tile_size=3600` and `overlap=20`, the processed tile size becomes `3620 × 3620` pixels.
-- If `ERA_5_z0_find=True`, SOLWEIG-GPU calculates wind-extension coefficients and expects the ERA5 file `data_stream-oper_stepType-instant.nc` to be available in `data_folder`. If `data_folder` points to WRF output files, keep `ERA_5_z0_find=False`.
+- If `ERA_5_z0_find=True`, SOLWEIG-GPU calculates wind-extension coefficients and expects the ERA5 file `data_stream-oper_stepType-instant.nc` to be available in `data_folder`. If `data_folder` points to WRF output files, keep `data_stream-oper_stepType-instant.nc` in that folder.
 
 #### Example 4: Own File
 
