@@ -23,6 +23,7 @@
 
 - Modular code to calculate wall and aspect, sky-view factor, and TMRT/UTCI
 - Ability to compute wet bulb globe temperature (WBGT)
+- Bug fixes
 - Implements GLIDE-SOL (Zonato et al., 2026) features:
   - Download and process the required input datasets
   - Wind direction based wind-extension coefficient calculation (requires ERA5 data)
