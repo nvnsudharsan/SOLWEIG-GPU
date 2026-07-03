@@ -55,6 +55,7 @@ for _mod, _pip in [
 ]:
     _ensure(_mod, _pip)
 import ee
+import os
 import geemap
 import geopandas as gpd
 import numpy as np
@@ -70,7 +71,8 @@ from rasterio.transform import from_origin
 from rasterio.warp import Resampling, reproject
 from shapely.geometry import box
 import xarray as xr
-from scipy.ndimage import uniform_filter, distance_transform_edt, maximum_filter, gaussian_filter
+from scipy.ndimage import uniform_filter, distance_transform_edt, maximum_filter, gaussian_filter, rotate, label,find_objects
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Force GeoPandas to use Fiona engine for IO to avoid pyogrio/PROJ data issues
 try:
@@ -151,7 +153,7 @@ def build_paths(base: Path, city: str) -> Paths:
         dem_ras=out_dir / "DEM.tif",
         dsm_plus_ras=out_dir / "Building_DSM.tif",
         lcz_ras=out_dir / "LCZ.tif",
-        wind_coeff_ras=out_dir / "WindCoeff.tif",
+        wind_coeff_ras=out_dir / "WindCoeff_dir000.tif",
     )
 
 # ------------------------------- Config ------------------------------------- #
@@ -780,43 +782,6 @@ def build_vectors_from_osm_gba(paths: Paths, bbox4326):
         gdf = _get_osm_polygons(bbox4326, tags)
         return _clip_polygons(gdf, poly_clip)
 
-    # Vegetation
-    gdf_green = _load_cached(paths.veg_fp, "OSM Vegetation")
-    if gdf_green is None or gdf_green.empty:
-        gdf_green = osm_polygons(OSM_TAGS_GREEN)
-        if gdf_green is not None and not gdf_green.empty:
-            gdf_green.to_file(paths.veg_fp, driver="GeoJSON")
-            tlog(f"OSM Vegetation: {len(gdf_green)} polys")
-
-    # Water (polygon-only)
-    gdf_water = _load_cached(paths.wat_fp, "OSM Water")
-    if gdf_water is None or gdf_water.empty:
-        try:
-            gdfw = _get_osm_polygons(bbox4326, OSM_TAGS_WATER)
-            if gdfw is not None and not gdfw.empty:
-                if gdfw.crs is None:
-                    gdfw = gdfw.set_crs("EPSG:4326")
-                gdfw = gdfw[gdfw.geom_type.isin(["Polygon", "MultiPolygon"])].copy()
-                gdf_water = _clip_polygons(gdfw, poly_clip)
-                if gdf_water is not None and not gdf_water.empty:
-                    gdf_water.to_file(paths.wat_fp, driver="GeoJSON")
-                    tlog(f"OSM Water: {len(gdf_water)} polys")
-        except Exception as e:
-            tlog(f"OSM water download failed: {e}")
-
-    # Impervious
-    imprv = _load_cached(paths.imprv_fp, "OSM Impervious")
-    if imprv is None or imprv.empty:
-        imprv_frames = []
-        for tg in (OSM_TAGS_IMPERVIOUS_ASPHALT, OSM_TAGS_IMPERVIOUS_PARKING):
-            g = osm_polygons(tg)
-            if g is not None and not g.empty:
-                imprv_frames.append(g[["geometry"]])
-        if imprv_frames:
-            imprv = gpd.GeoDataFrame(pd.concat(imprv_frames, ignore_index=True), crs="EPSG:4326")
-            imprv.to_file(paths.imprv_fp, driver="GeoJSON")
-            tlog(f"OSM Impervious: {len(imprv)} polys")
-
     # Buildings: prefer GBA WFS tiles, fallback to OSM buildings
     gdf_bld = _load_cached(paths.bld_fp, "Buildings")
     if gdf_bld is None or gdf_bld.empty:
@@ -1334,63 +1299,6 @@ def _coeff_at_z_buildings(mean_heights, lambdaf,
 
     return np.clip(C, None, clamp_max)
 
-# =========================================================
-# Trees: coefficient at z (z_ref == z_eval)
-# =========================================================
-def _coeff_at_z_trees(H_raw, H_mean, lp_t, *,
-                      z_eval=10.0, zref=10.0, z0_ref=0.7,
-                      LAI=4.0, a0=0.5, a1=0.2,
-                      alpha_min=0.6, alpha_max=3.5,
-                      hmin=1.0, lp_min_open=0.0,
-                      clamp=(0.01, 1.5)):
-    """Window-based vegetation coefficient without pixel overrides."""
-    if H_mean is not None:
-        Hm = np.asarray(H_mean, dtype=np.float32)
-    else:
-        Hm = np.asarray(H_raw, dtype=np.float32)
-    lam_eff = np.clip(np.asarray(lp_t, dtype=np.float32), 0.0, 1.0)
-    z = float(z_eval)
-
-    clamp_min, clamp_max = clamp
-    C = np.ones_like(Hm, dtype=np.float32)
-
-    active = np.isfinite(Hm) & np.isfinite(lam_eff) & (lam_eff > lp_min_open)
-    if not np.any(active):
-        return C
-
-    den_ref = math.log(max(z, 1.01 * z0_ref) / max(z0_ref, 1e-6))
-    if den_ref == 0:
-        den_ref = 1e-6
-
-    lai_eff = LAI * lam_eff
-    alpha = np.clip(a0 + a1 * lai_eff, alpha_min, alpha_max).astype(np.float32)
-
-    inside = active & (Hm > z)
-    outside = active & (~inside)
-
-    if np.any(inside):
-        H_i = np.maximum(Hm[inside], 1e-6)
-        z0_i = np.maximum(0.1 * H_i, 0.05)
-        d_i = 0.7 * H_i
-        ratio_top = np.maximum((H_i - d_i) / z0_i, 1.01)
-        corr = np.log(ratio_top) / den_ref
-        frac = np.maximum(0.0, 1.0 - (z / H_i))
-        atten = np.exp(-alpha[inside] * frac)
-        C_in = atten * corr
-        C[inside] = C_in.astype(np.float32)
-
-    if np.any(outside):
-        H_o = np.maximum(Hm[outside], 1e-6)
-        z0_o = np.maximum(0.1 * H_o, 0.05)
-        d_o = 0.7 * H_o
-        ratio = (z - d_o) / z0_o
-        ratio = np.where(ratio <= 1.0, 1.01, ratio)
-        num = np.log(ratio)
-        C_out = num / den_ref
-        C[outside] = C_out.astype(np.float32)
-
-    return np.clip(C, clamp_min, clamp_max)
-
 # ------------------- Fill missing values ------------------- #
 def _fill_nearest(arr, fill_value=1.0):
     """
@@ -1408,151 +1316,7 @@ def _fill_nearest(arr, fill_value=1.0):
     filled = out[tuple(idx)]
     result = np.where(valid, out, filled)
     return result
-
-# =================== Main computation (z = 10 m) =================== #
-def compute_wind_coeff(paths, win_m=100.0, smooth_m=250.0, hmin_b=1.0, hmin_t=1.0,
-                       z_eval=10.0, zref=10.0, z0_ref=0.7,
-                       # Vegetation alpha parameters (kept for _coeff_at_z_trees)
-                       LAI_t=2.0, a0_t=0.5, a1_t=0.4,
-                       alpha_min_t=0.2, alpha_max_t=2.5,
-                       coeff_min=0.01, coeff_max=1.00, lp_min_open=0.02):
-    """
-    Build wind reduction coefficients at height `z_eval` using *moving* windows:
-      • λp and H_mean computed with sliding uniform windows of ~100 m;
-      • C_buildings and C_trees computed separately;
-      • each set to 1 where its own λp ≤ 0.02;
-      • total coefficient = C_buildings × C_trees;
-      • each component is smoothed separately with a *moving* Gaussian window equivalent to ~200 m (configurable via smooth_m; ±3σ ≈ smooth_m), then multiplied to obtain the total.
-    """
-    import numpy as np
-    import rasterio
-
-    # 1) Load aligned rasters
-    if not paths.bld_ras.exists() or not paths.tree_ras.exists():
-        return
-
-    with rasterio.open(paths.bld_ras) as src_b:
-        B = src_b.read(1, masked=True).filled(np.nan).astype(np.float32)
-        transform = src_b.transform
-        meta_ref = src_b.profile
-    with rasterio.open(paths.tree_ras) as src_t:
-        T = src_t.read(1, masked=True).filled(np.nan).astype(np.float32)
-        if src_t.shape != B.shape:
-            raise ValueError("Trees raster shape differs from Buildings raster")
-
-    # pixel size → window (odd integer)
-    px = abs(transform.a)
-    ws = max(1, int(round(win_m / max(px, 1e-6))))
-    if ws % 2 == 0:
-        ws += 1
-
-    # 2) Basic masks and cutoff by minimal heights
-    Hb = np.where(np.isfinite(B) & (B >= hmin_b), B, 0.0)
-    Ht = np.where(np.isfinite(T) & (T >= hmin_t), T, 0.0)
-    Mb = Hb > 0
-    Mt = Ht > 0
-
-    # 3) Moving-window stats (λp, H_mean) for buildings and trees
-    lp_b, Hb_mean = _win_stats(Mb, Hb, ws)
-    lp_t, Ht_mean = _win_stats(Mt, Ht, ws)
-
-    # 4) Frontal index for buildings (λf) from edges
-    lf_b = _lambdaf_edges(Mb, Hb_mean, ws, px)
-
-    # 5) Coefficients at z (inside/outside handled inside the functions)
-    Cb = _coeff_at_z_buildings(
-        Hb_mean,lf_b,
-        z_eval=z_eval, zref=zref, z0_ref=z0_ref,
-        lp_min_open=lp_min_open, clamp=(coeff_min, coeff_max), H_raw_local=Hb,
-    ).astype(np.float32)
-
-    Ct = _coeff_at_z_trees(
-        H_raw=Ht, H_mean=Ht_mean, lp_t=lp_t,
-        z_eval=z_eval, zref=zref, z0_ref=z0_ref,
-        LAI=LAI_t, a0=a0_t, a1=a1_t,
-        alpha_min=alpha_min_t, alpha_max=alpha_max_t,
-        hmin=hmin_t, lp_min_open=lp_min_open,
-        clamp=(coeff_min, coeff_max),
-    ).astype(np.float32)
-
-    # 6) Set C=1 where λp ≤ 0.02 (individually for each layer)
-    Cb = np.where(lp_b > lp_min_open, Cb, 1.0).astype(np.float32)
-    Ct = np.where(lp_t > lp_min_open, Ct, 1.0).astype(np.float32)
-
-    # 6.a) Local override for trees with a window of ~10 m
-    # Calculate λp and H_mean on a small moving window (≈10 m) and recombine Ct on this scale.
-    ws10 = max(1, int(round(10.0 / max(px, 1e-6))))
-    if ws10 % 2 == 0:
-        ws10 += 1
-
-    lp_t_10, Ht_mean_10 = _win_stats(Mt, Ht, ws10)
-    Ct_10 = _coeff_at_z_trees(
-        H_raw=Ht, H_mean=Ht_mean_10, lp_t=lp_t_10,
-        z_eval=z_eval, zref=zref, z0_ref=z0_ref,
-        LAI=LAI_t, a0=a0_t, a1=a1_t,
-        alpha_min=alpha_min_t, alpha_max=alpha_max_t,
-        hmin=hmin_t, lp_min_open=lp_min_open,
-        clamp=(coeff_min, coeff_max),
-    ).astype(np.float32)
-    # Also apply here the rule lp<=threshold -> 1.0
-    Ct_10 = np.where(lp_t_10 > lp_min_open, Ct_10, 1.0).astype(np.float32)
-
-    # Where the 10 m value is < 1, replace it in the main field
-    Ct = np.where(Ct_10 < Ct, Ct_10, Ct).astype(np.float32)
-
     
-
-    # 8) Gaussian smoothing
-    #    Apply *anchor-preserving* smoothing ONLY to the trees coefficient (Ct),
-    #    while smoothing buildings (Cb) with a standard Gaussian (no anchors).
-    #    Then, smooth the total coefficient again at the end.
-    #    Window equivalence: ±3σ ≈ smooth_m ⇒ σ_px = (smooth_m/px)/6.
-    sigma_px = max(1, (smooth_m / max(px, 1e-6)) / 6.0)
-
-    def _gauss_preserve(arr, anchor_mask):
-        """Gaussian smoothing with exact preservation at anchor pixels.
-        Implementation: filter (values*weights) and (weights) separately, with large
-        weights (e.g., 1e6) on anchors. After filtering, enforce original values on anchors.
-        """
-        valid = np.isfinite(arr)
-        if not np.any(valid):
-            return arr
-        w = valid.astype(np.float32)
-        w_anchor = (anchor_mask & valid).astype(np.float32) * 1e6
-        w = w + w_anchor
-        num0 = np.where(valid, arr, 0.0).astype(np.float32) * w
-        num = gaussian_filter(num0, sigma=0.5*sigma_px, mode="nearest")
-        den = gaussian_filter(w,    sigma=0.5*sigma_px, mode="nearest")
-        with np.errstate(invalid="ignore", divide="ignore"):
-            out = np.where(den > 1e-6, num / den, arr)
-        out = np.where(anchor_mask, arr, out)
-        return np.clip(out.astype(np.float32), coeff_min, coeff_max)
-
-    
-    # Buildings: standard Gaussian smoothing (no anchors)
-    Cb_s =  _gauss_preserve(Cb, Mb)
-
-    # Trees: anchor-preserving smoothing
-    Ct_s = _gauss_preserve(Ct, Mt)
-
-    # 8.b) Total coefficient = product of smoothed components
-    Ctot = np.clip(Cb_s * Ct_s, coeff_min, coeff_max).astype(np.float32)
-
-    # 8.c) Smooth the total again (light additional smoothing with same σ)
-    Ctot = gaussian_filter(Ctot.astype(np.float32), sigma=2*sigma_px, mode="nearest")
-    Ctot = np.clip(Ctot.astype(np.float32), coeff_min, coeff_max)
-
-    # 9) Saving: components and total
-    def _save_like(ref_meta, out_fp, arr):
-        m = ref_meta.copy(); m.update(dtype="float32", count=1, compress="lzw", nodata=np.nan)
-        with rasterio.open(out_fp, "w", **m) as dst:
-            dst.write(arr.astype(np.float32), 1)
-
-    ensure_dir(paths.out_dir)
-    _save_like(meta_ref, paths.out_dir / "WindCoeff_Urban.tif", Cb)
-    _save_like(meta_ref, paths.out_dir / "WindCoeff_Vegetation.tif", Ct)
-    _save_like(meta_ref, paths.wind_coeff_ras, Ctot)
-
 def _read_vector_or_warn(vector_fp, friendly_name):
     if not vector_fp.exists():
         # removed logging
@@ -1908,8 +1672,6 @@ def run_create_inputs(
     km_buffer: float = DEFAULT_KM_BUFFER,
     km_reduced_lat: float = DEFAULT_KM_REDUCED_LAT,
     km_reduced_lon: float = DEFAULT_KM_REDUCED_LON,
-    year_start: int = DEFAULT_YEAR_START,
-    year_end: int = DEFAULT_YEAR_END,
     base_folder: str = None,
     resolution: float = DEFAULT_RES_M,
 ):
@@ -1933,8 +1695,6 @@ def run_create_inputs(
         Half-size of initial bounding box in km.
     km_reduced_lat, km_reduced_lon : float
         Shrink (N/S and E/W) from bbox for SOLWEIG domain in km.
-    year_start, year_end : int
-        Start/end year for meteorology (inclusive).
     base_folder : str, optional
         Workspace root. Defaults to DEFAULT_BASE (script directory or fixed path).
     resolution : float
@@ -1964,7 +1724,7 @@ def run_create_inputs(
     ensure_dir(paths.out_dir)
 
     # Clean old TIFs in out_dir before rebuilding assets, but keep existing vector rasters
-    keep_rasters = {paths.veg_ras.resolve(), paths.wat_ras.resolve(), paths.bld_ras.resolve()}
+    keep_rasters = {paths.bld_ras.resolve()}
     for tif in paths.out_dir.glob("*.tif"):
         try:
             if tif.resolve() in keep_rasters and tif.stat().st_size > 0:
@@ -1982,7 +1742,7 @@ def run_create_inputs(
     safe_initialize_ee()
 
     # Build vectors from OSM/GBA only if not already present
-    vector_outputs = [paths.veg_fp, paths.wat_fp, paths.imprv_fp, paths.bld_fp]
+    vector_outputs = [paths.bld_fp]
     if all(fp.exists() and fp.stat().st_size > 0 for fp in vector_outputs):
         tlog("OSM/GBA vectors already exist; skipping fetch.")
     else:
@@ -1993,7 +1753,6 @@ def run_create_inputs(
     download_worldcover(paths.esa_tif, b.bbox4326)
     download_tree_dsm(paths.tree_tif, paths.tree_tiles, b.bbox4326)
     download_dem(paths.dem_tif, b.bbox_utm, b.crs_utm, b.bbox4326)
-    download_lcz(paths.lcz_tif, b.bbox4326)
 
     # Build the reference analysis grid (SOLWEIG domain) in UTM
     grid = compute_reference_grid(b.bbox_utm_solweig, resolution)
@@ -2003,17 +1762,14 @@ def run_create_inputs(
     _resample_to_grid(paths.esa_tif,  paths.landuse_ras, b.crs_utm, grid.transform, grid.width, grid.height, Resampling.nearest)
     _resample_to_grid(paths.tree_tif, paths.tree_ras,    b.crs_utm, grid.transform, grid.width, grid.height, Resampling.bilinear)
     _resample_to_grid(paths.dem_tif,  paths.dem_ras,     b.crs_utm, grid.transform, grid.width, grid.height, Resampling.bilinear)
-    _resample_to_grid(paths.lcz_tif,  paths.lcz_ras,     b.crs_utm, grid.transform, grid.width, grid.height, Resampling.nearest)
 
     # Vector → raster: vegetation, water, and buildings (with height attribute)
-    vector_raster_outputs = [paths.veg_ras, paths.wat_ras, paths.bld_ras]
+    vector_raster_outputs = [paths.bld_ras]
     if all(fp.exists() and fp.stat().st_size > 0 for fp in vector_raster_outputs):
-        tlog("Rasterizing vectors skipped (raster outputs already present).")
+        tlog("Rasterizing building vector skipped (raster output already present).")
     else:
-        tlog("Rasterizing vectors...")
-        rasterize_vector_checked(paths.veg_fp,  paths.veg_ras,  2,             grid.transform, grid.width, grid.height, b.crs_utm, "vegetation")
-        rasterize_vector_checked(paths.wat_fp,  paths.wat_ras,  3,             grid.transform, grid.width, grid.height, b.crs_utm, "water")
-        rasterize_vector_checked(paths.bld_fp,  paths.bld_ras,  "HEIGHT_ROOF", grid.transform, grid.width, grid.height, b.crs_utm, "buildings", dtype="float32")
+        tlog("Rasterizing building vector...")
+        rasterize_vector_checked(paths.bld_fp, paths.bld_ras, "HEIGHT_ROOF", grid.transform, grid.width, grid.height, b.crs_utm, "buildings", dtype="float32")
 
     # Reclassify only the Landuse output
     reclassify_esa_worldcover_inplace(paths.landuse_ras, paths.bld_ras )
@@ -2043,89 +1799,28 @@ def run_create_inputs(
         paths.dsm_plus_ras
     )
 
-    # Meteorology: ERA5 via Earth Engine
-    met_out = paths.out_dir / f"era5_{city}_{year_start}_{year_end}.nc"
-    download_and_embed_era5(met_out, b.bbox_osm, year_start, year_end, paths.data_dir)
-
-    # Compute wind coefficient AFTER meteorology, using ERA5 Z0 mean if available
-    z0_ref_value = 0.03
-    try:
-        if met_out.exists():
-            with xr.open_dataset(met_out) as dsm:
-                if "Z0" in dsm.variables:
-                    z0_candidate = float(dsm["Z0"].mean().values)
-                    if np.isfinite(z0_candidate) and z0_candidate > 0:
-                        z0_ref_value = z0_candidate
-                        tlog(f"Using ERA5 Z0 mean as z0_ref: {z0_ref_value:.4f} m")
-                    else:
-                        tlog("Z0 present but invalid; using default z0_ref = 0.03 m")
-                else:
-                    tlog("Z0 not found in meteo file; using default z0_ref = 0.03 m")
-    except Exception as e:
-        tlog(f"WARNING: could not read Z0 from meteo file; using default z0_ref. Error: {e}")
-
-    # Wind coefficient raster (now that z0_ref is known)
-    try:
-        compute_wind_coeff(paths, z0_ref=z0_ref_value)
-    except Exception as e:
-        tlog(f"WARNING: WindCoeff computation failed: {e}")
-
-    # Alignment check (raises on mismatch)
     tlog("Checking alignment...")
-    to_check = [paths.landuse_ras, paths.tree_ras, paths.dem_ras, paths.dsm_plus_ras, paths.lcz_ras]
-    if paths.wind_coeff_ras.exists():
-        to_check.append(paths.wind_coeff_ras)
-    cb_fp = paths.out_dir / "WindCoeff_Urban.tif"
-    ct_fp = paths.out_dir / "WindCoeff_Vegetation.tif"
-    if cb_fp.exists():
-        to_check.append(cb_fp)
-    if ct_fp.exists():
-        to_check.append(ct_fp)
-    lf_b_fp = paths.out_dir / "LambdaF_Buildings.tif"
-    if lf_b_fp.exists():
-        to_check.append(lf_b_fp)
+    to_check = [
+        paths.landuse_ras,
+        paths.tree_ras,
+        paths.dem_ras,
+        paths.dsm_plus_ras,
+    ]
     check_raster_alignment(to_check)
+  
     tlog("All rasters aligned (CRS, resolution, extents, dimensions).")
 
   
     # Final report
     final_outputs = [
-        paths.landuse_ras, paths.tree_ras, paths.dem_ras, paths.dsm_plus_ras,
-        paths.lcz_ras, paths.veg_ras, paths.wat_ras, paths.bld_ras,
-        paths.wind_coeff_ras
-    ]
-    if lf_b_fp.exists():
-        final_outputs.append(lf_b_fp)
-    if cb_fp.exists():
-        final_outputs.append(cb_fp)
-    if ct_fp.exists():
-        final_outputs.append(ct_fp)
-    final_report_table(final_outputs)
+    paths.landuse_ras,
+    paths.tree_ras,
+    paths.dem_ras,
+    paths.dsm_plus_ras,
+    paths.bld_ras,]
 
     tlog("Completed successfully.")
     return str(paths.out_dir)
-
-##### Running the input downloader script
-#import os
-#from solweig_gpu import run_create_inputs
-
-#os.environ["EE_PROJECT"] = "XXXXXXXXX"  # your own GEE/GCP project ID
-
-#base_path = run_create_inputs(
-#    lat=30.2857,
-#    lon=-97.7396,
-#    city="Austin",
-#    km_buffer=3,
-#    km_reduced_lat=1,
-#    km_reduced_lon=1,
-#    year_start=2024,
-#    year_end=2025,
-#    base_folder="/",
-#    resolution=2,
-#)
-#print("SOLWEIG input folder:", base_path)
-########
-
 
 def main():
     ap = argparse.ArgumentParser(description="Build all static/forcing inputs for the SOLWEIG GPU pipeline.")
@@ -2135,8 +1830,6 @@ def main():
     ap.add_argument("--km-buffer", type=float, default=DEFAULT_KM_BUFFER, help="Half-size of initial bbox in km")
     ap.add_argument("--km-reduced-lat", type=float, default=DEFAULT_KM_REDUCED_LAT, help="Shrink (N/S) from bbox for SOLWEIG in km")
     ap.add_argument("--km-reduced-lon", type=float, default=DEFAULT_KM_REDUCED_LON, help="Shrink (E/W) from bbox for SOLWEIG in km")
-    ap.add_argument("--year-start", type=int, default=DEFAULT_YEAR_START, help="Start year for meteorology (inclusive)")
-    ap.add_argument("--year-end", type=int, default=DEFAULT_YEAR_END, help="End year for meteorology (inclusive)")
     ap.add_argument("--base-folder", type=str, default=DEFAULT_BASE, help="Workspace base folder")
     ap.add_argument("--resolution", type=float, default=DEFAULT_RES_M, help="Reference grid resolution (meters)")
     args = ap.parse_args()
