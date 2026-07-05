@@ -32,6 +32,25 @@ gdal.UseExceptions()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Increment when cached shadow/SVF outputs become incompatible with the
+# current shadow algorithm. Version 2 adds UMEP's pergola-aware vegetation
+# ray tracking.
+SVF_CACHE_VERSION = 2
+
+
+def is_current_svf_cache(npz_path):
+    """Return whether a shadow-matrix cache uses the current algorithm."""
+    if not os.path.isfile(npz_path):
+        return False
+
+    try:
+        with np.load(npz_path) as npz:
+            if "cache_version" not in npz.files:
+                return False
+            return int(np.asarray(npz["cache_version"]).item()) == SVF_CACHE_VERSION
+    except (OSError, ValueError, TypeError):
+        return False
+
 def load_raster_to_tensor(dem_path, device=device):
     dataset = gdal.Open(dem_path)
     if dataset is None:
@@ -158,6 +177,7 @@ def save_svf_zip_npz_outputs(output_dir, gdal_dsm, svf, svfE, svfS, svfW, svfN, 
 
     np.savez_compressed(
         npz_path,
+        cache_version=np.asarray(SVF_CACHE_VERSION, dtype=np.int32),
         shadowmat=tensor_to_numpy(shmat).astype(np.float32),
         vegshadowmat=tensor_to_numpy(vegshmat).astype(np.float32),
         vbshmat=tensor_to_numpy(vbshvegshmat).astype(np.float32),
@@ -191,22 +211,20 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
         - Implements anisotropic shadow casting
         - Accounts for vegetation transmittance
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = a.device
     degrees = torch.pi / 180.
-    if azimuth == 0.0:
-        azimuth = 1e-12
-    azimuth = ensure_tensor(azimuth)
-    altitutde = ensure_tensor(altitude)
-    azimuth = azimuth * degrees #torch.tensor(azimuth * degrees, device=a.device)
-    altitude = altitude * degrees #torch.tensor(altitude * degrees, device=a.device)
+    # Use float64 for ray angles. In float32, tan(90 degrees) is a large
+    # negative value and makes the zenith patch cast horizontal shadows.
+    azimuth = ensure_tensor(azimuth, device=device).to(device=device, dtype=torch.float64)
+    altitude = ensure_tensor(altitude, device=device).to(device=device, dtype=torch.float64)
+    azimuth = azimuth * degrees
+    altitude = altitude * degrees
 
     dx = 0.
     dy = 0.
     dz = 0.
     sizex = a.shape[0]
     sizey = a.shape[1]
-
-    device = a.device
 
     dx = torch.tensor(dx, device=device)
     dy = torch.tensor(dy, device=device)
@@ -217,10 +235,10 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     tempvegdem2 = torch.zeros((sizex, sizey), device=device)
     sh = torch.zeros((sizex, sizey), device=device)
     vbshvegsh = torch.zeros((sizex, sizey), device=device)
-    tempbush = torch.zeros((sizex, sizey), device=device)
+    templastfabovea = torch.zeros((sizex, sizey), device=device)
+    templastgabovea = torch.zeros((sizex, sizey), device=device)
 
     f = a.clone()
-    g = torch.zeros((sizex, sizey), device=device)
     bushplant = (bush > 1.).float()
     vegsh = torch.zeros((sizex, sizey), device=device) + bushplant
 
@@ -237,9 +255,14 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     dscos = torch.abs((1. / cosazimuth))
     tanaltitudebyscale = torch.tan(altitude) / scale
 
-    index = 1
+    # The previous ray height is required to detect vegetation layers that
+    # fall between two ray steps (for example, thin pergola canopies).
+    index = 0
+    dzprev = torch.tensor(0.0, device=device)
     fabovea = None
     gabovea = None
+    lastfabovea = None
+    lastgabovea = None
     vegsh2 = None
 
     while (amaxvalue >= dz and torch.abs(dx) < sizex and torch.abs(dy) < sizey):
@@ -257,6 +280,8 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
         tempvegdem.zero_()
         tempvegdem2.zero_()
         temp.zero_()
+        templastfabovea.zero_()
+        templastgabovea.zero_()
         absdx = torch.abs(dx)
         absdy = torch.abs(dy)
         xc1 = int((dx + absdx) / 2.)
@@ -278,25 +303,28 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
 
         fabovea = tempvegdem > a
         gabovea = tempvegdem2 > a
-        vegsh2 = fabovea.float() - gabovea.float()
+
+        templastfabovea[xp1:xp2, yp1:yp2] = vegdem[xc1:xc2, yc1:yc2] - dzprev
+        templastgabovea[xp1:xp2, yp1:yp2] = vegdem2[xc1:xc2, yc1:yc2] - dzprev
+        lastfabovea = templastfabovea > a
+        lastgabovea = templastgabovea > a
+        dzprev = dz
+
+        # Match UMEP's pergola-aware shadowingfunction_20. A ray intersects
+        # vegetation when any, but not all, of the current/previous canopy
+        # and trunk-base tests are above the target surface.
+        vegetation_states = (
+            fabovea.float()
+            + gabovea.float()
+            + lastfabovea.float()
+            + lastgabovea.float()
+        )
+        vegsh2 = ((vegetation_states > 0) & (vegetation_states < 4)).float()
 
         vegsh = torch.max(vegsh, vegsh2)
         vegsh[(vegsh * sh > 0.)] = 0.
 
         vbshvegsh = vegsh + vbshvegsh
-
-        if index == 1.:
-            firstvegdem = tempvegdem - temp
-            firstvegdem[firstvegdem <= 0.] = 1000.
-            vegsh[firstvegdem < dz] = 1.
-            vegsh = vegsh * (vegdem2 > a).float()
-            vbshvegsh.zero_()
-
-        if bush.max() > 0. and torch.max(fabovea * bush) > 0.:
-            tempbush.zero_()
-            tempbush[int(xp1)-1:int(xp2), int(yp1)-1:int(yp2)] = bush[int(xc1)-1:int(xc2), int(yc1)-1:int(yc2)] - dz
-            g = torch.max(g, tempbush)
-            g *= bushplant
 
         index += 1.
 
@@ -304,19 +332,12 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     vbshvegsh[vbshvegsh > 0.] = 1.
     vbshvegsh = vbshvegsh - vegsh
 
-    if bush.max() > 0.:
-        g = g - bush
-        g[g > 0.] = 1.
-        g[g < 0.] = 0.
-        vegsh = vegsh - bushplant + g
-        vegsh[vegsh < 0.] = 0.
-
-    vegsh[vegsh > 0.] = 1.
     vegsh = 1. - vegsh
     vbshvegsh = 1. - vbshvegsh
 
-    # Changed here
-    del tempvegdem, tempvegdem2, temp, tempbush, fabovea, gabovea, vegsh2
+    del tempvegdem, tempvegdem2, temp
+    del templastfabovea, templastgabovea
+    del fabovea, gabovea, lastfabovea, lastgabovea, vegsh2
     torch.cuda.empty_cache()
     # Changed here
     return sh, vegsh, vbshvegsh

@@ -282,7 +282,7 @@ def calculate_svf(base_path: str, patch_option: int = 2, overwrite: bool = False
     import torch
     from tqdm import tqdm
 
-    from .shadow import svf_calculator
+    from .shadow import is_current_svf_cache, svf_calculator
 
     building_dsm_dir = os.path.join(base_path, "Building_DSM")
     dem_dir = os.path.join(base_path, "DEM")
@@ -358,7 +358,7 @@ def calculate_svf(base_path: str, patch_option: int = 2, overwrite: bool = False
             not overwrite
             and os.path.exists(expected_tif)
             and os.path.exists(expected_zip)
-            and os.path.exists(expected_npz)
+            and is_current_svf_cache(expected_npz)
         ):
             continue
 

@@ -30,7 +30,7 @@ import pytz
 import datetime
 from .Tgmaps_v1 import Tgmaps_v1
 from .sun_position import Solweig_2015a_metdata_noload
-from .shadow import svf_calculator, create_patches
+from .shadow import create_patches, is_current_svf_cache, svf_calculator
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
 from .calculate_utci import utci_calculator
 from .calculate_wbgt import isobaric_wet_bulb_temperature_from_rh, black_globe_temperature
@@ -245,7 +245,7 @@ def _svf_cache_exists(building_dsm_path: str, number: str) -> bool:
     return (
         os.path.isfile(svftotal_path)
         and os.path.isfile(zip_path)
-        and os.path.isfile(npz_path)
+        and is_current_svf_cache(npz_path)
     )
 
 def _load_raster_to_tensor_from_path(raster_path: str):
@@ -928,5 +928,4 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     end_time = time.time()
     time_taken = end_time - start_time
     print(f"Time taken to execute tile {number}: {time_taken:.2f} seconds")
-
 
