@@ -1404,7 +1404,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
          landcover_filename, windcoeff_filename,
          tile_size, overlap, selected_date_str, use_own_met,
          start_time=None, end_time=None, data_source_type=None, data_folder=None,
-         own_met_file=None, preprocess_dir=None, use_uhi=True):
+         own_met_file=None, preprocess_dir=None, use_uhi=True, trunkzone_filename=None):
     """
     Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.
 
@@ -1412,7 +1412,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         base_path (str): Base working directory containing input rasters.
         building_dsm_filename (str): Filename of building DSM raster.
         dem_filename (str): Filename of DEM raster.
-        trees_filename (str): Filename of trees raster.
+        trees_filename (str): Filename of trees canopy DSM raster.
         landcover_filename (str): Filename of landcover raster or None.
         windcoeff_filename (str): Filename of wind coefficient raster or None.
         tile_size (int): Tile size in pixels.
@@ -1426,6 +1426,8 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         own_met_file (str): Path to user-provided met file (used if use_own_met is True).
         preprocess_dir (str): Directory for preprocessing outputs.
         use_uhi (bool): Whether to use UHI-aware ERA5 preprocessing.
+        trunkzone_filename (str): Filename of trunk-zone DSM raster (height in m agl)
+            or None. If None, the trunk zone is derived as 25% of the canopy height.
     """
     if preprocess_dir is None:
         preprocess_dir = os.path.join(base_path, "processed_inputs")
@@ -1436,6 +1438,9 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
     trees_path = os.path.join(base_path, trees_filename)
 
     landcover_path = None
+
+    windcoeff_path = None
+    trunkzone_path = None
     landcover_path = None
     windcoeff_files = []
 
@@ -1443,6 +1448,9 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         landcover_path = _resolve_path(base_path, landcover_filename)
 
     windcoeff_files = find_windcoeff_files(base_path, windcoeff_filename)
+
+    if trunkzone_filename is not None:
+        trunkzone_path = os.path.join(base_path, trunkzone_filename)
 
     # Check that all rasters have matching dimensions, pixel size, and CRS.
     try:
@@ -1454,6 +1462,9 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         # Check all directional wind coefficient rasters too
         if windcoeff_files:
             raster_list.extend(windcoeff_files)
+
+        if trunkzone_path is not None:
+            raster_list.append(trunkzone_path)
 
         check_rasters(raster_list)
 
@@ -1469,6 +1480,13 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
 
     if landcover_path is not None:
         rasters["Landcover"] = landcover_path
+
+    if windcoeff_path is not None:
+        rasters["WindCoeff"] = windcoeff_path
+
+    if trunkzone_path is not None:
+        rasters["TrunkZone"] = trunkzone_path
+
 
     for tile_type, raster in rasters.items():
         print(f"Creating tiles for {tile_type}...")

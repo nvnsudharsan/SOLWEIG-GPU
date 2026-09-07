@@ -37,6 +37,7 @@ def preprocess(
     own_met_file: Optional[str] = None,
     preprocess_dir: Optional[str] = None,
     use_uhi: bool = True,
+    trunkzone_filename: Optional[str] = None,
 ) -> str:
     """
     Run preprocessing only: validate rasters, create tiles, and prepare metfiles.
@@ -98,6 +99,9 @@ def preprocess(
             If True, use UHI-aware ERA5 processing and write UHI_CYCLE/uhii
             into generated metfiles when available. If False, use standard ERA5
             processing and write uhii = 0.0.
+        trunkzone_filename: Optional trunk-zone DSM raster (height in m agl, same
+            grid as the DSM). If None, the trunk zone is derived as 25% of the
+            canopy height.
 
     Returns:
         The path to the preprocessing directory.
@@ -128,6 +132,7 @@ def preprocess(
         own_met_file,
         preprocess_dir=preprocess_dir,
         use_uhi=use_uhi,
+        trunkzone_filename=trunkzone_filename,
     )
 
     return preprocess_dir
@@ -425,6 +430,7 @@ def run_utci_tiles(
     input_met = os.path.join(preprocess_dir, "metfiles")
     building_dsm_dir = os.path.join(preprocess_dir, "Building_DSM")
     tree_dir = os.path.join(preprocess_dir, "Trees")
+    trunkzone_dir = os.path.join(preprocess_dir, "TrunkZone")
     dem_dir = os.path.join(preprocess_dir, "DEM")
     landcover_dir = os.path.join(preprocess_dir, "Landcover")
     windcoeff_dir = os.path.join(preprocess_dir, "WindCoeff")
@@ -433,6 +439,7 @@ def run_utci_tiles(
 
     building_dsm_map = map_files_by_key(building_dsm_dir, ".tif")
     tree_map = map_files_by_key(tree_dir, ".tif")
+    trunkzone_map = map_files_by_key(trunkzone_dir, ".tif") if os.path.isdir(trunkzone_dir) else {}
     dem_map = map_files_by_key(dem_dir, ".tif")
     landcover_map = map_files_by_key(landcover_dir, ".tif") if os.path.isdir(landcover_dir) else {}
     windcoeff_map = map_windcoeff_files_by_key(windcoeff_dir, ".tif") if os.path.isdir(windcoeff_dir) else {}
@@ -459,6 +466,7 @@ def run_utci_tiles(
     for key in sorted(common_keys, key=_numeric_key):
         building_dsm_path = building_dsm_map[key]
         tree_path = tree_map[key]
+        trunk_path = trunkzone_map.get(key) if trunkzone_map else None
         dem_path = dem_map[key]
         landcover_path = landcover_map.get(key) if landcover_map else None
         windcoeff_paths = windcoeff_map.get(key) if windcoeff_map else None
@@ -483,6 +491,7 @@ def run_utci_tiles(
             output_folder,
             key,
             selected_date_str,
+            trunk_path=trunk_path,
             save_tmrt=save_tmrt,
             save_svf=save_svf,
             save_kup=save_kup,
@@ -504,6 +513,8 @@ def thermal_comfort(
     dem_filename='DEM.tif',
     trees_filename='Trees.tif',
     landcover_filename: Optional[str] = None,
+    windcoeff_filename: Optional[str] = None,
+    trunkzone_filename: Optional[str] = None,
     ERA_5_z0_find = True,
     tile_size=3600,
     overlap=20,
@@ -647,6 +658,8 @@ def thermal_comfort(
         dem_filename=dem_filename,
         trees_filename=trees_filename,
         landcover_filename=landcover_filename,
+        windcoeff_filename=windcoeff_filename,
+        trunkzone_filename=trunkzone_filename,
         windcoeff_folder=windcoeff_folder,
         tile_size=tile_size,
         overlap=overlap,
