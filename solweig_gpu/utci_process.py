@@ -518,7 +518,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     Tgmap1N = torch.zeros((rows, cols), device=device)
     TgOut1 = torch.zeros((rows, cols), device=device)
     
-    # Added
+    # Landcover classification based calculations 
     if landcover == 1:                                     
         (TgK_np, Tstart_np, alb_np, emis_np, TgK_wall_np, Tstart_wall_np, TmaxLST_np,
          TmaxLST_wall_np) = Tgmaps_v1(lcgrid_np, lc_class)
@@ -540,7 +540,6 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         Tstart_wall = -3.41
         TmaxLST = 15.
         TmaxLST_wall = 15.
-    # Added
     
     transVeg = 3. / 100.
     # landcover = 1 # Modified
