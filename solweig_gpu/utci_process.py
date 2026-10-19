@@ -411,7 +411,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
                 f"Building DSM shape {tuple(a.shape)}"
             )
  
-    # Added
+    # Landcover warnings
     landcover = 0
 
     if landcover_path is not None:
@@ -439,7 +439,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         lc_class = np.empty((len(lines), 6), dtype=float)
         for i, ln in enumerate(lines):
             lc_class[i, :] = [float(x) for x in ln.split()[1:]]  # cols 1-6
-    # Added
+    # Landcover warnings
     
     base_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d")
     rows, cols = a.shape
