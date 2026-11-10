@@ -76,16 +76,16 @@ def preprocess(
             Overlap between tiles in pixels.
 
         use_own_met:
-            If True, use own_met_file; else use ERA5/WRF.
+            If True, use own_met_file; else use ERA5/WRF/HRLDAS.
 
         start_time, end_time:
-            Required for ERA5/WRF, in UTC format 'YYYY-MM-DD HH:MM:SS'.
+            Required for ERA5/WRF/HRLDAS, in UTC format 'YYYY-MM-DD HH:MM:SS'.
 
         data_source_type:
-            'ERA5' or 'wrfout' when use_own_met is False.
+            'ERA5', 'wrfout' or 'hrldas' when use_own_met is False.
 
         data_folder:
-            Folder with ERA5/WRF NetCDF files when use_own_met is False.
+            Folder with ERA5/WRF/HRLDAS NetCDF files when use_own_met is False.
 
         own_met_file:
             Path to custom met file when use_own_met is True.
@@ -589,10 +589,10 @@ def thermal_comfort(
             End datetime 'YYYY-MM-DD HH:MM:SS'.
 
         data_source_type:
-            'ERA5' or 'wrfout'.
+            'ERA5', 'wrfout' or 'hrldas' (HRLDAS/Noah-MP ``YYYYMMDDHH.LDASOUT_DOMAINx`` files).
 
         data_folder:
-            Folder containing ERA5/WRF NetCDF files.
+            Folder containing ERA5/WRF/HRLDAS NetCDF files.
 
         own_met_file:
             Path to custom meteorological text file.

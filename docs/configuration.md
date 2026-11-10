@@ -183,6 +183,22 @@ client.retrieve(dataset, request).download()
    3.  When using the ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
     
 
+**HRLDAS (Noah-MP offline, `YYYYMMDDHH.LDASOUT_DOMAINx` files):**
+
+```python
+use_own_met = False
+data_source_type = 'hrldas'
+data_folder = '/path/to/LDASOUT_files'
+start_time = '2020-08-13 05:00:00'  # UTC
+end_time = '2020-08-14 04:00:00'    # UTC
+use_uhi = False                      # ERA5 only
+ERA_5_z0_find = False                # unless an ERA5 roughness file is kept in data_folder
+```
+
+The reader takes the hourly steps from the `Times` variable of every file, maps the LDASOUT variables to the SOLWEIG
+inputs (see the README, "Example 4: HRLDAS") and rebuilds the latitude/longitude grid from the projection attributes when
+`XLAT`/`XLONG` are absent.
+
 ## Wind and UHI Configuration (New in Version 2)
 
 ### `ERA_5_z0_find`

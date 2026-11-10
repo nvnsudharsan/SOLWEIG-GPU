@@ -878,7 +878,7 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     # Sort by timestamp, then by domain number for stable ordering
     wrf_files_sorted = sorted(wrf_files, key=lambda f: extract_datetime_strict(f))
 
-    wrf_files_sorted = [f for f in wrf_files_sorted if start_time <= extract_datetime_strict(f) <= end_time]
+    wrf_files_sorted = [f for f in wrf_files_sorted if start_time <= extract_datetime_strict(f)[0] <= end_time]   # extract_datetime_strict returns (datetime, domain): compare the datetime, not the tuple
 
     if not wrf_files_sorted:
         raise ValueError("No WRF files found within requested time window.")
@@ -1004,6 +1004,243 @@ def process_wrfout_data(start_time, end_time, folder_path, output_file="Outfile.
     
     print(f"New NetCDF file created: {output_file}")
     
+# =============================================================================
+# HRLDAS (Noah-MP offline, LDASOUT) forcing
+# =============================================================================
+HRLDAS_PATTERN = re.compile(r'^(\d{10})\.LDASOUT_DOMAIN(\d)$')   # e.g. 2020081301.LDASOUT_DOMAIN3
+
+
+def _hrldas_latlon(attrs, ny, nx):
+    """
+    Rebuild the 2-D latitude/longitude of an HRLDAS/WRF grid from its global attributes
+    (LDASOUT files carry no XLAT/XLONG). Implements the WRF/WPS ``module_llxy`` formulas on
+    the 6370 km sphere for MAP_PROJ 1 (Lambert conformal), 3 (Mercator) and 6 (regular lat/lon).
+    ``LAT1``/``LON1`` are the coordinates of grid point (1, 1) = array index [0, 0].
+
+    Returns:
+        tuple: (lat2d, lon2d) float arrays of shape (ny, nx), south_north x west_east.
+    """
+    rad = math.pi / 180.0
+    deg = 180.0 / math.pi
+    re_m = 6370000.0
+    proj = int(attrs['MAP_PROJ'])
+    lat1, lon1 = float(attrs['LAT1']), float(attrs['LON1'])
+    dx = float(attrs['DX'])
+    stdlon = float(attrs.get('STAND_LON', lon1))
+    truelat1 = float(attrs.get('TRUELAT1', lat1))
+    truelat2 = float(attrs.get('TRUELAT2', truelat1))
+    jj, ii = np.meshgrid(np.arange(1, ny + 1, dtype=float), np.arange(1, nx + 1, dtype=float), indexing='ij')
+
+    if proj == 6:   # regular lat/lon: DX/DY are degrees in LDASOUT geogrid files
+        dy = float(attrs.get('DY', dx))
+        lat = lat1 + (jj - 1) * dy
+        lon = lon1 + (ii - 1) * dx
+        return lat, ((lon + 180.0) % 360.0) - 180.0
+
+    rebydx = re_m / dx
+    if proj == 3:   # Mercator
+        clain = math.cos(rad * truelat1)
+        dlon = dx / (re_m * clain)
+        rsw = 0.0 if lat1 == 0.0 else math.log(math.tan(0.5 * ((lat1 + 90.0) * rad))) / dlon
+        lat = 2.0 * np.arctan(np.exp(dlon * (rsw + jj - 1.0))) * deg - 90.0
+        lon = (ii - 1.0) * dlon * deg + lon1
+        return lat, ((lon + 180.0) % 360.0) - 180.0
+
+    if proj != 1:
+        raise ValueError(f"MAP_PROJ={proj} is not supported (only Lambert conformal, Mercator and lat/lon)")
+
+    # Lambert conformal (WRF set_lc / xyll_lc)
+    hemi = 1.0 if truelat1 >= 0.0 else -1.0
+    if abs(truelat1 - truelat2) > 0.1:
+        cone = (math.log10(math.cos(truelat1 * rad)) - math.log10(math.cos(truelat2 * rad))) / \
+               (math.log10(math.tan((45.0 - abs(truelat1) / 2.0) * rad)) - math.log10(math.tan((45.0 - abs(truelat2) / 2.0) * rad)))
+    else:
+        cone = math.sin(abs(truelat1) * rad)
+    deltalon1 = lon1 - stdlon
+    if deltalon1 > 180.0: deltalon1 -= 360.0
+    if deltalon1 < -180.0: deltalon1 += 360.0
+    ctl1r = math.cos(truelat1 * rad)
+    rsw = rebydx * ctl1r / cone * (math.tan((90.0 * hemi - lat1) * rad / 2.0) / math.tan((90.0 * hemi - truelat1) * rad / 2.0)) ** cone
+    arg = cone * (deltalon1 * rad)
+    polei = hemi * 1.0 - hemi * rsw * math.sin(arg)      # grid point (1, 1) is (LAT1, LON1)
+    polej = hemi * 1.0 + rsw * math.cos(arg)
+    chi1 = (90.0 - hemi * truelat1) * rad
+    chi2 = (90.0 - hemi * truelat2) * rad
+    xx = hemi * ii - polei
+    yy = polej - hemi * jj
+    r2 = xx ** 2 + yy ** 2
+    r = np.sqrt(r2) / rebydx
+    lon = stdlon + deg * np.arctan2(hemi * xx, yy) / cone
+    lon = np.mod(lon + 360.0, 360.0)
+    if chi1 == chi2:
+        chi = 2.0 * np.arctan((r / math.tan(chi1)) ** (1.0 / cone) * math.tan(chi1 * 0.5))
+    else:
+        chi = 2.0 * np.arctan((r * cone / math.sin(chi1)) ** (1.0 / cone) * math.tan(chi1 * 0.5))
+    lat = (90.0 - chi * deg) * hemi
+    lat = np.where(r2 == 0.0, hemi * 90.0, lat)
+    lon = np.where(r2 == 0.0, stdlon, lon)
+    lon = np.where(lon > 180.0, lon - 360.0, lon)
+    return lat, lon
+
+
+def _hrldas_file_times(ds):
+    """Decode the ``Times`` character variable of an LDASOUT file into naive UTC datetimes."""
+    raw = ds['Times'].values
+    out = []
+    for row in raw:
+        s = b''.join(row).decode() if raw.dtype.kind == 'S' else ''.join(row.astype(str))
+        out.append(datetime.datetime.strptime(s.strip('\x00 '), "%Y-%m-%d_%H:%M:%S"))
+    return out
+
+
+def process_hrldas_data(start_time, end_time, folder_path, output_file="Outfile.nc"):
+    """
+    Process HRLDAS (Noah-MP offline) LDASOUT files to create meteorological forcing data.
+
+    Reads every ``YYYYMMDDHH.LDASOUT_DOMAINx`` file in ``folder_path`` (each holds one or more
+    hourly steps, dated by its ``Times`` variable, not by the filename), keeps the steps inside
+    ``[start_time, end_time]`` and writes the same ``Outfile.nc`` that :func:`process_wrfout_data`
+    produces, so the rest of the pipeline (:func:`process_metfiles`) is unchanged.
+
+    Variable mapping (first available wins; a message is printed when a fallback is used):
+      T2      <- T2M (urban diagnostics build), else FVEG-weighted T2MV/T2MB, else FORCTLSM
+      Q       <- Q2M, else FVEG-weighted Q2MV/Q2MB, else FORCQLSM   (specific humidity -> mixing ratio for RH2)
+      PSFC    <- FORCPLSM reduced hydrostatically from FORCZLSM to the surface, else 101325 Pa
+      WIND    <- WS10M, else FORCWLSM (lowest model level, not 10 m)
+      SWDOWN  <- SWFORC;   GLW <- LWFORC (written, not used downstream)
+      TSK     <- TRAD, else TG, else T2
+      WDIR    <- not available in LDASOUT (no wind components): written as NaN -> Wd = -999 in the metfiles,
+                 which disables the directional wind-coefficient lookup.
+    lat/lon come from XLAT/XLONG when present, otherwise from the projection attributes (:func:`_hrldas_latlon`).
+    The -1e33 ``missing_value`` and the -9999 sentinel of the 2 m diagnostics (water cells) become NaN.
+
+    Parameters:
+        start_time (str): Start datetime (UTC) "%Y-%m-%d %H:%M:%S".
+        end_time (str): End datetime (UTC) "%Y-%m-%d %H:%M:%S".
+        folder_path (str): Directory containing LDASOUT files.
+        output_file (str): Output NetCDF file name.
+    """
+    start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    end_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    G, RD, RV = 9.80665, 287.05, 461.5
+    eps = RD / RV
+
+    files = sorted(f for f in os.listdir(folder_path) if HRLDAS_PATTERN.match(f))
+    if not files:
+        raise FileNotFoundError("No HRLDAS files (YYYYMMDDHH.LDASOUT_DOMAINx) found in " + str(folder_path))
+
+    def clean(arr):
+        arr = np.asarray(arr, dtype=np.float32)
+        return np.where((arr < -1e30) | (arr <= -9998.0), np.nan, arr)
+
+    def pick(ds, t, *names):
+        for n in names:
+            if n in ds.variables:
+                return n, clean(ds[n].isel(Time=t).values)
+        return None, None
+
+    def blended(ds, t, veg, bare):
+        """FVEG-weighted vegetated/bare-ground diagnostics."""
+        if veg in ds.variables and bare in ds.variables and 'FVEG' in ds.variables:
+            f = clean(ds['FVEG'].isel(Time=t).values)
+            return f * clean(ds[veg].isel(Time=t).values) + (1.0 - f) * clean(ds[bare].isel(Time=t).values)
+        return None
+
+    times, t2_l, w_l, rh_l, tsk_l, sw_l, glw_l, p_l = [], [], [], [], [], [], [], []
+    lat = lon = None
+    notes = set()
+    for f in files:
+        with xr.open_dataset(os.path.join(folder_path, f), decode_times=False, concat_characters=False) as ds:
+            ftimes = _hrldas_file_times(ds)
+            idx = [i for i, ft in enumerate(ftimes) if start_time <= ft <= end_time]
+            if not idx:
+                continue
+            if lat is None:
+                ny, nx = ds.sizes['south_north'], ds.sizes['west_east']
+                if 'XLAT' in ds.variables and 'XLONG' in ds.variables:
+                    lat = np.asarray(ds['XLAT'].values)[0] if ds['XLAT'].ndim == 3 else np.asarray(ds['XLAT'].values)
+                    lon = np.asarray(ds['XLONG'].values)[0] if ds['XLONG'].ndim == 3 else np.asarray(ds['XLONG'].values)
+                else:
+                    lat, lon = _hrldas_latlon(ds.attrs, ny, nx)
+            for t in idx:
+                name, t2 = pick(ds, t, 'T2M')
+                if t2 is None:
+                    t2 = blended(ds, t, 'T2MV', 'T2MB'); name = 'FVEG*T2MV+(1-FVEG)*T2MB'
+                if t2 is None:
+                    name, t2 = pick(ds, t, 'FORCTLSM')
+                notes.add(f"T2 <- {name}")
+                name, q = pick(ds, t, 'Q2M')
+                if q is None:
+                    q = blended(ds, t, 'Q2MV', 'Q2MB'); name = 'FVEG*Q2MV+(1-FVEG)*Q2MB'
+                if q is None:
+                    name, q = pick(ds, t, 'FORCQLSM')
+                notes.add(f"Q <- {name}")
+                name, p = pick(ds, t, 'FORCPLSM')
+                if p is not None and 'FORCZLSM' in ds.variables and 'FORCTLSM' in ds.variables:
+                    z = clean(ds['FORCZLSM'].isel(Time=t).values)
+                    tf = clean(ds['FORCTLSM'].isel(Time=t).values)
+                    p = p * np.exp(G * z / (RD * tf))
+                    name = 'FORCPLSM reduced from FORCZLSM'
+                if p is None:
+                    p = np.full_like(t2, 101325.0); name = 'constant 101325 Pa (no FORCPLSM)'
+                notes.add(f"PSFC <- {name}")
+                name, ws = pick(ds, t, 'WS10M', 'FORCWLSM')
+                notes.add(f"WIND <- {name}")
+                _, sw = pick(ds, t, 'SWFORC')
+                _, glw = pick(ds, t, 'LWFORC')
+                name, tsk = pick(ds, t, 'TRAD', 'TG')
+                if tsk is None:
+                    tsk, name = t2, 'T2'
+                notes.add(f"TSK <- {name}")
+                if t2 is None or q is None or ws is None or sw is None:
+                    raise KeyError(f"{f}: cannot build T2/Q/WIND/SWDOWN from the available LDASOUT variables")
+                w = q / (1.0 - q)                                     # specific humidity -> mixing ratio
+                e_s = 6.112 * np.exp((17.67 * (t2 - 273.15)) / ((t2 - 273.15) + 243.5)) * 100.0
+                rh = np.clip((w * p / (eps + w)) / e_s * 100.0, 0, 100)
+                times.append(ftimes[t]); t2_l.append(t2); w_l.append(ws); rh_l.append(rh); tsk_l.append(tsk)
+                sw_l.append(sw); glw_l.append(glw if glw is not None else np.full_like(t2, np.nan)); p_l.append(p)
+
+    if not times:
+        raise ValueError("No HRLDAS time steps found within requested time window.")
+    order = np.argsort(np.array(times, dtype='datetime64[s]'))
+    times = [times[i] for i in order]
+    stack = lambda lst: np.stack([lst[i] for i in order], axis=0).astype(np.float32)
+    print("[INFO] HRLDAS mapping: " + "; ".join(sorted(notes)))
+    gaps = [(times[i], times[i + 1]) for i in range(len(times) - 1) if (times[i + 1] - times[i]) != timedelta(hours=1)]
+    if gaps:
+        print(f"[WARNING] HRLDAS series is not hourly-continuous at {len(gaps)} place(s), e.g. {gaps[0][0]} -> {gaps[0][1]}")
+
+    with Dataset(output_file, 'w', format='NETCDF4') as ncf:
+        ncf.createDimension('time', len(times))
+        ncf.createDimension('lat', lat.shape[0])
+        ncf.createDimension('lon', lon.shape[1])
+        time_var = ncf.createVariable('time', 'f8', ('time',))
+        lat_var = ncf.createVariable('lat', 'f4', ('lat', 'lon'))
+        lon_var = ncf.createVariable('lon', 'f4', ('lat', 'lon'))
+        out_vars = {}
+        for name, units in [('T2', 'K'), ('WIND', 'm/s'), ('WDIR', 'degrees'), ('RH2', '%'), ('TSK', 'K'),
+                            ('SWDOWN', 'W/m^2'), ('GLW', 'W/m^2'), ('PSFC', 'Pa')]:
+            out_vars[name] = ncf.createVariable(name, 'f4', ('time', 'lat', 'lon'), zlib=True)
+            out_vars[name].units = units
+        time_var.units = "hours since 1970-01-01 00:00:00"
+        time_var.calendar = "gregorian"
+        lat_var.units = "degrees_north"
+        lon_var.units = "degrees_east"
+        time_var[:] = date2num(times, units=time_var.units, calendar=time_var.calendar)
+        lat_var[:, :] = lat
+        lon_var[:, :] = lon
+        out_vars['T2'][:] = stack(t2_l)
+        out_vars['WIND'][:] = stack(w_l)
+        out_vars['WDIR'][:] = np.full((len(times),) + lat.shape, np.nan, dtype=np.float32)   # no wind components in LDASOUT
+        out_vars['RH2'][:] = stack(rh_l)
+        out_vars['TSK'][:] = stack(tsk_l)
+        out_vars['SWDOWN'][:] = stack(sw_l)
+        out_vars['GLW'][:] = stack(glw_l)
+        out_vars['PSFC'][:] = stack(p_l)
+        ncf.source = "HRLDAS LDASOUT files from " + str(folder_path)
+
+    print(f"New NetCDF file created: {output_file} ({len(times)} hourly steps, {times[0]} .. {times[-1]} UTC)")
+
 # =============================================================================
 # Functions to process the NetCDF file and create metfiles based on a set of raster tiles.
 # =============================================================================
@@ -1421,7 +1658,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         use_own_met (bool): Whether to use a user-provided met file.
         start_time (str): Start datetime (required if not using own met file).
         end_time (str): End datetime (required if not using own met file).
-        data_source_type (str): Either 'ERA5' or 'wrfout'.
+        data_source_type (str): 'ERA5', 'wrfout' or 'hrldas' (HRLDAS/Noah-MP LDASOUT files).
         data_folder (str): Folder containing input NetCDF files.
         own_met_file (str): Path to user-provided met file (used if use_own_met is True).
         preprocess_dir (str): Directory for preprocessing outputs.
@@ -1510,8 +1747,11 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         elif data_source_type.lower() == "wrfout":
             process_wrfout_data(start_time, end_time, data_folder, output_file=processed_nc_file)
 
+        elif data_source_type.lower() == "hrldas":
+            process_hrldas_data(start_time, end_time, data_folder, output_file=processed_nc_file)
+
         else:
-            print("Error: data_source_type must be either 'ERA5' or 'wrfout'.")
+            print("Error: data_source_type must be 'ERA5', 'wrfout' or 'hrldas'.")
             exit(1)
 
         # Process the generated NetCDF file to create metfiles.

@@ -51,7 +51,7 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 - Divides larger areas into tiles based on the selected tile size
 - CPU-based computations of wall height and aspect are parallelized across multiple CPUs
 - GPU-based computation of SVF, shortwave/longwave radiation, shadows, Tmrt, and UTCI
-- Compatible with meteorological data from UMEP, ERA5, and WRF (`wrfout`)
+- Compatible with meteorological data from UMEP, ERA5, WRF (`wrfout`) and HRLDAS/Noah-MP (`LDASOUT`)
 - Pipeline can be run in stages (`preprocess`, `run_walls_aspect`, `run_utci_tiles`) for subset-of-tiles or reuse; see [documentation](https://solweig-gpu.readthedocs.io/en/latest/) (Developer Guide and API Reference)
 
 ![SOLWEIG-GPU workflow ](https://raw.githubusercontent.com/nvnsudharsan/solweig-gpu/main/solweig_diagram.png)  
@@ -392,6 +392,51 @@ thermal_comfort(
 - Keep `use_uhi=False` for user-provided meteorological files.
 - If `ERA_5_z0_find=True`, SOLWEIG-GPU expects the ERA5 file `data_stream-oper_stepType-instant.nc` in `data_folder`. Because this example does not use ERA5 forcing, the safer default is `ERA_5_z0_find=False`.
 - If `ERA_5_z0_find=True`, wind directions should be available for each time step in the meteorological `.txt` file.
+
+### Example 4: HRLDAS (Noah-MP offline) forcing
+
+`data_source_type='hrldas'` reads HRLDAS output files named `YYYYMMDDHH.LDASOUT_DOMAINx` (one or more hourly
+steps per file; the steps are taken from the `Times` variable, not from the filename) and converts them into the
+same weather file that the WRF reader produces.
+
+```python
+from solweig_gpu import thermal_comfort
+
+thermal_comfort(
+    base_path='/path/to/input',
+    selected_date_str='2020-08-13',
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    landcover_filename=None,
+    tile_size=1000,
+    overlap=100,
+    use_own_met=False,
+    start_time='2020-08-13 05:00:00',   # UTC window covering the local date (Austin, TX: UTC-5 in August)
+    end_time='2020-08-14 04:00:00',
+    data_source_type='hrldas',
+    data_folder='/path/to/LDASOUT_files',
+    ERA_5_z0_find=False,                # no ERA5 roughness file -> no directional wind coefficients
+    use_uhi=False,                      # the UHI diagnostic is ERA5-only
+)
+```
+
+Variable mapping of the reader (`preprocessor.process_hrldas_data`, first available wins; the choice is printed):
+
+| SOLWEIG input | LDASOUT variable |
+|---|---|
+| air temperature `T2` | `T2M` (urban-diagnostics build), else `FVEG`-weighted `T2MV`/`T2MB`, else `FORCTLSM` |
+| humidity (for `RH2`) | `Q2M`, else `FVEG`-weighted `Q2MV`/`Q2MB`, else `FORCQLSM` (specific humidity, converted to mixing ratio) |
+| pressure `PSFC` | `FORCPLSM` reduced hydrostatically from `FORCZLSM` to the surface, else 101325 Pa |
+| wind speed `WIND` | `WS10M`, else `FORCWLSM` (lowest model level) |
+| shortwave `SWDOWN` | `SWFORC` |
+| longwave `GLW` (written, unused) | `LWFORC` |
+| surface temperature `TSK` (written, unused) | `TRAD`, else `TG` |
+| wind direction `WDIR` | not available (no wind components in LDASOUT): `Wd = -999` in the met files, so directional wind coefficients are not applied |
+
+`XLAT`/`XLONG` are used when present; otherwise the grid is rebuilt from the `MAP_PROJ`, `LAT1`, `LON1`, `DX`, `DY`,
+`TRUELAT1`, `TRUELAT2` and `STAND_LON` attributes (Lambert conformal, Mercator and regular lat/lon). Cells flagged
+`-1e33` or `-9999` become NaN and are skipped when a tile's meteorology is averaged.
 
 ### Note for Windows Users
 On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
