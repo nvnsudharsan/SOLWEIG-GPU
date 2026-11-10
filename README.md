@@ -421,22 +421,6 @@ thermal_comfort(
 )
 ```
 
-Variable mapping of the reader (`preprocessor.process_hrldas_data`, first available wins; the choice is printed):
-
-| SOLWEIG input | LDASOUT variable |
-|---|---|
-| air temperature `T2` | `T2M` (urban-diagnostics build), else `FVEG`-weighted `T2MV`/`T2MB`, else `FORCTLSM` |
-| humidity (for `RH2`) | `Q2M`, else `FVEG`-weighted `Q2MV`/`Q2MB`, else `FORCQLSM` (specific humidity, converted to mixing ratio) |
-| pressure `PSFC` | `FORCPLSM` reduced hydrostatically from `FORCZLSM` to the surface, else 101325 Pa |
-| wind speed `WIND` | `WS10M`, else `FORCWLSM` (lowest model level) |
-| shortwave `SWDOWN` | `SWFORC` |
-| longwave `GLW` (written, unused) | `LWFORC` |
-| surface temperature `TSK` (written, unused) | `TRAD`, else `TG` |
-| wind direction `WDIR` | not available (no wind components in LDASOUT): `Wd = -999` in the met files, so directional wind coefficients are not applied |
-
-`XLAT`/`XLONG` are used when present; otherwise the grid is rebuilt from the `MAP_PROJ`, `LAT1`, `LON1`, `DX`, `DY`,
-`TRUELAT1`, `TRUELAT2` and `STAND_LON` attributes (Lambert conformal, Mercator and regular lat/lon). Cells flagged
-`-1e33` or `-9999` become NaN and are skipped when a tile's meteorology is averaged.
 
 ### Note for Windows Users
 On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
