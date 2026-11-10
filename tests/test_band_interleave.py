@@ -4,7 +4,7 @@ import os
 import numpy as np
 from osgeo import gdal
 
-from solweig_gpu.utci_process import geotiff_creation_options
+from solweig_gpu.geotiff import geotiff_creation_options
 
 
 def test_default_is_gdal_default():
