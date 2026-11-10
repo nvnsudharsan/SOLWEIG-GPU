@@ -245,7 +245,18 @@ save_shadow = False   # Shadow maps
 save_wbgt = False     # Wet Bulb Globe Temperature (new in v2)
 save_ta = False       # Diagnostic air temperature field (new in v2)
 save_wind = False     # Diagnostic wind speed field (new in v2)
+band_interleave = False   # GeoTIFF layout: True = band-interleaved, tiled, ZSTD/DEFLATE compressed (fast per-hour reads)
 ```
+
+### `band_interleave`
+
+**Type:** Boolean
+**Default:** `False`
+**Description:** GDAL's default GeoTIFF is pixel-interleaved and uncompressed, so reading one time step (one band) of a 24-band
+tile reads the whole file; mosaicking hundreds of tiles hour by hour then re-reads every tile 24 times. With `band_interleave=True`
+the outputs are written band-interleaved (`INTERLEAVE=BAND`), tiled (512 x 512) and losslessly compressed (ZSTD level 1 when the GDAL
+build has it, DEFLATE otherwise), which makes a per-hour read touch only that band and halves the file size. Any GeoTIFF reader opens
+both layouts. Leave it `False` to keep files identical to earlier versions.
 
 **Output Descriptions:**
 

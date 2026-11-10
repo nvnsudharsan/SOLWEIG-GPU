@@ -400,6 +400,7 @@ def run_utci_tiles(
     save_wbgt: bool = False,
     save_ta: bool = False,
     save_wind: bool = False,
+    band_interleave: bool = False,
 ) -> None:
     """
     Run UTCI (and optional outputs) for tiles in the preprocessing directory.
@@ -416,7 +417,11 @@ def run_utci_tiles(
             Which outputs to save (UTCI is always saved).
         save_ta: Save diagnostic Ta field.
         save_wind: Save diagnostic wind field.
-    """
+    
+
+        band_interleave:
+            Band-interleaved, tiled, compressed output GeoTIFFs (fast per-hour reads);
+            default False keeps GDAL's default layout."""
     import os
     import numpy as np
     import torch
@@ -495,6 +500,7 @@ def run_utci_tiles(
             save_wbgt=save_wbgt,
             save_ta=save_ta,
             save_wind=save_wind,
+            band_interleave=band_interleave,
         )
         empty_cache()
 
@@ -526,6 +532,7 @@ def thermal_comfort(
     save_wbgt=False,
     save_ta=False,
     save_wind=False,
+    band_interleave=False,
 ):
     """
     Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
@@ -631,6 +638,12 @@ def thermal_comfort(
         save_wind:
             Save diagnostic wind speed field.
 
+        band_interleave:
+            Write the output GeoTIFFs band-interleaved, tiled and losslessly compressed
+            (ZSTD or DEFLATE). Reading one time step of a tile then touches only that
+            band, which makes hour-by-hour mosaics of many tiles much faster; files are
+            about half the size. Default False keeps GDAL's default layout.
+
     Returns:
         None
     """
@@ -684,4 +697,5 @@ def thermal_comfort(
         save_wbgt=save_wbgt,
         save_ta=save_ta,
         save_wind=save_wind,
+        band_interleave=band_interleave,
     )
