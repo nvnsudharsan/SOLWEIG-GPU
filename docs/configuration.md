@@ -317,12 +317,18 @@ thermal_comfort(
 
 ### GPU vs CPU
 
-The package automatically detects and uses GPU if available. To force CPU execution:
+The package detects the GPU backend automatically through `solweig_gpu.device`: CUDA (NVIDIA, and AMD GPUs through the
+ROCm build of PyTorch, which also reports as `cuda`), then Intel XPU, then Apple MPS, then CPU. Install the PyTorch build
+that matches your hardware (see the README, "GPU backends"). To force a backend, or CPU execution, set the environment
+variable before importing the package:
 
 ```python
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['SOLWEIG_DEVICE'] = 'cpu'      # or 'cuda', 'xpu', 'mps', 'xpu:1', ...
 ```
+
+`CUDA_VISIBLE_DEVICES`, `HIP_VISIBLE_DEVICES` and `ZE_AFFINITY_MASK` restrict which NVIDIA, AMD or Intel devices are
+visible; `solweig_gpu.device.mask_device(i)` sets all three for one worker process.
 
 ### Memory Management
 

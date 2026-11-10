@@ -302,6 +302,8 @@ def calculate_svf(base_path: str, patch_option: int = 2, overwrite: bool = False
     import torch
     from tqdm import tqdm
 
+    from .device import empty_cache, get_device
+
     from .shadow import is_current_svf_cache, svf_calculator
 
     building_dsm_dir = os.path.join(base_path, "Building_DSM")
@@ -388,8 +390,7 @@ def calculate_svf(base_path: str, patch_option: int = 2, overwrite: bool = False
         # Do not keep GPU tensors in memory after each tile.
         del svf_results
 
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        empty_cache()
 
     print("[INFO] Standalone SVF calculation complete.")
 
@@ -436,6 +437,7 @@ def run_utci_tiles(
     import re
     import numpy as np
     import torch
+    from .device import empty_cache, get_device
     from .utci_process import compute_utci, map_files_by_key, map_windcoeff_files_by_key
 
     base_output_path = os.path.join(base_path, "output_folder")
@@ -529,7 +531,7 @@ def run_utci_tiles(
             save_wind=save_wind,
             met_fields=met_fields_path,
         )
-        torch.cuda.empty_cache()
+        empty_cache()
 
 
 def thermal_comfort(

@@ -22,6 +22,7 @@ import datetime
 import calendar
 import scipy.ndimage.interpolation as sc
 import torch
+from .device import empty_cache, get_device
 import torch.nn.functional as F
 from scipy.ndimage import rotate
 import time
@@ -41,7 +42,7 @@ import zipfile
 from .walls_aspect import run_parallel_processing
 gdal.UseExceptions()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = get_device()
 
 script_dir = os.path.dirname(__file__)
 landcover_classes_path = os.path.join(script_dir, 'landcoverclasses_2016a.txt')
