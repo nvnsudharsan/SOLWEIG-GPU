@@ -88,6 +88,7 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 - Structure: One folder per tile (e.g., `0_0/`, `1000_0/`)
 - SVF: Single-band raster
 - Other outputs: Multi-band raster (e.g., 24 bands for hourly results)
+- `band_interleave=True` (or `--band_interleave True`) writes the multi-band rasters band-interleaved, tiled and losslessly compressed: reading one hour of a tile then touches only that band (fast mosaics of many tiles) and files are about half the size; default `False` keeps GDAL's default layout
 
 If you need outputs in a different folder, set `base_path` to that directory and pass **complete paths** for the rasters: `building_dsm_filename`, `dem_filename`, `trees_filename`, and `landcover_filename` (optional).
 
