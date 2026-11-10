@@ -44,6 +44,10 @@ setup(
         "matplotlib"
     ],
     extras_require={
+        "hrrr": [
+            "requests",
+            "eccodes",
+        ],
         "test": [
             "pytest",
             "pytest-cov",

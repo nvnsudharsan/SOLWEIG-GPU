@@ -183,6 +183,22 @@ client.retrieve(dataset, request).download()
    3.  When using the ERA-5 dataset, the package can find the corresponding data for `start_time` and `end_time`. For example, if ERA-5 data is downloaded from 2020-08-13 00 UTC to 2020-08-14 23 UTC and the model is to be run from 2020-08-13 06 UTC to 2020-08-14 05 UTC, the package can select data from 2020-08-13 06 UTC to 2020-08-14 05 UTC by itself (selected_date_str = '2020-08-13', start_time = '2020-08-13 00:00:00', and end_time = '2020-08-14 23:00:00')
     
 
+**HRRR (NOAA 3 km forecast, contiguous United States):**
+
+```python
+use_own_met = False
+data_source_type = 'hrrr'
+data_folder = '/path/to/hrrr_window'   # filled on the first call (ERA5-style NetCDF pair), reused afterwards
+start_time = '2026-09-08 07:00:00'     # UTC, 24 h before the local day when use_uhi=True
+end_time = '2026-09-10 06:00:00'       # UTC
+```
+
+The window is fetched from the public bucket `noaa-hrrr-bdp-pds` by HTTP byte ranges (a few tens of MB for 48 h):
+the latest published 6-hourly cycle at or before `start_time` and the cycle 24 h earlier; where they overlap the
+shorter lead time is used; each cycle reaches 48 h ahead. The files contain the roughness length (`fsr`), so
+`ERA_5_z0_find=True` works as with ERA5. Requires the optional packages `requests` and `eccodes`
+(`pip install solweig-gpu[hrrr]`). `solweig_gpu.hrrr.fetch_hrrr()` exposes the download on its own.
+
 ## Wind and UHI Configuration (New in Version 2)
 
 ### `ERA_5_z0_find`
@@ -206,6 +222,21 @@ ERA_5_z0_find = True   # requires data_stream-oper_stepType-instant.nc in data_f
 
 ```python
 use_uhi = True   # ERA5 only
+```
+
+### `use_met_fields`
+
+**Type:** Boolean
+**Default:** `False`
+**Description:** With one weather value per tile (the default, the nearest grid cell), tiles that straddle a weather-grid
+boundary show a step in UTCI at the seam when the weather grid is finer than the tiles (for example 3 km HRRR with 3 km tiles).
+`use_met_fields=True` makes `preprocess()` also write 2-D fields of air temperature, humidity, wind, pressure and UHI intensity
+per tile (`metfields_<tile>_<date>.npz`, bilinear interpolation of the weather grid on a ~100 m grid) and makes `run_utci_tiles()`
+use them per pixel. Radiation and the sky model keep the tile values. Requires gridded weather (`use_own_met=False`) on a
+regular latitude/longitude grid (ERA5, HRRR).
+
+```python
+use_met_fields = True   # seam fix; False reproduces earlier results exactly
 ```
 
 ### `windcoeff_folder` (staged pipeline only)

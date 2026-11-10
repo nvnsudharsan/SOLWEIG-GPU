@@ -1404,7 +1404,7 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
          landcover_filename, windcoeff_filename,
          tile_size, overlap, selected_date_str, use_own_met,
          start_time=None, end_time=None, data_source_type=None, data_folder=None,
-         own_met_file=None, preprocess_dir=None, use_uhi=True):
+         own_met_file=None, preprocess_dir=None, use_uhi=True, use_met_fields=False):
     """
     Preprocessing routine to validate raster files, generate tiles, and prepare metfiles for SOLWEIG.
 
@@ -1421,11 +1421,14 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         use_own_met (bool): Whether to use a user-provided met file.
         start_time (str): Start datetime (required if not using own met file).
         end_time (str): End datetime (required if not using own met file).
-        data_source_type (str): Either 'ERA5' or 'wrfout'.
+        data_source_type (str): 'ERA5', 'hrrr' (NOAA HRRR, downloaded from AWS into data_folder when missing) or 'wrfout'.
         data_folder (str): Folder containing input NetCDF files.
         own_met_file (str): Path to user-provided met file (used if use_own_met is True).
         preprocess_dir (str): Directory for preprocessing outputs.
         use_uhi (bool): Whether to use UHI-aware ERA5 preprocessing.
+        use_met_fields (bool): Also write 2-D meteorological fields per tile (``metfields_<key>_<date>.npz``,
+            see :func:`process_metfields`) for ``run_utci_tiles(use_met_fields=True)``. Needs gridded weather
+            (``use_own_met=False``).
     """
     if preprocess_dir is None:
         preprocess_dir = os.path.join(base_path, "processed_inputs")
@@ -1485,6 +1488,10 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
     dem_tiles_folder = os.path.join(preprocess_dir, "DEM")
 
     # Choose between own met file or processed NetCDF file.
+    if use_met_fields and use_own_met:
+        raise ValueError("use_met_fields=True needs gridded weather data (use_own_met=False with ERA5, HRRR or WRF); "
+                         "a single meteorological file has no spatial fields.")
+
     if use_own_met:
         if own_met_file is None:
             print("Error: Please provide the path to your own met file.")
@@ -1499,7 +1506,12 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
         # Define the name (and path) for the processed NetCDF output.
         processed_nc_file = os.path.join(preprocess_dir, "Outfile.nc")
 
-        if data_source_type.lower() == "era5":
+        if data_source_type.lower() == "hrrr":
+            # HRRR forcing is downloaded into data_folder (when missing) as the same NetCDF pair that the ERA5 readers use.
+            from .hrrr import ensure_hrrr
+            ensure_hrrr(data_folder, start_time, end_time, raster=os.path.join(base_path, building_dsm_filename))
+
+        if data_source_type.lower() in ("era5", "hrrr"):
             if use_uhi:
                 print("[INFO] Using ERA5 processing with UHI correction")
                 process_era5_data_uhi(start_time, end_time, data_folder, output_file=processed_nc_file)
@@ -1511,16 +1523,135 @@ def ppr(base_path, building_dsm_filename, dem_filename, trees_filename,
             process_wrfout_data(start_time, end_time, data_folder, output_file=processed_nc_file)
 
         else:
-            print("Error: data_source_type must be either 'ERA5' or 'wrfout'.")
+            print("Error: data_source_type must be 'ERA5', 'hrrr' or 'wrfout'.")
             exit(1)
 
         # Process the generated NetCDF file to create metfiles.
         process_metfiles(processed_nc_file, dem_tiles_folder, base_path, selected_date_str, preprocess_dir, use_uhi=use_uhi)
 
+        # Optional 2-D meteorological fields per tile (removes the steps at tile seams that one value per tile produces).
+        if use_met_fields:
+            process_metfields(processed_nc_file, dem_tiles_folder, selected_date_str, preprocess_dir, use_uhi=use_uhi)
 
 
+# =============================================================================
+# 2-D meteorological fields per tile (tile-seam fix)
+# =============================================================================
+def process_metfields(netcdf_file, raster_folder, selected_date_str, preprocess_dir, field_res_m=100.0, use_uhi=True):
+    """
+    Write 2-D meteorological fields for every tile, as a companion to :func:`process_metfiles`.
 
+    :func:`process_metfiles` gives each tile ONE weather value per hour (the nearest grid cell), which
+    produces visible steps at tile seams when the weather grid is finer than the tile layout (for
+    example 3 km HRRR with 3 km tiles). This function bilinearly interpolates the weather grid onto a
+    coarse grid (about ``field_res_m``) that covers exactly the extent of each tile raster and writes
+    ``metfields_<key>_<date>.npz`` next to ``metfile_<key>_<date>.txt`` with one layer per met-file row
+    of Ta (C), RH (%), Ws (m/s), P (kPa) and uhii (K). :func:`solweig_gpu.run_utci_tiles` with
+    ``use_met_fields=True`` upsamples the layers to the tile resolution every hour; radiation and the
+    sky model keep using the tile scalars. Without the option the scalar met file is used as before.
 
+    The weather grid must be a regular latitude/longitude grid (as written by the ERA5 and HRRR
+    readers); curvilinear WRF grids are rejected.
 
+    Parameters:
+        netcdf_file (str): Processed weather NetCDF (``Outfile.nc`` with T2, RH2, WIND, PSFC, UHI_CYCLE).
+        raster_folder (str): Folder of tile rasters (the DEM tiles), one field file per tile.
+        selected_date_str (str): Local date "YYYY-MM-DD" (same hour selection as the met files).
+        preprocess_dir (str): Preprocessing directory; files go to ``<preprocess_dir>/metfiles``.
+        field_res_m (float): Approximate field grid spacing in metres (default 100 m).
+        use_uhi (bool): Include the UHI_CYCLE layer; otherwise uhii is zero.
+    """
+    from scipy.interpolate import RegularGridInterpolator
+    metfiles_folder = os.path.join(preprocess_dir, "metfiles")
+    os.makedirs(metfiles_folder, exist_ok=True)
+    tf = TimezoneFinder()
+    dataset = nc.Dataset(netcdf_file, "r")
+    tif_files = glob.glob(os.path.join(raster_folder, "*.tif"))
+    if not tif_files:
+        print(f"No TIFF files found in {raster_folder}.")
+        dataset.close()
+        return
+    time_var = dataset.variables["time"][:]
+    time_units = dataset.variables["time"].units
+    time_base_date = nc.num2date(time_var, units=time_units, only_use_cftime_datetimes=False)
+    selected_local_date = datetime.datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+    lat2d = np.array(dataset.variables["lat"][:], dtype=float)
+    lon2d = np.array(dataset.variables["lon"][:], dtype=float)
+    if lat2d.ndim == 2:
+        if np.abs(np.diff(lat2d, axis=1)).max() > 1e-6 or np.abs(np.diff(lon2d, axis=0)).max() > 1e-6:
+            raise ValueError("process_metfields needs a regular latitude/longitude weather grid")
+        lat1, lon1 = lat2d[:, 0], lon2d[0, :]
+    else:
+        lat1, lon1 = lat2d, lon2d
+    lat_asc = lat1[0] < lat1[-1]
+    lon_asc = lon1[0] < lon1[-1]
+    lat_g = lat1 if lat_asc else lat1[::-1]
+    lon_g = lon1 if lon_asc else lon1[::-1]
 
+    def grid_layer(arr):
+        """(ny, nx) layer with ascending axes; masked values become NaN."""
+        a = np.asanyarray(arr)
+        a = np.where(a.mask, np.nan, a.data) if np.ma.isMaskedArray(a) else np.array(a, dtype=float)
+        if not lat_asc:
+            a = a[::-1, :]
+        if not lon_asc:
+            a = a[:, ::-1]
+        return a
 
+    var_map = {"Ta": ("T2", lambda v: v - 273.15), "RH": ("RH2", lambda v: v), "Ws": ("WIND", lambda v: v),
+               "P": ("PSFC", lambda v: v / 1000.0), "uhii": ("UHI_CYCLE", lambda v: v)}
+    target_srs = osr.SpatialReference()
+    target_srs.ImportFromEPSG(4326)
+    target_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    for tif_file in tif_files:
+        ds_tif = gdal.Open(tif_file)
+        if ds_tif is None:
+            print(f"Could not open {tif_file}. Skipping.")
+            continue
+        gt = ds_tif.GetGeoTransform()
+        xsize, ysize = ds_tif.RasterXSize, ds_tif.RasterYSize
+        srs_tif = osr.SpatialReference()
+        srs_tif.ImportFromWkt(ds_tif.GetProjection())
+        srs_tif.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        transform = osr.CoordinateTransformation(srs_tif, target_srs)
+        left, top = gt[0], gt[3]
+        right, bottom = left + gt[1] * xsize, top + gt[5] * ysize
+        width_m, height_m = abs(right - left), abs(top - bottom)
+        fx = max(2, int(round(width_m / field_res_m)))
+        fy = max(2, int(round(height_m / field_res_m)))
+        xs = left + (np.arange(fx) + 0.5) * (right - left) / fx
+        ys = top + (np.arange(fy) + 0.5) * (bottom - top) / fy
+        X, Y = np.meshgrid(xs, ys)
+        pts = transform.TransformPoints(np.column_stack([X.ravel(), Y.ravel()]).tolist())
+        lon_c = np.array([p[0] for p in pts]).reshape(fy, fx)
+        lat_c = np.array([p[1] for p in pts]).reshape(fy, fx)
+        q = np.column_stack([lat_c.ravel(), lon_c.ravel()])
+        shape_name = os.path.splitext(os.path.basename(tif_file))[0]
+        key = re.sub(r'\W+', '_', shape_name).replace("DEM", "metfields", 1)   # DEM_0_0 -> metfields_0_0
+        out_npz = os.path.join(metfiles_folder, f"{key}_{selected_date_str}.npz")
+        lon_center, lat_center = float(lon_c.mean()), float(lat_c.mean())
+        local_tz = pytz.timezone(tf.timezone_at(lng=lon_center, lat=lat_center) or "UTC")
+        utc_start = local_tz.localize(datetime.datetime.combine(selected_local_date, datetime.time(0, 0))).astimezone(pytz.utc)
+        utc_end = local_tz.localize(datetime.datetime.combine(selected_local_date, datetime.time(23, 59))).astimezone(pytz.utc)
+        time_indices = [idx for idx, d in enumerate(time_base_date) if utc_start <= d.replace(tzinfo=pytz.utc) <= utc_end]
+        if not time_indices:
+            print(f"No UTC data found for local date {selected_date_str} in {tif_file}.")
+            continue
+        out = {k: np.zeros((len(time_indices), fy, fx), np.float32) for k in var_map}
+        hours = []
+        for n, t in enumerate(time_indices):
+            hours.append(time_base_date[t].replace(tzinfo=pytz.utc).astimezone(local_tz).hour)
+            for k, (vn, conv) in var_map.items():
+                if vn not in dataset.variables or (k == "uhii" and not use_uhi):
+                    continue   # layer stays 0
+                layer = grid_layer(dataset.variables[vn][t, :, :])
+                lin = RegularGridInterpolator((lat_g, lon_g), layer, method="linear", bounds_error=False, fill_value=np.nan)(q)
+                bad = ~np.isfinite(lin)
+                if bad.any():   # outside the grid or next to missing cells: nearest valid cell
+                    lin[bad] = RegularGridInterpolator((lat_g, lon_g), np.where(np.isfinite(layer), layer, np.nan),
+                                                       method="nearest", bounds_error=False, fill_value=None)(q[bad])
+                out[k][n] = conv(lin).reshape(fy, fx)
+        np.savez_compressed(out_npz, hours=np.array(hours, np.int16), extent=np.array([left, bottom, right, top]),
+                            field_res_m=np.array([width_m / fx, height_m / fy]), **out)
+        print(f"Wrote {out_npz}: {len(time_indices)} layers of {fy}x{fx} (~{width_m / fx:.0f} m)")
+    dataset.close()

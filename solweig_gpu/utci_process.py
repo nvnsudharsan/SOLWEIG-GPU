@@ -68,6 +68,7 @@ firstdayleaf = 97
 lastdayleaf = 300
 conifer_bool = False
 
+
 def load_raster_to_tensor(dem_path):
     """
     Load a GeoTIFF raster file into a PyTorch tensor.
@@ -325,7 +326,7 @@ def load_cached_svf_outputs(building_dsm_path: str, number: str):
 
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file,
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
-                save_ldown=False,save_shadow=False,save_wbgt=False,save_ta=False,save_wind=False):
+                save_ldown=False,save_shadow=False,save_wbgt=False,save_ta=False,save_wind=False, met_fields=None):
     """
     Compute UTCI and related thermal comfort outputs for a single tile.
     
@@ -570,6 +571,20 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     else:
         uhii = torch.zeros(met_file.shape[0], device=device)
 
+    # met fields: optional 2-D met fields (metfields_<key>_<date>.npz from process_metfields), explicit opt-in via met_fields=path.
+    # Coarse (~100 m) layers per met-file row, covering exactly the raster extent; upsampled bilinearly to (rows, cols) per hour on the GPU.
+    fields = None
+    if met_fields is not None:
+        import torch.nn.functional as _F
+        _z = np.load(met_fields)
+        if _z["Ta"].shape[0] != met_file.shape[0]:
+            raise ValueError(f"met fields {met_fields}: {_z['Ta'].shape[0]} layers but {met_file.shape[0]} met-file rows")
+        fields = {k: torch.tensor(np.asarray(_z[k], dtype=np.float32), device=device) for k in ("Ta", "RH", "Ws", "P", "uhii")}
+        if met_file.shape[1] <= 24: fields["uhii"] = torch.zeros_like(fields["Ta"])   # no uhii column -> UHI off, as in the scalar path
+        def _up(t2d): return _F.interpolate(t2d[None, None], size=(rows, cols), mode="bilinear", align_corners=False)[0, 0]
+        print(f"met fields on: {met_fields} ({tuple(_z['Ta'].shape)} -> {rows}x{cols})")
+
+
     if save_wbgt:
         Ta_np = (Ta + uhii).cpu().numpy()
         RH_np = RH.cpu().numpy()
@@ -577,6 +592,13 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     
         wbt_np = isobaric_wet_bulb_temperature_from_rh(p=P_np * 1000.0, T=Ta_np + 273.15, rh=RH_np, phase='liquid', method='Romps',limit=True)
         wbt = torch.tensor(wbt_np, device=device, dtype=Ta.dtype)
+        if fields is not None:   # wet-bulb on the coarse field grid (smooth in Ta/RH/P), upsampled per hour below
+            _zz = {k: fields[k].cpu().numpy().astype(np.float64) for k in ("Ta", "RH", "P", "uhii")}
+            try:
+                wbt_c = isobaric_wet_bulb_temperature_from_rh(p=_zz["P"] * 1000.0, T=_zz["Ta"] + _zz["uhii"] + 273.15, rh=_zz["RH"], phase='liquid', method='Romps', limit=True)
+            except Exception:
+                wbt_c = np.vectorize(lambda pp, tt, rr: isobaric_wet_bulb_temperature_from_rh(p=pp, T=tt, rh=rr, phase='liquid', method='Romps', limit=True))(_zz["P"] * 1000.0, _zz["Ta"] + _zz["uhii"] + 273.15, _zz["RH"])
+            fields["wbt"] = torch.tensor(np.asarray(wbt_c, dtype=np.float32), device=device)
     # Prepare leafon based on vegetation type
     if conifer_bool:
         leafon = torch.ones((1, DOY.shape[0]), device=device)
@@ -665,15 +687,19 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
                     CI = 1.
             else:
                 CI = 1.
+        if fields is not None:   # per-pixel met for this hour (bilinear upsampling of the coarse field layers)
+            Ta_i, RH_i, P_i, Ws_i, uhii_i = (_up(fields[k][i]) for k in ("Ta", "RH", "P", "Ws", "uhii"))
+        else:
+            Ta_i, RH_i, P_i, Ws_i, uhii_i = Ta[i], RH[i], P[i], Ws[i], uhii[i]
         Tmrt, Kdown, Kup, Ldown, Lup, Tg, ea, esky, I0, CI, shadow, firstdaytime, timestepdec, timeadd, \
         Tgmap1, Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N, Keast, Ksouth, Kwest, Knorth, Least, Lsouth, Lwest, Lnorth, \
         KsideI, TgOut1, TgOut, radIout, radDout, Lside, Lsky_patch_characteristics, CI_Tg, CI_TgG, KsideD, dRad, Kside = Solweig_2022a_calc(
             i, a, scale, rows, cols, svf, svfN, svfW, svfE, svfS, svfveg, svfNveg, svfEveg, svfSveg, svfWveg, svfaveg, svfEaveg, svfSaveg, svfWaveg, svfNaveg, vegdsm, vegdsm2, albedo_b, absK, absL, ewall, Fside, Fup, Fcyl,
-            altitude[0][i], azimuth[0][i], zen[0][i], jday[0][i], usevegdem, onlyglobal, buildings, location, psi[0][i], landcover, lcgrid, dectime[i], altmax[0][i], dirwalls, walls, cyl, elvis, Ta[i], RH[i], radG[i], radD[i], radI[i], P[i],
+            altitude[0][i], azimuth[0][i], zen[0][i], jday[0][i], usevegdem, onlyglobal, buildings, location, psi[0][i], landcover, lcgrid, dectime[i], altmax[0][i], dirwalls, walls, cyl, elvis, Ta_i, RH_i, radG[i], radD[i], radI[i], P_i,
             amaxvalue, bush, Twater, TgK, Tstart, alb_grid, emis_grid, TgK_wall, Tstart_wall, TmaxLST, TmaxLST_wall, first, second, svfalfa, svfbuveg, firstdaytime, timeadd, timestepdec, Tgmap1, Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N,
-            CI, TgOut1, diffsh, shmat, vegshmat, vbshvegshmat, anisotropic_sky, asvf, patch_option)
+            CI, TgOut1, diffsh, shmat, vegshmat, vbshvegshmat, anisotropic_sky, asvf, patch_option, Ta_s=Ta[i], RH_s=RH[i], P_s=P[i])
         # Create matrices for meteorological parameters for the current time step
-        RH_mat = torch.zeros((rows, cols), device=device) + RH[i]
+        RH_mat = torch.zeros((rows, cols), device=device) + RH_i
         Tmrt_mat = torch.zeros((rows, cols), device=device) + Tmrt
         if windcoeff_by_dir is not None:
             wd_i = float(Wdirection[i].detach().cpu().item())
@@ -686,9 +712,9 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         else:
             coeff_i = windcoeff
 
-        va10m_mat = coeff_i * Ws[i]
+        va10m_mat = coeff_i * Ws_i
         va10m_mat = torch.clamp(va10m_mat, min=0.15) #WGBT works for u > 0.15 m/s
-        Ta_mat = torch.zeros((rows, cols), device=device) + Ta[i] + uhii[i]
+        Ta_mat = torch.zeros((rows, cols), device=device) + Ta_i + uhii_i
         #wind_factor = torch.pow(va10m_mat, -0.25)
         #uhi_term = (2.0 - svf - fveg) * uhii[i] * wind_factor
         #Ta_mat = Ta_mat + uhi_term
@@ -698,8 +724,9 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             hcg = coef*torch.pow(va10m_mat, 0.6)
             bgt_mat = black_globe_temperature(hcg, Tmrt_mat, Ta_mat, emissivity=0.95)
             cond = shadow < 0.1
-            wbgt_sun = 0.7 * wbt[i] + 0.3 * bgt_mat
-            wbgt_shade = 0.7 * wbt[i] + 0.2 * bgt_mat + 0.1 * Ta_mat
+            wbt_i = _up(fields["wbt"][i]) if fields is not None else wbt[i]
+            wbgt_sun = 0.7 * wbt_i + 0.3 * bgt_mat
+            wbgt_shade = 0.7 * wbt_i + 0.2 * bgt_mat + 0.1 * Ta_mat
             wbgt_mat = torch.where(cond, wbgt_sun, wbgt_shade)
         
         UTCI_mat = utci_calculator(Ta_mat, RH_mat, Tmrt_mat, va10m_mat)
@@ -927,4 +954,3 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     end_time = time.time()
     time_taken = end_time - start_time
     print(f"Time taken to execute tile {number}: {time_taken:.2f} seconds")
-

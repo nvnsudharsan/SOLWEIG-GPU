@@ -373,6 +373,47 @@ thermal_comfort(
 - If `ERA_5_z0_find=True`, SOLWEIG-GPU expects the ERA5 file `data_stream-oper_stepType-instant.nc` in `data_folder`. Because this example does not use ERA5 forcing, the safer default is `ERA_5_z0_find=False`.
 - If `ERA_5_z0_find=True`, wind directions should be available for each time step in the meteorological `.txt` file.
 
+### Example 4: HRRR forecast forcing with 2-D meteorological fields (seam fix)
+
+For domains inside the contiguous United States, `data_source_type='hrrr'` downloads NOAA's 3 km HRRR
+forecast from the public AWS bucket for the requested window (the latest published 6-hourly cycle, plus
+the previous one for the UHI padding) and converts it into the same NetCDF pair that the ERA5 readers
+use. `use_met_fields=True` then interpolates the weather bilinearly inside every tile instead of using
+one value per tile, which removes the steps that appear at tile seams when the weather grid is finer
+than the tiles. Needs the optional dependencies `requests` and `eccodes` (`pip install solweig-gpu[hrrr]`).
+
+```python
+from solweig_gpu import thermal_comfort
+
+thermal_comfort(
+    base_path='/path/to/los_angeles',
+    selected_date_str='2026-09-09',
+    building_dsm_filename='Building_DSM.tif',
+    dem_filename='DEM.tif',
+    trees_filename='Trees.tif',
+    landcover_filename='Landcover.tif',
+    tile_size=600,
+    overlap=40,
+    use_own_met=False,
+    start_time='2026-09-08 07:00:00',   # UTC; 24 h before the local day for the UHI cycle
+    end_time='2026-09-10 06:00:00',     # UTC; end of the local day (PDT = UTC-7)
+    data_source_type='hrrr',
+    data_folder='/path/to/hrrr_20260909',   # created and filled on the first call, reused afterwards
+    ERA_5_z0_find=True,    # the HRRR pair carries the roughness length (fsr) the wind scheme reads
+    use_uhi=True,
+    use_met_fields=True,   # 2-D weather inside each tile (seam fix); False = one value per tile
+    save_tmrt=True,
+    save_wbgt=True,
+)
+```
+
+Notes:
+- `use_met_fields=True` works with any gridded source on a regular latitude/longitude grid (ERA5, HRRR);
+  it is rejected with a user-provided met file. The scalar met files are still written, so results with
+  `use_met_fields=False` are unchanged from earlier versions.
+- The HRRR download can also be driven directly: `from solweig_gpu.hrrr import fetch_hrrr` with
+  `fetch_hrrr(start_time, end_time, out_dir, bbox=(lonmin, lonmax, latmin, latmax))` or `raster=<path>`.
+
 ### Note for Windows Users
 On Windows, Python uses the *spawn* start method for new processes: each worker re-imports your script. Without guarding the entry point, a top-level call to `thermal_comfort()` would run again in every child process, causing repeated execution and failures (e.g. `BrokenProcessPool`). Always call `thermal_comfort()` inside a `main()` function and use `if __name__ == "__main__":` (see example below).
 ```python
@@ -440,6 +481,8 @@ thermal_comfort --base_path '/path/to/input' ^
 
 - `--era5_z0_find` computes directional wind-extension coefficients and requires `data_stream-oper_stepType-instant.nc` in `--data_folder`. It defaults to `True` when `--data_folder` is provided and `False` otherwise.
 - `--use_uhi` computes the diagnostic urban heat island intensity; use it only with ERA5 forcing (set `False` for WRF or your own meteorological file).
+- `--data_source_type hrrr` downloads the NOAA HRRR forecast into `--data_folder` (CONUS only; needs `requests` and `eccodes`).
+- `--use_met_fields True` interpolates the gridded weather inside each tile (tile-seam fix); requires `--use_own_met False`.
 
 > Tip: Use `--help` to list all CLI options.
 

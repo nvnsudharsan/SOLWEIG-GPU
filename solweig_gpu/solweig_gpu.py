@@ -37,6 +37,7 @@ def preprocess(
     own_met_file: Optional[str] = None,
     preprocess_dir: Optional[str] = None,
     use_uhi: bool = True,
+    use_met_fields: bool = False,
 ) -> str:
     """
     Run preprocessing only: validate rasters, create tiles, and prepare metfiles.
@@ -76,16 +77,18 @@ def preprocess(
             Overlap between tiles in pixels.
 
         use_own_met:
-            If True, use own_met_file; else use ERA5/WRF.
+            If True, use own_met_file; else use ERA5/HRRR/WRF.
 
         start_time, end_time:
-            Required for ERA5/WRF, in UTC format 'YYYY-MM-DD HH:MM:SS'.
+            Required for ERA5/HRRR/WRF, in UTC format 'YYYY-MM-DD HH:MM:SS'.
 
         data_source_type:
-            'ERA5' or 'wrfout' when use_own_met is False.
+            'ERA5', 'hrrr' or 'wrfout' when use_own_met is False. With 'hrrr' the NOAA HRRR
+            forecast is downloaded from AWS into data_folder when it is not already there
+            (needs the optional 'requests' and 'eccodes' packages).
 
         data_folder:
-            Folder with ERA5/WRF NetCDF files when use_own_met is False.
+            Folder with ERA5/HRRR/WRF NetCDF files when use_own_met is False.
 
         own_met_file:
             Path to custom met file when use_own_met is True.
@@ -98,6 +101,11 @@ def preprocess(
             If True, use UHI-aware ERA5 processing and write UHI_CYCLE/uhii
             into generated metfiles when available. If False, use standard ERA5
             processing and write uhii = 0.0.
+
+        use_met_fields:
+            Also write 2-D meteorological fields per tile (``metfields_<key>_<date>.npz``)
+            for :func:`run_utci_tiles` with ``use_met_fields=True``. Requires gridded
+            weather (``use_own_met=False``).
 
     Returns:
         The path to the preprocessing directory.
@@ -128,6 +136,7 @@ def preprocess(
         own_met_file,
         preprocess_dir=preprocess_dir,
         use_uhi=use_uhi,
+        use_met_fields=use_met_fields,
     )
 
     return preprocess_dir
@@ -399,6 +408,7 @@ def run_utci_tiles(
     save_wbgt: bool = False,
     save_ta: bool = False,
     save_wind: bool = False,
+    use_met_fields: bool = False,
 ) -> None:
     """
     Run UTCI (and optional outputs) for tiles in the preprocessing directory.
@@ -415,8 +425,15 @@ def run_utci_tiles(
             Which outputs to save (UTCI is always saved).
         save_ta: Save diagnostic Ta field.
         save_wind: Save diagnostic wind field.
-    """
+    
+
+        use_met_fields:
+            Use the 2-D meteorological fields written by ``preprocess(..., use_met_fields=True)``
+            (bilinear weather inside each tile, removes tile-seam steps). Default False = one
+            value per tile from the met file, as before."""
+    import glob
     import os
+    import re
     import numpy as np
     import torch
     from .utci_process import compute_utci, map_files_by_key, map_windcoeff_files_by_key
@@ -439,6 +456,15 @@ def run_utci_tiles(
     walls_map = map_files_by_key(walls_dir, ".tif")
     aspect_map = map_files_by_key(aspect_dir, ".tif")
     met_map = map_files_by_key(input_met, ".txt")
+    # Several dates can share the metfiles folder: keep the files of the requested date, matched by their full
+    # name (the key-only mapping above picks an arbitrary date when more than one exists).
+    dated = {}
+    for f in sorted(glob.glob(os.path.join(input_met, f"metfile_*_{selected_date_str}.txt"))):
+        m = re.search(r"metfile_(\d+)_(\d+)_", os.path.basename(f))
+        if m:
+            dated[f"{m.group(1)}_{m.group(2)}"] = f
+    if dated:
+        met_map = dated
 
     common_keys = set(building_dsm_map) & set(tree_map) & set(dem_map) & set(met_map) & set(walls_map) & set(aspect_map)
 
@@ -469,7 +495,15 @@ def run_utci_tiles(
         output_folder = os.path.join(base_output_path, key)
         os.makedirs(output_folder, exist_ok=True)
 
-        met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ')
+        met_file_data = np.loadtxt(met_file_path, skiprows=1, delimiter=' ', ndmin=2)   # a single-hour file must stay 2-D
+        met_fields_path = None
+        if use_met_fields:
+            met_fields_path = os.path.join(input_met, f"metfields_{key}_{selected_date_str}.npz")
+            if not os.path.exists(met_fields_path):
+                raise FileNotFoundError(
+                    f"use_met_fields=True but {met_fields_path} is missing: run preprocess(..., use_met_fields=True) "
+                    "or preprocessor.process_metfields first"
+                )
 
         compute_utci(
             building_dsm_path,
@@ -493,6 +527,7 @@ def run_utci_tiles(
             save_wbgt=save_wbgt,
             save_ta=save_ta,
             save_wind=save_wind,
+            met_fields=met_fields_path,
         )
         torch.cuda.empty_cache()
 
@@ -524,6 +559,7 @@ def thermal_comfort(
     save_wbgt=False,
     save_ta=False,
     save_wind=False,
+    use_met_fields=False,
 ):
     """
     Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
@@ -587,10 +623,12 @@ def thermal_comfort(
             End datetime 'YYYY-MM-DD HH:MM:SS'.
 
         data_source_type:
-            'ERA5' or 'wrfout'.
+            'ERA5', 'hrrr' or 'wrfout'. With 'hrrr' the NOAA HRRR forecast for the window is
+            downloaded from AWS into ``data_folder`` when it is not already there (needs the
+            optional 'requests' and 'eccodes' packages: ``pip install solweig-gpu[hrrr]``).
 
         data_folder:
-            Folder containing ERA5/WRF NetCDF files.
+            Folder containing ERA5/WRF NetCDF files (for 'hrrr': the download folder).
 
         own_met_file:
             Path to custom meteorological text file.
@@ -629,9 +667,23 @@ def thermal_comfort(
         save_wind:
             Save diagnostic wind speed field.
 
+        use_met_fields:
+            Interpolate the gridded weather (ERA5/HRRR/WRF) bilinearly inside every tile
+            instead of using one value per tile. Removes the steps at tile seams when the
+            weather grid is finer than the tiles. Requires ``use_own_met=False``. Default False.
+
     Returns:
         None
     """
+    if (not use_own_met) and data_source_type and str(data_source_type).lower() == "hrrr":
+        # Download the HRRR window into data_folder first (the ERA5-style pair also carries the roughness length
+        # that build_wind_ext_coeff reads).
+        import os
+        from .hrrr import ensure_hrrr
+        if data_folder is None or start_time is None or end_time is None:
+            raise ValueError("data_source_type='hrrr' needs data_folder, start_time and end_time")
+        ensure_hrrr(data_folder, start_time, end_time, raster=os.path.join(base_path, building_dsm_filename))
+
     windcoeff_folder = None
     if ERA_5_z0_find:
         try:
@@ -657,6 +709,7 @@ def thermal_comfort(
         data_folder=data_folder,
         own_met_file=own_met_file,
         use_uhi=use_uhi,
+        use_met_fields=use_met_fields,
     )
 
     run_walls_aspect(preprocess_dir)
@@ -682,4 +735,5 @@ def thermal_comfort(
         save_wbgt=save_wbgt,
         save_ta=save_ta,
         save_wind=save_wind,
+        use_met_fields=use_met_fields,
     )

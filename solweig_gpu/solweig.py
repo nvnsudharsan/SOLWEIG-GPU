@@ -127,7 +127,7 @@ def sunonsurface_2018a(azimuthA, scale, buildings, shadow, sunwall, first, secon
     f = buildings
     Lup = SBC * emis_grid * (Tg * shadow + Ta + 273.15) ** 4 - SBC * emis_grid * (Ta + 273.15) ** 4
     if landcover == 1:
-        Tg[lc_grid == 3] = (Twater - Ta).float()
+        _tw = (Twater - Ta).float(); Tg[lc_grid == 3] = _tw[lc_grid == 3] if (torch.is_tensor(_tw) and _tw.dim() > 0) else _tw   # met fields: Ta may be 2-D
 
     Lwall = SBC * ewall * (Tgwall + Ta + 273.15) ** 4 - SBC * ewall * (Ta + 273.15) ** 4
     albshadow = alb_grid * shadow
@@ -1422,7 +1422,7 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
                                  shmat, vegshmat, vbshvegshmat,
                                  Lsky_down, Lsky_side, Lsky, Lup,
                                  Ta, Tgwall, ewall,
-                                 rows, cols):
+                                 rows, cols, sky_scale=None):
     """
     Calculate longwave radiation from discretized sky hemisphere patches.
     
@@ -1482,16 +1482,17 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
     Lsouth = torch.zeros((rows, cols), device=device)
 
     ewall = torch.tensor(ewall, device=device).clone().detach()
+    _ss = sky_scale if sky_scale is not None else 1.0   # met fields: per-pixel ratio of local to tile-mean sky radiance (met fields)
 
     for idx in range(patch_altitude.shape[0]):
         # Calculations for patches on sky, shmat = 1 = sky is visible
         temp_sky = ((shmat[:, :, idx] == 1) & (vegshmat[:, :, idx] == 1))
 
         # Longwave radiation from sky to vertical surface
-        Ldown_sky += temp_sky * Lsky_down[idx, 2]
+        Ldown_sky += temp_sky * Lsky_down[idx, 2] * _ss
 
         # Longwave radiation from sky to horizontal surface
-        Lside_sky += temp_sky * Lsky_side[idx, 2]
+        Lside_sky += temp_sky * Lsky_side[idx, 2] * _ss
 
         # Calculations for patches that are vegetation, vegshmat = 0 = shade from vegetation
         temp_vegsh = ((vegshmat[:, :, idx] == 0) | (vbshvegshmat[:, :, idx] == 0))
@@ -1506,16 +1507,16 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
 
         # Portion into cardinal directions to be used for standing box or POI output
         if (patch_azimuth[idx] > 360) or (patch_azimuth[idx] < 180):
-            Least += temp_sky * Lsky_side[idx, 2] * torch.cos((90 - patch_azimuth[idx]) * deg2rad)
+            Least += temp_sky * Lsky_side[idx, 2] * _ss * torch.cos((90 - patch_azimuth[idx]) * deg2rad)
             Least += vegetation_surface * steradian[idx] * torch.cos(patch_altitude[idx] * deg2rad) * temp_vegsh * torch.cos((90 - patch_azimuth[idx]) * deg2rad)
         if (patch_azimuth[idx] > 90) and (patch_azimuth[idx] < 270):
-            Lsouth += temp_sky * Lsky_side[idx, 2] * torch.cos((180 - patch_azimuth[idx]) * deg2rad)
+            Lsouth += temp_sky * Lsky_side[idx, 2] * _ss * torch.cos((180 - patch_azimuth[idx]) * deg2rad)
             Lsouth += vegetation_surface * steradian[idx] * torch.cos(patch_altitude[idx] * deg2rad) * temp_vegsh * torch.cos((180 - patch_azimuth[idx]) * deg2rad)
         if (patch_azimuth[idx] > 180) and (patch_azimuth[idx] < 360):
-            Lwest += temp_sky * Lsky_side[idx, 2] * torch.cos((270 - patch_azimuth[idx]) * deg2rad)
+            Lwest += temp_sky * Lsky_side[idx, 2] * _ss * torch.cos((270 - patch_azimuth[idx]) * deg2rad)
             Lwest += vegetation_surface * steradian[idx] * torch.cos(patch_altitude[idx] * deg2rad) * temp_vegsh * torch.cos((270 - patch_azimuth[idx]) * deg2rad)
         if (patch_azimuth[idx] > 270) or (patch_azimuth[idx] < 90):
-            Lnorth += temp_sky * Lsky_side[idx, 2] * torch.cos((0 - patch_azimuth[idx]) * deg2rad)
+            Lnorth += temp_sky * Lsky_side[idx, 2] * _ss * torch.cos((0 - patch_azimuth[idx]) * deg2rad)
             Lnorth += vegetation_surface * steradian[idx] * torch.cos(patch_altitude[idx] * deg2rad) * temp_vegsh * torch.cos((0 - patch_azimuth[idx]) * deg2rad)
 
         # Calculations for patches that are buildings, shmat = 0 = shade from buildings
@@ -1607,7 +1608,7 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
     return Ldown, Lside, Lside_sky, Lside_veg, Lside_sh, Lside_sun, Lside_ref, Least, Lwest, Lnorth, Lsouth
 
 
-def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbshvegshmat, solar_altitude, solar_azimuth, rows, cols, asvf):
+def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbshvegshmat, solar_altitude, solar_azimuth, rows, cols, asvf, esky_s=None, Ta_s=None):
     """
     Calculate longwave radiation on cylindrical surface (human body model).
     
@@ -1637,6 +1638,14 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
     SBC = torch.tensor(5.67051e-8, device=device).clone().detach()
 
     # Sky longwave radiation from emissivity based on Prata (1996)
+    # met fields: the per-patch sky radiances need scalars; with 2-D Ta/esky use the tile scalars here and
+    # rescale the accumulated sky terms per pixel by (esky * Ta^4) / (esky_s * Ta_s^4) in define_patch_characteristics.
+    Ta_full = Ta; sky_scale = None
+    if torch.is_tensor(Ta) and Ta.dim() > 0:
+        if Ta_s is None: Ta_s = Ta.mean()
+        if esky_s is None: esky_s = esky.mean() if (torch.is_tensor(esky) and esky.dim() > 0) else esky
+        sky_scale = (esky * (Ta + 273.15) ** 4) / (esky_s * (Ta_s + 273.15) ** 4)
+        Ta = Ta_s; esky = esky_s
     Ldown_prata = (esky * SBC * ((Ta + 273.15) ** 4))
 
     # Degrees to radians
@@ -1709,8 +1718,8 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
                                  asvf,
                                  shmat, vegshmat, vbshvegshmat,
                                  Lsky_down, Lsky_side, Lsky_normal, Lup,
-                                 Ta, Tgwall, ewall,
-                                 rows, cols)
+                                 Ta_full, Tgwall, ewall,
+                                 rows, cols, sky_scale=sky_scale)
 
     del Lnormal, Lsky_normal, Lsky_down, Lsky_side
 
@@ -1910,7 +1919,7 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
                        landcover, lc_grid, dectime, altmax, dirwalls, walls, cyl, elvis, Ta, RH, radG, radD, radI, P,
                        amaxvalue, bush, Twater, TgK, Tstart, alb_grid, emis_grid, TgK_wall, Tstart_wall, TmaxLST,
                        TmaxLST_wall, first, second, svfalfa, svfbuveg, firstdaytime, timeadd, timestepdec, Tgmap1,
-                       Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N, CI, TgOut1, diffsh, shmat, vegshmat, vbshvegshmat, anisotropic_sky, asvf, patch_option):
+                       Tgmap1E, Tgmap1S, Tgmap1W, Tgmap1N, CI, TgOut1, diffsh, shmat, vegshmat, vbshvegshmat, anisotropic_sky, asvf, patch_option, Ta_s=None, RH_s=None, P_s=None):
     """
     Main SOLWEIG 2022a calculation kernel - integrates all radiation and temperature calculations.
     
@@ -1995,24 +2004,32 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
     _, _, _, SNUP = daylen(torch.tensor(jday.item()), torch.tensor(location['latitude']))
 
     # Vapor pressure
+    # met fields: Ta/RH/P may be 2-D tensors; Ta_s/RH_s/P_s are the tile scalars used where a scalar is required
+    if Ta_s is None: Ta_s = Ta
+    if RH_s is None: RH_s = RH
+    if P_s is None: P_s = P
     ea = 6.107 * 10 ** ((7.5 * Ta) / (237.3 + Ta)) * (RH / 100.)
 
     # Determination of clear - sky emissivity from Prata (1996)
     msteg = 46.5 * (ea / (Ta + 273.15))
     esky = (1 - (1 + msteg) * torch.exp(-((1.2 + 3.0 * msteg) ** 0.5))) + elvis  # -0.04 old error from Jonsson et al.2006
+    # met fields: tile-scalar emissivity for the per-patch sky model (identical to esky when Ta/RH are scalars)
+    ea_s = 6.107 * 10 ** ((7.5 * Ta_s) / (237.3 + Ta_s)) * (RH_s / 100.)
+    msteg_s = 46.5 * (ea_s / (Ta_s + 273.15))
+    esky_s = (1 - (1 + msteg_s) * torch.exp(-((1.2 + 3.0 * msteg_s) ** 0.5))) + elvis
 
     if altitude > 0: # # # # # # DAYTIME # # # # # #
         # Clearness Index on Earth's surface after Crawford and Dunchon (1999) with a correction
         #  factor for low sun elevations after Lindberg et al.(2008)
-        I0, CI, Kt, I0et, CIuncorr = clearnessindex_2013b(torch.tensor(zen.item()), torch.tensor(jday.item()), torch.tensor(Ta.item()), torch.tensor(RH.item()) / 100., torch.tensor(radG.item()), location, torch.tensor(P.item()))
+        I0, CI, Kt, I0et, CIuncorr = clearnessindex_2013b(torch.tensor(zen.item()), torch.tensor(jday.item()), torch.tensor(Ta_s.item()), torch.tensor(RH_s.item()) / 100., torch.tensor(radG.item()), location, torch.tensor(P_s.item()))
         CI = min(CI, 1.0)
 
         # Estimation of radD and radI if not measured after Reindl et al.(1990)
         if onlyglobal == 1:
-            I0, CI, Kt, I0et, CIuncorr = clearnessindex_2013b(torch.tensor(zen.item()), torch.tensor(jday.item()), Ta.item(), torch.tensor(RH.item()) / 100., torch.tensor(radG.item()), location, torch.tensor(P.item()))
+            I0, CI, Kt, I0et, CIuncorr = clearnessindex_2013b(torch.tensor(zen.item()), torch.tensor(jday.item()), Ta_s.item(), torch.tensor(RH_s.item()) / 100., torch.tensor(radG.item()), location, torch.tensor(P_s.item()))
             CI = min(CI, 1.0)
 
-            radI, radD = diffusefraction(torch.tensor(radG.item()), torch.tensor(altitude.item()), Kt, torch.tensor(Ta.item()), torch.tensor(RH.item()))
+            radI, radD = diffusefraction(torch.tensor(radG.item()), torch.tensor(altitude.item()), Kt, torch.tensor(Ta_s.item()), torch.tensor(RH_s.item()))
 
         # Diffuse Radiation
         # Anisotropic Diffuse Radiation after Perez et al. 1993
@@ -2050,7 +2067,7 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
 
         Tgwall = torch.maximum(Tgwall, torch.tensor(0, device=device))
 
-        radI0, _ = diffusefraction(I0, altitude.item(), 1., Ta.item(), RH.item())
+        radI0, _ = diffusefraction(I0, altitude.item(), 1., Ta_s.item(), RH_s.item())
         corr = 0.1473 * torch.log(90 - (zen / np.pi * 180)) + 0.3454  # 20070329 correction of lat, Lindberg et al. 2008
         CI_Tg = (radG / radI0) + (1 - corr)
         CI_Tg = min(CI_Tg, 1.0)
@@ -2164,10 +2181,11 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
         if CI < 0.95:
             esky_c = CI * esky + (1 - CI) * 1.
             esky = esky_c
+            esky_s = CI * esky_s + (1 - CI) * 1.
 
         Ldown, Lside, Least_, Lwest_, Lnorth_, Lsouth_ \
                   = Lcyl_v2022a(esky, L_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbshvegshmat,
-                                altitude, azimuth, rows, cols, asvf)
+                                altitude, azimuth, rows, cols, asvf, esky_s=esky_s, Ta_s=Ta_s)
 
     else:
         Ldown = (svf + svfveg - 1) * esky * SBC * ((Ta + 273.15) ** 4) + (2 - svfveg - svfaveg) * ewall * SBC * \

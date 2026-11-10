@@ -67,8 +67,8 @@ def main():
     # Meteorological inputs
     parser.add_argument('--use_own_met', type=str2bool, default=True, help='Use your own meteorological file (True/False)')
     parser.add_argument('--own_metfile', default=None, help='Path to your own meteorological file (UMEP-format text file)')
-    parser.add_argument('--data_source_type', default=None, help='Meteorological source (ERA5 or wrfout)')
-    parser.add_argument('--data_folder', default=None, help='Directory containing ERA5/WRF data files')
+    parser.add_argument('--data_source_type', default=None, help='Meteorological source (ERA5, hrrr or wrfout)')
+    parser.add_argument('--data_folder', default=None, help='Directory containing the ERA5/HRRR/WRF data files (HRRR is downloaded there when missing)')
 
     # Optional time range (required if using data_source_type)
     parser.add_argument('--start', default=None, help="Start time in UTC (e.g., '2020-08-12 00:00:00')")
@@ -82,6 +82,9 @@ def main():
     parser.add_argument('--use_uhi', type=str2bool, default=True,
                         help='Compute diagnostic urban heat island intensity (ERA5 forcing only; '
                              'set False for WRF or own met file) (True/False)')
+    parser.add_argument('--use_met_fields', type=str2bool, default=False,
+                        help='Use 2-D meteorological fields interpolated inside each tile from the gridded weather data '
+                             '(ERA5/HRRR/WRF) instead of one value per tile; removes steps at tile seams (True/False)')
 
     # Output options
     parser.add_argument('--save_tmrt', type=str2bool, default=True, help='Save mean radiant temperature output')
@@ -148,4 +151,5 @@ def main():
         save_wbgt=args.save_wbgt,
         save_ta=args.save_ta,
         save_wind=args.save_wind,
+        use_met_fields=args.use_met_fields,
     )
