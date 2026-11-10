@@ -22,6 +22,7 @@ import datetime
 import calendar
 import scipy.ndimage.interpolation as sc
 import torch
+from .device import empty_cache, get_device
 import torch.nn.functional as F
 from scipy.ndimage import rotate
 from .shadow import create_patches
@@ -39,7 +40,7 @@ def ensure_tensor(x, device=None):
         torch.Tensor: Input as tensor on device
     """
     if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = get_device()
     if not isinstance(x, torch.Tensor):
         x = torch.tensor(x, device=device)
     return x
@@ -106,7 +107,7 @@ def sunonsurface_2018a(azimuthA, scale, buildings, shadow, sunwall, first, secon
         tuple: Radiation components for different surfaces
     """
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Convert inputs to tensors on the GPU
 
@@ -318,7 +319,7 @@ def gvf_2018a(wallsun, walls, buildings, scale, shadow, first, second, dirwalls,
     Returns:
         tuple: View factors and albedo components for different directions
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     azimuthA = torch.arange(5, 359, 20, device=device, dtype=torch.float32)  # Search directions for Ground View Factors (GVF)
 
@@ -415,7 +416,7 @@ def cylindric_wedge(zen, svfalfa, rows, cols):
     """
     np.seterr(divide='ignore', invalid='ignore')
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     beta = torch.tensor(zen, device=device, dtype=torch.float32)
     alfa = torch.zeros((rows, cols), device=device) + svfalfa
@@ -464,7 +465,7 @@ def TsWaveDelay_2015a(gvfLup, firstdaytime, timeadd, timestepdec, Tgmap1):
     Returns:
         torch.Tensor: Temperature with wave delay applied
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # gvfLup = torch.tensor(gvfLup, device=device)
     Tgmap0 = gvfLup  # current timestep
@@ -496,7 +497,7 @@ def Kup_veg_2015a(radI, radD, radG, altitude, svfbuveg, albedo_b, F_sh, gvfalb, 
     Returns:
         tuple: Upward shortwave components for different directions
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     albedo_b = torch.tensor(albedo_b, device=device).clone().detach()
     Kup = (gvfalb * radI * torch.sin(altitude * (torch.pi / 180.))) + (radD * svfbuveg + albedo_b * (1 - svfbuveg) * (radG * (1 - F_sh) + radD * F_sh)) * gvfalbnosh
@@ -509,7 +510,7 @@ def Kup_veg_2015a(radI, radD, radG, altitude, svfbuveg, albedo_b, F_sh, gvfalb, 
 
 def Kvikt_veg(svf, svfveg, vikttot):
     """Calculate shortwave weight factor accounting for vegetation."""
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     viktwall = (vikttot - (63.227 * svf ** 6 - 161.51 * svf ** 5 + 156.91 * svf ** 4 - 70.424 * svf ** 3 + 16.773 * svf ** 2 - 0.4863 * svf)) / vikttot
     svfvegbu = (svfveg + svf - 1)
@@ -535,7 +536,7 @@ def shaded_or_sunlit(solar_altitude, solar_azimuth, patch_altitude, patch_azimut
     Returns:
         torch.Tensor: Binary mask (1=sunlit, 0=shaded)
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Patch azimuth in relation to sun azimuth
     patch_to_sun_azi = torch.abs(solar_azimuth - patch_azimuth)
@@ -593,7 +594,7 @@ def Kside_veg_v2022a(radI, radD, radG, shadow, svfS, svfW, svfN, svfE, svfEveg, 
         tuple: (Keast, Ksouth, Kwest, Knorth, KsideI, KsideD, Kside) - 
                Shortwave radiation components for each direction
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     vikttot = 4.4897
     aziE = azimuth + t
@@ -822,7 +823,7 @@ def sun_distance(jday):
     Returns:
         torch.Tensor: Distance correction factor (dimensionless)
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     b = 2. * torch.pi * jday / 365.
     D = torch.sqrt(1.00011 + 0.034221 * torch.cos(b) + 0.001280 * torch.sin(b) + 0.000719 * torch.cos(2. * b) + 0.000077 * torch.sin(2. * b))
@@ -844,7 +845,7 @@ def clearnessindex_2013b(zen, jday, Ta, RH, radG, location, P):
     Returns:
         torch.Tensor: Clearness index (dimensionless, 0-1)
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     if P == -999.0:
         p = 1013.0  # Pressure in millibars
@@ -923,7 +924,7 @@ def diffusefraction(radG, altitude, Kt, Ta, RH):
             - radD: Diffuse radiation (W/m²)
             - radI: Direct beam radiation (W/m²)
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
     Ta = ensure_tensor(Ta)
     RH = ensure_tensor(RH)
     alfa = altitude * (torch.pi / 180.0)
@@ -963,7 +964,7 @@ def shadowingfunction_wallheight_13(a, azimuth, altitude, scale, walls, aspect):
     Returns:
         tuple: (vegsh, sh, vbshvegsh, wallsh, wallsun, wallshve, facesh, facesun)
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     if not walls.size:
         pass
@@ -1065,7 +1066,7 @@ def shadowingfunction_wallheight_23(a, vegdem, vegdem2, azimuth, altitude, scale
     Returns:
         tuple: Shadow components including vegetation effects
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     degrees = torch.tensor(np.pi / 180.0, device=device)
     azimuth = torch.tensor(azimuth, device=device) * degrees
@@ -1227,7 +1228,7 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
         Perez et al. (1993). All-weather model for sky luminance distribution.
         Solar Energy, 50(3), 235-245.
     """
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     m_a1 = torch.tensor([1.3525, -1.2219, -1.1000, -0.5484, -0.6000, -1.0156, -1.0000, -1.0500], device=device)
     m_a2 = torch.tensor([-0.2576, -0.7730, -0.2515, -0.6654, -0.3566, -0.3670, 0.0211, 0.0289], device=device)
@@ -1342,7 +1343,7 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
 
 def model1(sky_patches, esky, Ta):
     """Calculate longwave sky radiation using Model 1 (isotropic)."""
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     SBC = 5.67051e-8
     deg2rad = torch.tensor(np.pi / 180, device=device)
@@ -1373,7 +1374,7 @@ def model1(sky_patches, esky, Ta):
 
 def model2(sky_patches, esky, Ta):
     """Calculate longwave sky radiation using Model 2 (simple anisotropic)."""
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
     deg2rad = torch.tensor(np.pi / 180, device=device)
 
     skyalt, skyalt_c = torch.unique(sky_patches[:, 0], return_counts=True)
@@ -1395,7 +1396,7 @@ def model2(sky_patches, esky, Ta):
 
 def model3(sky_patches, esky, Ta):
     """Calculate longwave sky radiation using Model 3 (advanced anisotropic)."""
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
     deg2rad = torch.tensor(np.pi / 180, device=device)
 
     skyalt, skyalt_c = torch.unique(sky_patches[:, 0], return_counts=True)
@@ -1455,7 +1456,7 @@ def define_patch_characteristics(solar_altitude, solar_azimuth,
         - Computes directional components (E, S, W, N)
     """
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Stefan-Boltzmann's Constant
     SBC = torch.tensor(5.67051e-8, device=device)
@@ -1631,7 +1632,7 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
     """
 
     # Device for GPU computation
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Stefan-Boltzmann's Constant
     SBC = torch.tensor(5.67051e-8, device=device).clone().detach()
@@ -1719,7 +1720,7 @@ def Lcyl_v2022a(esky, sky_patches, Ta, Tgwall, ewall, Lup, shmat, vegshmat, vbsh
 def Lvikt_veg(svf, svfveg, svfaveg, vikttot):
     """Calculate longwave radiation weight factors accounting for vegetation."""
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
     viktonlywall = (vikttot - (63.227 * svf ** 6 - 161.51 * svf ** 5 + 156.91 * svf ** 4 - 70.424 * svf ** 3 + 16.773 * svf ** 2 - 0.4863 * svf)) / vikttot
     viktaveg = (vikttot - (63.227 * svfaveg ** 6 - 161.51 * svfaveg ** 5 + 156.91 * svfaveg ** 4 - 70.424 * svfaveg ** 3 + 16.773 * svfaveg ** 2 - 0.4863 * svfaveg)) / vikttot
     viktwall = viktonlywall - viktaveg
@@ -1763,7 +1764,7 @@ def Lside_veg_v2022a(svfS, svfW, svfN, svfE, svfEveg, svfSveg, svfWveg, svfNveg,
         tuple: (Ldown, Lside, Least, Lwest, Lnorth, Lsouth) - Longwave components
     """
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     azimuth = torch.tensor(azimuth, device=device)
     altitude = torch.tensor(altitude, device=device)
@@ -1973,7 +1974,7 @@ def Solweig_2022a_calc(i, dsm, scale, rows, cols, svf, svfN, svfW, svfE, svfS, s
 
     t = 0.
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_device()
 
     # Convert input data to torch tensors
     altitude = torch.tensor(altitude, device=device).clone().detach()

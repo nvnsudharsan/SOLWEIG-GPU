@@ -47,7 +47,7 @@ For detailed documentation, see [Solweig-GPU Documentation](https://solweig-gpu.
 
 ## Features
 
-- CPU and GPU support (automatically uses GPU if available)
+- GPU support for NVIDIA (CUDA), AMD (ROCm), Intel (XPU / oneAPI) and Apple silicon (MPS), with CPU fallback; the backend is picked automatically or set with `SOLWEIG_DEVICE`
 - Divides larger areas into tiles based on the selected tile size
 - CPU-based computations of wall height and aspect are parallelized across multiple CPUs
 - GPU-based computation of SVF, shortwave/longwave radiation, shadows, Tmrt, and UTCI
@@ -109,6 +109,26 @@ pip install solweig-gpu
 pip install --upgrade solweig-gpu
 
 ```
+
+### GPU backends
+
+All GPU work goes through `solweig_gpu/device.py`, which selects the backend in the order CUDA (NVIDIA, and AMD through
+the ROCm build of PyTorch, which also reports as `cuda`), Intel XPU, Apple MPS, CPU. Install the PyTorch build for
+your hardware and the package follows it:
+
+| Hardware | PyTorch build | Notes |
+|---|---|---|
+| NVIDIA | default `pip install torch` (CUDA) or conda `pytorch` + `cudnn` | as before |
+| AMD | `pip install torch --index-url https://download.pytorch.org/whl/rocm6.4` (or the ROCm version matching your driver) | appears as `cuda`; consumer Radeon cards may need `HSA_OVERRIDE_GFX_VERSION` |
+| Intel (Data Center Max, Arc) | `pip install torch --index-url https://download.pytorch.org/whl/xpu` | `torch.xpu`; Max 1550 cards expose two tiles, each is one device |
+| Apple silicon | default `pip install torch` on macOS (MPS) | one device; set `PYTORCH_ENABLE_MPS_FALLBACK=1` so any op without an MPS kernel runs on the CPU; float64 scalars are cast to float32 by the package |
+| none | any build | runs on the CPU (slow) |
+
+`SOLWEIG_DEVICE=cuda|xpu|mps|cpu` (or a specific device such as `xpu:1`) overrides the automatic choice. Multi-GPU drivers
+that start one worker per device can call `solweig_gpu.device.mask_device(i)` before importing torch (sets the NVIDIA,
+AMD and Intel visibility masks). `python -c "from solweig_gpu.device import describe; print(describe())"` shows what was
+detected.
+
 ## Testing
 
 Run the test suite with:

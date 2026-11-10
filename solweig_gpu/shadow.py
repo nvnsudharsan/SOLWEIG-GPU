@@ -22,6 +22,7 @@ import datetime
 import calendar
 import scipy.ndimage.interpolation as sc
 import torch
+from .device import empty_cache, get_device
 import torch.nn.functional as F
 from scipy.ndimage import rotate
 import time
@@ -30,7 +31,7 @@ import zipfile
 
 gdal.UseExceptions()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = get_device()
 
 # Increment when cached shadow/SVF outputs become incompatible with the
 # current shadow algorithm. Version 2 adds UMEP's pergola-aware vegetation
@@ -73,7 +74,7 @@ def ensure_tensor(x, device=None):
         torch.Tensor: Input converted to tensor on specified device
     """
     if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = get_device()
     if not isinstance(x, torch.Tensor):
         x = torch.tensor(x, device=device)
     return x
@@ -338,7 +339,7 @@ def shadow(amaxvalue, a, vegdem, vegdem2, bush, azimuth, altitude, scale):
     del tempvegdem, tempvegdem2, temp
     del templastfabovea, templastgabovea
     del fabovea, gabovea, lastfabovea, lastgabovea, vegsh2
-    torch.cuda.empty_cache()
+    empty_cache()
     # Changed here
     return sh, vegsh, vbshvegsh
 
@@ -358,7 +359,7 @@ def annulus_weight(altitude, aziinterval, device=None):
         torch.Tensor: Array of annulus weights
     """
     if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = get_device()
     
     n = torch.tensor(90.0, device=device)
     altitude = torch.tensor(altitude, device=device)
@@ -391,7 +392,7 @@ def create_patches(patch_option):
     Raises:
         ValueError: If patch_option is not 144 or 2304
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = get_device()
     deg2rad = torch.pi / 180
     skyvaultalt = torch.tensor([], device=device)
     skyvaultazi = torch.tensor([], device=device)
@@ -640,7 +641,7 @@ def svf_calculator(patch_option, amaxvalue=None, a=None, vegdem=None, vegdem2=No
         )
 
     del sh, vegsh,vbshvegsh, last, weight
-    torch.cuda.empty_cache()
+    empty_cache()
     
     return svf, svfaveg, svfE, svfEaveg, svfEveg, svfN, svfNaveg, svfNveg, svfS, svfSaveg, svfSveg, svfveg, svfW, svfWaveg, svfWveg, vegshmat, vbshvegshmat, shmat, SVFtotal
 
