@@ -97,6 +97,8 @@ def main():
     parser.add_argument('--save_wbgt', type=str2bool, default=False, help='Save wet bulb globe temperature output')
     parser.add_argument('--save_ta', type=str2bool, default=False, help='Save diagnostic air temperature output')
     parser.add_argument('--save_wind', type=str2bool, default=False, help='Save diagnostic wind speed output')
+    parser.add_argument('--band_interleave', type=str2bool, default=False,
+                        help='Write output GeoTIFFs band-interleaved, tiled and compressed (fast per-hour reads, half the size); default False')
 
     args = parser.parse_args()
 
@@ -152,4 +154,5 @@ def main():
         save_ta=args.save_ta,
         save_wind=args.save_wind,
         use_met_fields=args.use_met_fields,
+        band_interleave=args.band_interleave,
     )

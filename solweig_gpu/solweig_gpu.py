@@ -410,6 +410,8 @@ def run_utci_tiles(
     save_ta: bool = False,
     save_wind: bool = False,
     use_met_fields: bool = False,
+
+    band_interleave: bool = False,
 ) -> None:
     """
     Run UTCI (and optional outputs) for tiles in the preprocessing directory.
@@ -431,7 +433,10 @@ def run_utci_tiles(
         use_met_fields:
             Use the 2-D meteorological fields written by ``preprocess(..., use_met_fields=True)``
             (bilinear weather inside each tile, removes tile-seam steps). Default False = one
-            value per tile from the met file, as before."""
+            value per tile from the met file, as before.
+        band_interleave:
+            Band-interleaved, tiled, compressed output GeoTIFFs (fast per-hour reads);
+            default False keeps GDAL's default layout."""
     import glob
     import os
     import re
@@ -530,6 +535,7 @@ def run_utci_tiles(
             save_ta=save_ta,
             save_wind=save_wind,
             met_fields=met_fields_path,
+            band_interleave=band_interleave,
         )
         empty_cache()
 
@@ -562,6 +568,7 @@ def thermal_comfort(
     save_ta=False,
     save_wind=False,
     use_met_fields=False,
+    band_interleave=False,
 ):
     """
     Main function to compute urban thermal comfort using the SOLWEIG-GPU model.
@@ -674,6 +681,12 @@ def thermal_comfort(
             instead of using one value per tile. Removes the steps at tile seams when the
             weather grid is finer than the tiles. Requires ``use_own_met=False``. Default False.
 
+        band_interleave:
+            Write the output GeoTIFFs band-interleaved, tiled and losslessly compressed
+            (ZSTD or DEFLATE). Reading one time step of a tile then touches only that
+            band, which makes hour-by-hour mosaics of many tiles much faster; files are
+            about half the size. Default False keeps GDAL's default layout.
+
     Returns:
         None
     """
@@ -738,4 +751,5 @@ def thermal_comfort(
         save_ta=save_ta,
         save_wind=save_wind,
         use_met_fields=use_met_fields,
+        band_interleave=band_interleave,
     )

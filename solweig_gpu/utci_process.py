@@ -35,6 +35,7 @@ from .shadow import create_patches, is_current_svf_cache, svf_calculator
 from .solweig import Solweig_2022a_calc, clearnessindex_2013b
 from .calculate_utci import utci_calculator
 from .calculate_wbgt import isobaric_wet_bulb_temperature_from_rh, black_globe_temperature
+from .geotiff import geotiff_creation_options
 import os
 import re
 import zipfile
@@ -69,7 +70,7 @@ firstdayleaf = 97
 lastdayleaf = 300
 conifer_bool = False
 
-
+# geotiff_creation_options lives in .geotiff (no heavy imports); re-exported here for backwards compatibility
 def load_raster_to_tensor(dem_path):
     """
     Load a GeoTIFF raster file into a PyTorch tensor.
@@ -327,7 +328,7 @@ def load_cached_svf_outputs(building_dsm_path: str, number: str):
 
 def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path, landcover_path, windcoeff_path, met_file,
                 output_path,number,selected_date_str,save_tmrt=False,save_svf=False, save_kup=False,save_kdown=False,save_lup=False,
-                save_ldown=False,save_shadow=False,save_wbgt=False,save_ta=False,save_wind=False, met_fields=None):
+                save_ldown=False,save_shadow=False,save_wbgt=False,save_ta=False,save_wind=False, met_fields=None, band_interleave=False):
     """
     Compute UTCI and related thermal comfort outputs for a single tile.
     
@@ -355,6 +356,8 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
         save_shadow (bool): Save shadow maps
         save_ta (bool): Save diagnostic air temperature field
         save_wind (bool): Save diagnostic wind speed field
+        band_interleave (bool): Write the output GeoTIFFs band-interleaved, tiled and compressed
+            (see :func:`geotiff_creation_options`); default False keeps GDAL's default layout.
 
     Returns:
         None: Outputs are saved as GeoTIFF files in output_path
@@ -765,9 +768,10 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
 
     # Write a multi-band GeoTIFF for UTCI (each band corresponds to one time step)
     driver = gdal.GetDriverByName('GTiff')
+    create_options = geotiff_creation_options(band_interleave)
     out_file_path = os.path.join(output_path, f'UTCI_{number}.tif')
     num_bands = UTCI_all.shape[0]
-    out_dataset = driver.Create(out_file_path, cols, rows, num_bands, gdal.GDT_Float32)
+    out_dataset = driver.Create(out_file_path, cols, rows, num_bands, gdal.GDT_Float32, options=create_options)
     out_dataset.SetGeoTransform(dataset.GetGeoTransform())
     out_dataset.SetProjection(dataset.GetProjection())
     for band in range(num_bands):
@@ -783,7 +787,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_tmrt:
         out_file_path_op = os.path.join(output_path, f'TMRT_{number}.tif')
         num_bands_op = TMRT_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -806,6 +810,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
             rows,
             1,
             gdal.GDT_Float32,
+            options=create_options,
         )
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
@@ -824,7 +829,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_kup:
         out_file_path_op = os.path.join(output_path, f'Kup_{number}.tif')
         num_bands_op = Kup_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -839,7 +844,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_kdown:
         out_file_path_op = os.path.join(output_path, f'Kdown_{number}.tif')
         num_bands_op = Kdown_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -854,7 +859,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_lup:
         out_file_path_op = os.path.join(output_path, f'Lup_{number}.tif')
         num_bands_op = Lup_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -869,7 +874,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_ldown:
         out_file_path_op = os.path.join(output_path, f'Ldown_{number}.tif')
         num_bands_op = Ldown_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -884,7 +889,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_shadow:
         out_file_path_op = os.path.join(output_path, f'Shadow_{number}.tif')
         num_bands_op = Shadow_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -899,7 +904,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_wbgt:
         out_file_path_op = os.path.join(output_path, f'WBGT_{number}.tif')
         num_bands_op = wbgt_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -915,7 +920,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_ta:
         out_file_path_op = os.path.join(output_path, f'Ta_{number}.tif')
         num_bands_op = Ta_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):
@@ -931,7 +936,7 @@ def compute_utci(building_dsm_path, tree_path, dem_path, walls_path, aspect_path
     if save_wind:
         out_file_path_op = os.path.join(output_path, f'Wind_{number}.tif')
         num_bands_op = Wind_all.shape[0]
-        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32)
+        out_dataset_op = driver.Create(out_file_path_op, cols, rows, num_bands_op, gdal.GDT_Float32, options=create_options)
         out_dataset_op.SetGeoTransform(dataset.GetGeoTransform())
         out_dataset_op.SetProjection(dataset.GetProjection())
         for band in range(num_bands_op):

@@ -41,7 +41,8 @@ setup(
         "timezonefinder",
         "xarray",
         "tqdm",
-        "matplotlib"
+        "matplotlib",
+        "numba"
     ],
     extras_require={
         "hrrr": [

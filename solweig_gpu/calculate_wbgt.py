@@ -8,7 +8,13 @@
 #Quarterly Journal of the Royal Meteorological Society, p.e70082.
 
 import numpy as np
-from numba import vectorize
+try:
+    from numba import vectorize
+except ImportError:   # numba is a declared dependency, but keep the module importable without it (pure-numpy fallback, slower)
+    def vectorize(signatures=None, **kwargs):
+        def decorator(func):
+            return np.vectorize(func, otypes=[np.float64])
+        return decorator
 import torch
 
 # ---------------------------------------------------------------------
